@@ -93,6 +93,7 @@ import com.arrowpuzzle.game.util.SoundEffects
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlin.math.hypot
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -354,9 +355,11 @@ private fun GameBoard(
         state.correctFlashId?.let(level::arrowById)
     }
 
-    LaunchedEffect(level) {
-        boardScale = START_BOARD_SCALE
-        boardOffset = clampBoardOffset(Offset.Zero, START_BOARD_SCALE, viewportSize)
+    LaunchedEffect(level, viewportSize) {
+        if (viewportSize.width > 0 && viewportSize.height > 0) {
+            boardScale = START_BOARD_SCALE
+            boardOffset = centeredBoardOffset(START_BOARD_SCALE, viewportSize)
+        }
     }
     LaunchedEffect(state.wrongFlashToken) {
         if (state.wrongFlashToken > 0) {
@@ -611,23 +614,38 @@ private fun pointAtDistance(
     return route.last()
 }
 
+/**
+ * Keeps the board fully inside the viewport.
+ *
+ * When the board is larger than the viewport (scale > 1) the offset is negative
+ * and lets the user pan around the enlarged board. When it is smaller
+ * (scale < 1) the offset is positive and lets the user move the board within
+ * the free space instead of nailing it to the centre.
+ */
 private fun clampBoardOffset(offset: Offset, scale: Float, viewport: IntSize): Offset {
     if (viewport.width <= 0 || viewport.height <= 0) return Offset.Zero
     val width = viewport.width.toFloat()
     val height = viewport.height.toFloat()
-    if (scale <= 1f) {
-        // The board is smaller than the viewport: keep it centred so free space
-        // appears evenly on every side while zooming out.
-        return Offset(
-            x = (width - width * scale) / 2f,
-            y = (height - height * scale) / 2f,
-        )
-    }
-    val minX = width - width * scale
-    val minY = height - height * scale
+    val rangeX = width - width * scale
+    val rangeY = height - height * scale
+    val minX = min(0f, rangeX)
+    val maxX = max(0f, rangeX)
+    val minY = min(0f, rangeY)
+    val maxY = max(0f, rangeY)
     return Offset(
-        x = offset.x.coerceIn(minX, 0f),
-        y = offset.y.coerceIn(minY, 0f),
+        x = offset.x.coerceIn(minX, maxX),
+        y = offset.y.coerceIn(minY, maxY),
+    )
+}
+
+/** Places a board that is smaller than the viewport in its centre. */
+private fun centeredBoardOffset(scale: Float, viewport: IntSize): Offset {
+    if (viewport.width <= 0 || viewport.height <= 0) return Offset.Zero
+    val width = viewport.width.toFloat()
+    val height = viewport.height.toFloat()
+    return Offset(
+        x = (width - width * scale) / 2f,
+        y = (height - height * scale) / 2f,
     )
 }
 
