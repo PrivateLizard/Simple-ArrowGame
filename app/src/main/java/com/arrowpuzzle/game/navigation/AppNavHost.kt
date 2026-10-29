@@ -140,6 +140,7 @@ fun AppNavHost(container: AppContainer) {
 
             GameScreen(
                 viewModel = viewModel,
+                soundEffects = container.soundEffects,
                 onExit = { navController.popBackStack() },
                 onVictory = { result ->
                     navController.navigate(AppRoutes.victory(result)) {

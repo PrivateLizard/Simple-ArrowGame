@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,7 +53,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
@@ -92,18 +90,20 @@ import kotlin.math.min
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
+    soundEffects: SoundEffects,
     onExit: () -> Unit,
     onVictory: (GameResult) -> Unit,
     onDefeat: (GameState.Defeat, LevelConfig) -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val view = LocalView.current
-    val context = LocalContext.current
-    val soundEffects = remember(context) { SoundEffects(context.applicationContext) }
     var showQuitDialog by remember { mutableStateOf(false) }
 
-    DisposableEffect(Unit) {
-        onDispose(soundEffects::release)
+    // Start decoding as early as possible. The sound object is app-scoped, so
+    // this is a no-op after the first level; the aim is that samples are ready
+    // before the first tap.
+    LaunchedEffect(soundEffects) {
+        soundEffects.preload()
     }
 
     LaunchedEffect(viewModel) {

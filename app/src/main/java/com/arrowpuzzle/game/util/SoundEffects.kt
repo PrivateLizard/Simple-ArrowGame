@@ -22,6 +22,11 @@ import kotlin.math.sin
  * reliably.
  *
  * No audio assets are bundled and no permission is needed.
+ *
+ * [preload] must be called as early as possible (screen entry), because
+ * SoundPool decodes asynchronously. An earlier version only loaded on the first
+ * [play] call and silently dropped the cue while loading, which is why the very
+ * first tap of a level made no sound and the second one was cut short.
  */
 class SoundEffects(private val context: Context) {
 
@@ -32,12 +37,35 @@ class SoundEffects(private val context: Context) {
     private val sampleIds = mutableMapOf<GameFeedback.Kind, Int>()
     private var loadedIds = emptySet<Int>()
 
+    /**
+     * Cue requested while its sample was still decoding. It is played once
+     * loading finishes instead of being thrown away.
+     */
+    private var pendingKind: GameFeedback.Kind? = null
+
+    /** Starts creating and loading the samples. Safe to call repeatedly. */
+    fun preload() {
+        ensureLoaded()
+    }
+
     fun play(feedback: GameFeedback) {
         ensureLoaded()
-        val id = sampleIds[feedback.kind] ?: return
-        if (id !in loadedIds) return
+        val kind = feedback.kind
+        val pool = soundPool ?: return
+        val id = sampleIds[kind] ?: return
+
+        val ready = synchronized(lock) { id in loadedIds }
+        if (!ready) {
+            // Still decoding: remember it and let the load callback fire it.
+            synchronized(lock) { pendingKind = kind }
+            return
+        }
+        playNow(pool, id)
+    }
+
+    private fun playNow(pool: SoundPool, id: Int) {
         runCatching {
-            soundPool?.play(
+            pool.play(
                 id,
                 VOLUME,
                 VOLUME,
@@ -74,8 +102,23 @@ class SoundEffects(private val context: Context) {
             }.getOrNull() ?: return
 
             pool.setOnLoadCompleteListener { _, sampleId, status ->
-                if (status == 0) {
-                    synchronized(lock) { loadedIds = loadedIds + sampleId }
+                if (status != 0) return@setOnLoadCompleteListener
+                synchronized(lock) { loadedIds = loadedIds + sampleId }
+
+                // Play anything that was requested while this sample was
+                // still decoding, so the first tap of a level is not silent.
+                val deferred = synchronized(lock) {
+                    val kind = pendingKind ?: return@synchronized null
+                    val deferredId = sampleIds[kind]
+                    if (deferredId == sampleId) {
+                        pendingKind = null
+                        deferredId
+                    } else {
+                        null
+                    }
+                }
+                if (deferred != null) {
+                    playNow(pool, deferred)
                 }
             }
 
@@ -212,11 +255,20 @@ class SoundEffects(private val context: Context) {
     private companion object {
         const val SAMPLE_RATE = 22_050
 
-        /** Peak level of the synthesised cues, leaving headroom for the mixer. */
-        const val LEVEL = 0.85
+        /**
+         * Peak level of the synthesised cues. Normalised near full scale: the
+         * earlier 0.85 * 0.9 combination was clearly too quiet on a phone
+         * speaker.
+         */
+        const val LEVEL = 0.95
 
-        const val VOLUME = 0.9f
+        const val VOLUME = 1.0f
         const val PRIORITY = 1
-        const val MAX_STREAMS = 4
+
+        /**
+         * Enough streams that a fast tap series never steals the previous
+         * cue's stream, which used to cut it off mid-playback.
+         */
+        const val MAX_STREAMS = 8
     }
 }
