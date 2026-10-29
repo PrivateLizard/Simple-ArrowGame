@@ -27,8 +27,11 @@ object LevelCatalog {
     /** Arrow count of the very first level. */
     private const val BASE_ARROWS = 34
 
-    /** Arrow count at [MAX_LEVEL]. */
-    private const val FINAL_ARROWS = 150
+    /**
+     * Arrow count at [MAX_LEVEL]. Kept modest on purpose: see
+     * [arrowCountForLevel] for why more arrows means easier, not harder.
+     */
+    private const val FINAL_ARROWS = 90
 
     fun gridSizeForLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
@@ -40,15 +43,21 @@ object LevelCatalog {
     /**
      * Arrow target for a campaign level.
      *
-     * Grows from [BASE_ARROWS] to [FINAL_ARROWS] with a slight ease-in curve,
-     * so the step between neighbouring levels stays small and readable.
+     * More arrows do **not** make a board harder. Measured with a naive player
+     * (always tap a random open arrow) the average number of available moves
+     * *grows* with arrow count, because a fuller board keeps more independent
+     * chains alive. Difficulty comes from the open-arrow count, not from here.
+     *
+     * Arrow count therefore only controls how big and busy a board looks. It
+     * stays roughly flat and is not used as the difficulty knob.
      */
     fun arrowCountForLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
         if (safe == 1) return BASE_ARROWS
+        // Gentle, almost linear growth. A steep ramp would silently *reduce*
+        // difficulty, which is the opposite of what a level curve should do.
         val t = (safe - 1).toDouble() / (MAX_LEVEL - 1)
-        val eased = t * t * (3.0 - 2.0 * t) * 0.35 + t * 0.65
-        return (BASE_ARROWS + (FINAL_ARROWS - BASE_ARROWS) * eased).roundToInt()
+        return (BASE_ARROWS + (FINAL_ARROWS - BASE_ARROWS) * t).roundToInt()
     }
 
     /** Difficulty of a level on the 1..[MAX_DIFFICULTY] scale. */
@@ -56,25 +65,26 @@ object LevelCatalog {
         levelId.coerceIn(1, MAX_LEVEL)
 
     /**
-     * Complexity tier of a level.
+     * Complexity tier of a level. This is the real difficulty driver.
      *
-     * EASY (4 open) for the introduction, MEDIUM (2 open) for the middle, and
-     * HARD (3 open) for the finale. HARD intentionally does not use a single
-     * open arrow any more: see the class comment.
+     * With many open arrows the player almost always has a safe move, so the
+     * board is easy. With two or three open arrows every mistake is a real
+     * mistake. HARD deliberately does not go down to a single open arrow: on a
+     * 150-arrow board that turns the game into guessing.
      */
     fun complexityForLevel(levelId: Int): ComplexityLevel {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
         return when {
-            safe <= 20 -> ComplexityLevel.EASY
-            safe <= 60 -> ComplexityLevel.MEDIUM
+            safe <= 30 -> ComplexityLevel.EASY
+            safe <= 70 -> ComplexityLevel.MEDIUM
             else -> ComplexityLevel.HARD
         }
     }
 
     fun openArrowCountForLevel(levelId: Int): Int = when (complexityForLevel(levelId)) {
         ComplexityLevel.EASY -> 4
-        ComplexityLevel.MEDIUM -> 2
-        ComplexityLevel.HARD -> 3
+        ComplexityLevel.MEDIUM -> 3
+        ComplexityLevel.HARD -> 2
     }
 
     fun defaultConfig(

@@ -5,6 +5,30 @@ import com.arrowpuzzle.game.data.model.ScoreRecord
 
 const val ARROW_EXIT_ANIMATION_MILLIS = 460L
 
+/**
+ * Board cells per second the arrowhead travels during the exit animation.
+ *
+ * The animation is length-based, not duration-based: a long snaking arrow takes
+ * proportionally longer than a short one, so every arrow moves at the same
+ * visible speed. Using one fixed duration made long arrows race and short ones
+ * crawl.
+ */
+const val ARROW_EXIT_CELLS_PER_SECOND = 34f
+
+/**
+ * Duration for an arrow whose visible path is [lengthCells] board cells long.
+ * Clamped to a sensible window so a one-cell stub is not instant and a huge
+ * snaking arrow does not feel sluggish.
+ */
+fun arrowExitDurationMillis(lengthCells: Int): Long {
+    val seconds = lengthCells.coerceAtLeast(1) / ARROW_EXIT_CELLS_PER_SECOND.toDouble()
+    val millis = (seconds * 1000.0).toLong()
+    return millis.coerceIn(MIN_ARROW_EXIT_ANIMATION_MILLIS, MAX_ARROW_EXIT_ANIMATION_MILLIS)
+}
+
+const val MIN_ARROW_EXIT_ANIMATION_MILLIS = 260L
+const val MAX_ARROW_EXIT_ANIMATION_MILLIS = 900L
+
 sealed interface GameState {
     data object Loading : GameState
 
@@ -46,6 +70,14 @@ sealed interface GameFeedback {
     val hapticsEnabled: Boolean
     val soundEnabled: Boolean
 
+    /** Distinguishes the cue without having to match on the data class. */
+    val kind: Kind get() = when (this) {
+        is Correct -> Kind.CORRECT
+        is Wrong -> Kind.WRONG
+        is Victory -> Kind.VICTORY
+        is Defeat -> Kind.DEFEAT
+    }
+
     data class Correct(
         override val hapticsEnabled: Boolean,
         override val soundEnabled: Boolean,
@@ -65,6 +97,8 @@ sealed interface GameFeedback {
         override val hapticsEnabled: Boolean,
         override val soundEnabled: Boolean,
     ) : GameFeedback
+
+    enum class Kind { CORRECT, WRONG, VICTORY, DEFEAT }
 }
 
 /** Snapshot used by the result screens and for retry navigation. */

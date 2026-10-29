@@ -59,6 +59,10 @@ fun AppNavHost(container: AppContainer) {
                 onSettings = {
                     navController.navigate(AppRoutes.SETTINGS) { launchSingleTop = true }
                 },
+                isAllUnlocked = highestUnlocked >= LevelCatalog.MAX_LEVEL,
+                onToggleUnlockAll = { unlocked ->
+                    viewModel.setAllLevelsUnlocked(unlocked)
+                },
             )
         }
 

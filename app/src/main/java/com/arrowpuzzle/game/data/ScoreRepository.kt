@@ -51,6 +51,20 @@ class ScoreRepository(context: Context) {
         }
     }
 
+    /**
+     * Developer helper: unlock every campaign level, or lock everything again.
+     *
+     * Unlocking keeps best scores untouched. Locking resets progression to
+     * level 1 but, like [clearProgress], leaves scores and settings alone.
+     */
+    fun setAllLevelsUnlocked(unlocked: Boolean, maxLevel: Int) {
+        synchronized(lock) {
+            val value = if (unlocked) maxLevel.coerceAtLeast(1) else 1
+            _highestUnlocked.value = value
+            preferences.edit().putInt(KEY_UNLOCKED, value).apply()
+        }
+    }
+
     fun clearProgress() {
         synchronized(lock) {
             val editor = preferences.edit()

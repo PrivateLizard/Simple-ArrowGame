@@ -1,5 +1,6 @@
 package com.arrowpuzzle.game.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +24,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +59,10 @@ fun HomeScreen(
     onPlay: () -> Unit,
     onCustom: () -> Unit,
     onSettings: () -> Unit,
+    isAllUnlocked: Boolean = false,
+    onToggleUnlockAll: (Boolean) -> Unit = {},
 ) {
+    var showDevOptions by rememberSaveable { mutableStateOf(false) }
     ScreenBackground {
         Column(
             modifier = Modifier
@@ -193,6 +201,30 @@ fun HomeScreen(
                 )
             }
 
+            Spacer(Modifier.height(10.dp))
+
+            // Developer options stay hidden until the small DEV label is tapped,
+            // so normal players never see level skipping.
+            TextButton(
+                onClick = { showDevOptions = !showDevOptions },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = if (showDevOptions) "DEV \u25B4" else "DEV \u25BE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AppTextMuted.copy(alpha = 0.55f),
+                    letterSpacing = 1.5.sp,
+                )
+            }
+
+            AnimatedVisibility(visible = showDevOptions) {
+                DevOptionsCard(
+                    isAllUnlocked = isAllUnlocked,
+                    highestUnlocked = highestUnlocked,
+                    onToggleUnlockAll = onToggleUnlockAll,
+                )
+            }
+
             Spacer(Modifier.height(26.dp))
 
             Text(
@@ -201,6 +233,60 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTextMuted.copy(alpha = 0.72f),
                 textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DevOptionsCard(
+    isAllUnlocked: Boolean,
+    highestUnlocked: Int,
+    onToggleUnlockAll: (Boolean) -> Unit,
+) {
+    SectionCard {
+        Column(Modifier.fillMaxWidth()) {
+            Text(
+                text = "DEV OPTIONS",
+                style = MaterialTheme.typography.labelMedium,
+                color = AppSecondary,
+                letterSpacing = 1.2.sp,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Progress: $highestUnlocked / ${LevelCatalog.MAX_LEVEL}",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppTextMuted,
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { onToggleUnlockAll(!isAllUnlocked) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppAccent.copy(alpha = 0.7f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AppAccent),
+            ) {
+                Text(
+                    text = if (isAllUnlocked) {
+                        "LOCK ALL LEVELS"
+                    } else {
+                        "UNLOCK ALL ${LevelCatalog.MAX_LEVEL} LEVELS"
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    letterSpacing = 0.8.sp,
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = if (isAllUnlocked) {
+                    "All levels are open. Locking resets progress to level 1; best scores are kept."
+                } else {
+                    "Temporary test switch. Scores and settings are never touched."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = AppTextMuted.copy(alpha = 0.8f),
             )
         }
     }

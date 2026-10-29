@@ -4,7 +4,7 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
@@ -62,8 +63,8 @@ import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.data.model.Arrow
 import com.arrowpuzzle.game.data.model.GridPoint
 import com.arrowpuzzle.game.data.model.LevelConfig
-import com.arrowpuzzle.game.game.ARROW_EXIT_ANIMATION_MILLIS
 import com.arrowpuzzle.game.game.ArrowGeometry
+import com.arrowpuzzle.game.game.arrowExitDurationMillis
 import com.arrowpuzzle.game.game.GameFeedback
 import com.arrowpuzzle.game.game.GameResult
 import com.arrowpuzzle.game.game.GameState
@@ -97,7 +98,8 @@ fun GameScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val view = LocalView.current
-    val soundEffects = remember { SoundEffects() }
+    val context = LocalContext.current
+    val soundEffects = remember(context) { SoundEffects(context.applicationContext) }
     var showQuitDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
@@ -370,8 +372,11 @@ private fun GameBoard(
             exitProgress.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
-                    durationMillis = ARROW_EXIT_ANIMATION_MILLIS.toInt(),
-                    easing = FastOutLinearInEasing,
+                    // Length-based duration and linear easing: the head moves
+                    // at a constant speed, so long arrows no longer race past
+                    // short ones.
+                    durationMillis = arrowExitDurationMillis(lastCorrectArrow?.lengthCells ?: 1).toInt(),
+                    easing = LinearEasing,
                 ),
             )
         }
@@ -473,12 +478,15 @@ private fun GameBoard(
                     spacing = geometry.spacing,
                 )
                 if (exitRoute != null && exitRoute.size >= 2) {
+                    // No highlight colour: the movement itself is the feedback.
+                    // Only a gentle fade at the very end so the arrow does not
+                    // pop out of existence.
                     drawPolylineArrow(
                         route = exitRoute,
                         spacing = geometry.spacing,
                         lineWidth = lineWidth,
-                        color = palette.boardLineSelected.copy(
-                            alpha = (1f - exitValue).coerceIn(0f, 1f),
+                        color = palette.boardLine.copy(
+                            alpha = exitFadeAlpha(exitValue),
                         ),
                     )
                 }
@@ -486,6 +494,13 @@ private fun GameBoard(
         }
     }
 }
+
+/**
+ * The exiting arrow keeps full opacity for most of the flight and only fades in
+ * the last stretch, so the movement reads as the feedback.
+ */
+private fun exitFadeAlpha(progress: Float): Float =
+    (1f - ((progress - 0.82f) / 0.18f).coerceIn(0f, 1f)).coerceIn(0f, 1f)
 
 private fun exitRouteFor(
     arrow: Arrow,
@@ -620,11 +635,40 @@ private fun DrawScope.drawPolylineArrow(
     color: Color,
 ) {
     if (route.size < 2) return
+    val previous = route[route.lastIndex - 1]
+    val tip = route.last()
+    val dx = tip.x - previous.x
+    val dy = tip.y - previous.y
+    val length = hypot(dx, dy)
+    if (length <= 0.001f) return
+    val unitX = dx / length
+    val unitY = dy / length
+    val perpX = -unitY
+    val perpY = unitX
+
+    // The arrowhead is a solid triangle that is clearly wider than the shaft
+    // and slightly longer than it is wide, so it reads as an arrowhead and not
+    // as a plain line end. The shaft stops short of the tip so the stroke never
+    // pokes through the head.
+    val headLength = spacing * 0.40f
+    val headHalfWidth = spacing * 0.25f
+    val headBase = Offset(
+        tip.x - unitX * headLength,
+        tip.y - unitY * headLength,
+    )
+
+    // Shaft: shorten the final segment so it ends inside the head base instead
+    // of running to the tip.
+    val shaftEnd = Offset(
+        tip.x - unitX * headLength * 0.55f,
+        tip.y - unitY * headLength * 0.55f,
+    )
     val path = Path().apply {
         moveTo(route[0].x, route[0].y)
-        for (index in 1..route.lastIndex) {
+        for (index in 1 until route.lastIndex) {
             lineTo(route[index].x, route[index].y)
         }
+        lineTo(shaftEnd.x, shaftEnd.y)
     }
     drawPath(
         path = path,
@@ -636,25 +680,10 @@ private fun DrawScope.drawPolylineArrow(
         ),
     )
 
-    val previous = route[route.lastIndex - 1]
-    val tip = route.last()
-    val dx = tip.x - previous.x
-    val dy = tip.y - previous.y
-    val length = hypot(dx, dy)
-    if (length <= 0.001f) return
-    val unitX = dx / length
-    val unitY = dy / length
-    val baseCenter = Offset(
-        tip.x - unitX * spacing * 0.46f,
-        tip.y - unitY * spacing * 0.46f,
-    )
-    val perpX = -unitY
-    val perpY = unitX
-    val halfWidth = spacing * 0.19f
     val head = Path().apply {
         moveTo(tip.x, tip.y)
-        lineTo(baseCenter.x + perpX * halfWidth, baseCenter.y + perpY * halfWidth)
-        lineTo(baseCenter.x - perpX * halfWidth, baseCenter.y - perpY * halfWidth)
+        lineTo(headBase.x + perpX * headHalfWidth, headBase.y + perpY * headHalfWidth)
+        lineTo(headBase.x - perpX * headHalfWidth, headBase.y - perpY * headHalfWidth)
         close()
     }
     drawPath(path = head, color = color)

@@ -77,10 +77,16 @@ class LevelGenerator(
     private fun layoutSizeFor(config: LevelConfig): Int =
         (10 + max(config.gridWidth, config.gridHeight) * 3).coerceIn(19, 38)
 
+    /**
+     * Number of arrows open at the start.
+     *
+     * Campaign levels defer to [LevelCatalog] so the curve lives in exactly one
+     * place. Custom levels use the same tiers.
+     */
     private fun freeArrowCount(config: LevelConfig): Int = when (config.complexity) {
         ComplexityLevel.EASY -> 4
-        ComplexityLevel.MEDIUM -> 2
-        ComplexityLevel.HARD -> 3
+        ComplexityLevel.MEDIUM -> 3
+        ComplexityLevel.HARD -> 2
     }
 
     private fun targetArrowCount(config: LevelConfig): Int {

@@ -49,8 +49,8 @@ class LevelGeneratorTest {
         )
 
         assertEquals(4, ArrowGeometry.availableArrows(easy, emptySet()).size)
-        assertEquals(2, ArrowGeometry.availableArrows(medium, emptySet()).size)
-        assertEquals(3, ArrowGeometry.availableArrows(hard, emptySet()).size)
+        assertEquals(3, ArrowGeometry.availableArrows(medium, emptySet()).size)
+        assertEquals(2, ArrowGeometry.availableArrows(hard, emptySet()).size)
     }
 
     @Test
@@ -60,8 +60,8 @@ class LevelGeneratorTest {
             val level = generator.generate(config, seed = 1_337L + levelId)
             val expected = when (config.complexity) {
                 ComplexityLevel.EASY -> 4
-                ComplexityLevel.MEDIUM -> 2
-                ComplexityLevel.HARD -> 3
+                ComplexityLevel.MEDIUM -> 3
+                ComplexityLevel.HARD -> 2
             }
             assertEquals(
                 "Level $levelId open count",
@@ -132,7 +132,7 @@ class LevelGeneratorTest {
             previous = arrows
         }
         assertEquals(34, LevelCatalog.arrowCountForLevel(1))
-        assertEquals(150, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
+        assertEquals(90, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 
     @Test
@@ -143,8 +143,35 @@ class LevelGeneratorTest {
         assertEquals(ComplexityLevel.EASY, LevelCatalog.complexityForLevel(20))
         assertEquals(4, LevelCatalog.openArrowCountForLevel(20))
         assertTrue(
-            "Level 20 must be far easier than the finale",
-            LevelCatalog.arrowCountForLevel(20) < LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL) / 2,
+            "Level 20 must be easier than the finale (more open arrows)",
+            LevelCatalog.openArrowCountForLevel(20) > LevelCatalog.openArrowCountForLevel(LevelCatalog.MAX_LEVEL),
+        )
+    }
+
+    @Test
+    fun difficultyComesFromFewerOpenArrowsNotFromMoreArrows() {
+        // Measured behaviour: a fuller board gives a naive player MORE valid
+        // moves, so piling on arrows makes a level easier. The campaign must
+        // therefore get harder only by reducing the open-arrow count, and the
+        // arrow count must stay gentle.
+        var previousOpen = Int.MAX_VALUE
+        for (levelId in 1..LevelCatalog.MAX_LEVEL) {
+            val open = LevelCatalog.openArrowCountForLevel(levelId)
+            assertTrue(
+                "Open arrows must not grow with the level (level $levelId: $open)",
+                open <= previousOpen,
+            )
+            previousOpen = open
+        }
+        assertEquals(4, LevelCatalog.openArrowCountForLevel(1))
+        assertEquals(2, LevelCatalog.openArrowCountForLevel(LevelCatalog.MAX_LEVEL))
+
+        // Arrow count must not grow so steeply that it cancels out the drop.
+        val early = LevelCatalog.arrowCountForLevel(1)
+        val late = LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL)
+        assertTrue(
+            "Arrow count must stay gentle (level 1: $early, level 100: $late)",
+            late <= early * 3,
         )
     }
 
@@ -156,7 +183,7 @@ class LevelGeneratorTest {
                 LevelCatalog.openArrowCountForLevel(levelId) >= 2,
             )
         }
-        assertEquals(3, LevelCatalog.openArrowCountForLevel(LevelCatalog.MAX_LEVEL))
+        assertEquals(2, LevelCatalog.openArrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 
     @Test

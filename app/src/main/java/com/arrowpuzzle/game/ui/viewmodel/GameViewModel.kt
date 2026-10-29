@@ -6,7 +6,7 @@ import com.arrowpuzzle.game.data.ScoreRepository
 import com.arrowpuzzle.game.data.SettingsRepository
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.data.model.ScoreRecord
-import com.arrowpuzzle.game.game.ARROW_EXIT_ANIMATION_MILLIS
+import com.arrowpuzzle.game.game.arrowExitDurationMillis
 import com.arrowpuzzle.game.game.ArrowLogic
 import com.arrowpuzzle.game.game.DefeatReason
 import com.arrowpuzzle.game.game.GameFeedback
@@ -128,9 +128,15 @@ class GameViewModel(
                             correctFlashToken = current.correctFlashToken + 1,
                             wrongFlashId = null,
                         )
+                        // Wait for the exit animation of the final arrow. The
+                        // duration depends on that arrow's length, so it is
+                        // derived the same way GameScreen derives it.
+                        val exitMillis = arrowExitDurationMillis(
+                            current.level.arrowById(arrowId)?.lengthCells ?: 1,
+                        )
                         finishJob?.cancel()
                         finishJob = viewModelScope.launch {
-                            delay(ARROW_EXIT_ANIMATION_MILLIS + 40L)
+                            delay(exitMillis + 40L)
                             _state.value = GameState.Victory(current.level, record, isNewHighScore)
                         }
                         feedback = victoryFeedback()
