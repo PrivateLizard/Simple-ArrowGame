@@ -208,74 +208,69 @@ private fun PlayingContent(
         ArrowGeometry.availableArrows(level, state.removedIds)
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        GameTopBar(
+    Box(modifier = Modifier.fillMaxSize()) {
+        // The board is the background: it fills the whole screen and fades out
+        // underneath the top UI instead of being boxed into a separate panel.
+        GameBoard(
+            level = level,
             state = state,
-            availableCount = available.size,
-            onExit = onExit,
+            onArrowTap = onArrowTap,
+            modifier = Modifier.fillMaxSize(),
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            StatPill(
-                label = "Cleared",
-                value = "$removedCount/${level.arrowCount}",
-                tint = AppPrimary,
-                modifier = Modifier.weight(1f),
+        Column(modifier = Modifier.fillMaxSize()) {
+            GameTopBar(
+                state = state,
+                availableCount = available.size,
+                onExit = onExit,
             )
-            StatPill(
-                label = "Failures",
-                value = "${state.failures}/${config.maxFailures}",
-                tint = failuresTint,
-                modifier = Modifier.weight(1f),
-            )
-            StatPill(
-                label = "Time",
-                value = GridUtils.formatTime(state.elapsedSeconds),
-                tint = AppSecondary,
-                modifier = Modifier.weight(1f),
-            )
-        }
 
-        Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                StatPill(
+                    label = "Cleared",
+                    value = "$removedCount/${level.arrowCount}",
+                    tint = AppPrimary,
+                    modifier = Modifier.weight(1f),
+                )
+                StatPill(
+                    label = "Failures",
+                    value = "${state.failures}/${config.maxFailures}",
+                    tint = failuresTint,
+                    modifier = Modifier.weight(1f),
+                )
+                StatPill(
+                    label = "Time",
+                    value = GridUtils.formatTime(state.elapsedSeconds),
+                    tint = AppSecondary,
+                    modifier = Modifier.weight(1f),
+                )
+            }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(5.dp)
-                .clip(RoundedCornerShape(50))
-                .background(AppGridLine),
-        ) {
+            Spacer(Modifier.height(12.dp))
+
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .background(Brush.horizontalGradient(listOf(AppSecondary, AppPrimary))),
-            )
-        }
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(AppGridLine),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .fillMaxHeight()
+                        .background(Brush.horizontalGradient(listOf(AppSecondary, AppPrimary))),
+                )
+            }
 
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            val boardSize = min(maxWidth.value, maxHeight.value).dp
-            GameBoard(
-                level = level,
-                state = state,
-                onArrowTap = onArrowTap,
-                modifier = Modifier.size(boardSize),
-            )
+            Spacer(Modifier.weight(1f))
         }
-
-        Spacer(Modifier.height(10.dp))
     }
 }
 
@@ -327,7 +322,7 @@ private fun GameTopBar(
     }
 }
 
-private const val BOARD_INSET_FRACTION = 0.04f
+private const val BOARD_INSET_FRACTION = 0.02f
 private const val MIN_BOARD_SCALE = 1f
 private const val MAX_BOARD_SCALE = 5f
 
@@ -339,7 +334,6 @@ private fun GameBoard(
     modifier: Modifier = Modifier,
 ) {
     val palette = ArrowTheme.colors
-    val shape = RoundedCornerShape(22.dp)
     // Drives both the red tint and the shake of a wrongly tapped arrow.
     val wrongAnim = remember { Animatable(0f) }
     val exitProgress = remember { Animatable(1f) }
@@ -395,7 +389,6 @@ private fun GameBoard(
 
     Box(
         modifier = modifier
-            .clip(shape)
             // Isolated layer so the DstIn fade below only masks the board and
             // not whatever is drawn behind the screen.
             .graphicsLayer()
@@ -403,9 +396,11 @@ private fun GameBoard(
                 drawContent()
                 drawRect(
                     brush = Brush.verticalGradient(
+                        // Fade in slowly under the top UI (top bar, stat pills,
+                        // progress bar) and only a soft fade at the bottom edge.
                         0f to Color.Transparent,
-                        0.12f to Color.White,
-                        0.88f to Color.White,
+                        0.32f to Color.White,
+                        0.965f to Color.White,
                         1f to Color.Transparent,
                     ),
                     blendMode = BlendMode.DstIn,
@@ -472,8 +467,8 @@ private fun GameBoard(
 
             // Faint dots on every lattice point hint at the grid the arrows
             // travel on, without drawing a visible frame around the board.
-            val dotRadius = (geometry.spacing * 0.055f).coerceAtLeast(0.6f)
-            val dotColor = palette.gridLine.copy(alpha = 0.55f)
+            val dotRadius = (geometry.spacing * 0.085f).coerceAtLeast(1f)
+            val dotColor = palette.textMuted.copy(alpha = 0.28f)
             for (gx in 0 until level.layoutSize) {
                 for (gy in 0 until level.layoutSize) {
                     drawCircle(
