@@ -323,7 +323,16 @@ private fun GameTopBar(
 }
 
 private const val BOARD_INSET_FRACTION = 0.02f
-private const val MIN_BOARD_SCALE = 1f
+
+/** Zoom out far enough that the whole field sits with free space around it. */
+private const val MIN_BOARD_SCALE = 0.45f
+
+/**
+ * Start slightly zoomed out so the field does not sit flush against the screen
+ * edges. The user can still pinch in both directions from here.
+ */
+private const val START_BOARD_SCALE = 0.85f
+
 private const val MAX_BOARD_SCALE = 5f
 
 @Composable
@@ -337,7 +346,7 @@ private fun GameBoard(
     // Drives both the red tint and the shake of a wrongly tapped arrow.
     val wrongAnim = remember { Animatable(0f) }
     val exitProgress = remember { Animatable(1f) }
-    var boardScale by remember { mutableFloatStateOf(MIN_BOARD_SCALE) }
+    var boardScale by remember { mutableFloatStateOf(START_BOARD_SCALE) }
     var boardOffset by remember { mutableStateOf(Offset.Zero) }
     var viewportSize by remember { mutableStateOf(IntSize.Zero) }
     val removedIds = state.removedIds
@@ -346,8 +355,8 @@ private fun GameBoard(
     }
 
     LaunchedEffect(level) {
-        boardScale = MIN_BOARD_SCALE
-        boardOffset = Offset.Zero
+        boardScale = START_BOARD_SCALE
+        boardOffset = clampBoardOffset(Offset.Zero, START_BOARD_SCALE, viewportSize)
     }
     LaunchedEffect(state.wrongFlashToken) {
         if (state.wrongFlashToken > 0) {
@@ -399,7 +408,7 @@ private fun GameBoard(
                         // Fade in slowly under the top UI (top bar, stat pills,
                         // progress bar) and only a soft fade at the bottom edge.
                         0f to Color.Transparent,
-                        0.32f to Color.White,
+                        0.26f to Color.White,
                         0.965f to Color.White,
                         1f to Color.Transparent,
                     ),
@@ -606,6 +615,14 @@ private fun clampBoardOffset(offset: Offset, scale: Float, viewport: IntSize): O
     if (viewport.width <= 0 || viewport.height <= 0) return Offset.Zero
     val width = viewport.width.toFloat()
     val height = viewport.height.toFloat()
+    if (scale <= 1f) {
+        // The board is smaller than the viewport: keep it centred so free space
+        // appears evenly on every side while zooming out.
+        return Offset(
+            x = (width - width * scale) / 2f,
+            y = (height - height * scale) / 2f,
+        )
+    }
     val minX = width - width * scale
     val minY = height - height * scale
     return Offset(
