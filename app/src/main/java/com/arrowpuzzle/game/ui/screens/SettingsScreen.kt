@@ -1,10 +1,18 @@
 package com.arrowpuzzle.game.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,8 +24,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -29,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +49,6 @@ import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
-import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(
@@ -63,12 +69,18 @@ fun SettingsScreen(
                 subtitle = "Stored only on this device",
                 onBack = onBack,
             )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter,
+            ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth(0.75f)
+                    .fillMaxHeight()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 18.dp, vertical = 8.dp),
+                    .padding(vertical = 8.dp),
             ) {
+                val failuresOff = settings.maxFailures == AppSettings.NO_FAILURE_LIMIT
                 SectionCard {
                     Column {
                         Row(
@@ -83,45 +95,27 @@ fun SettingsScreen(
                                     color = AppText,
                                 )
                                 Text(
-                                    text = "A level ends after this many wrong taps.",
+                                    text = if (failuresOff) {
+                                        "Failures are off. Wrong taps never end a level."
+                                    } else {
+                                        "A level ends after this many wrong taps."
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = AppTextMuted,
                                 )
                             }
                             Text(
-                                text = settings.maxFailures.toString(),
+                                text = if (failuresOff) "AUS" else settings.maxFailures.toString(),
                                 style = MaterialTheme.typography.headlineMedium,
                                 color = AppPrimary,
                                 fontWeight = FontWeight.Black,
                             )
                         }
-                        Spacer(Modifier.height(8.dp))
-                        Slider(
-                            value = settings.maxFailures.toFloat(),
-                            onValueChange = { onMaxFailuresChange(it.roundToInt()) },
-                            valueRange = 1f..99f,
-                            steps = 97,
-                            colors = SliderDefaults.colors(
-                                thumbColor = AppPrimary,
-                                activeTrackColor = AppPrimary,
-                                inactiveTrackColor = AppSurfaceRaised,
-                            ),
+                        Spacer(Modifier.height(12.dp))
+                        FailureOptions(
+                            selected = settings.maxFailures,
+                            onSelect = onMaxFailuresChange,
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = "1",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = AppTextMuted,
-                            )
-                            Text(
-                                text = "99",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = AppTextMuted,
-                            )
-                        }
                     }
                 }
 
@@ -178,6 +172,7 @@ fun SettingsScreen(
                     color = AppTextMuted.copy(alpha = 0.8f),
                 )
             }
+            }
         }
     }
 
@@ -210,6 +205,42 @@ fun SettingsScreen(
             textContentColor = AppTextMuted,
             shape = RoundedCornerShape(20.dp),
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FailureOptions(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        AppSettings.FAILURE_OPTIONS.forEach { option ->
+            val isSelected = selected == option
+            val shape = RoundedCornerShape(12.dp)
+            Box(
+                modifier = Modifier
+                    .clip(shape)
+                    .background(if (isSelected) AppPrimary else AppSurfaceRaised)
+                    .border(1.dp, if (isSelected) AppPrimary else AppGridLine, shape)
+                    .clickable { onSelect(option) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = if (option == AppSettings.NO_FAILURE_LIMIT) {
+                        "AUS"
+                    } else {
+                        option.toString()
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else AppText,
+                )
+            }
+        }
     }
 }
 

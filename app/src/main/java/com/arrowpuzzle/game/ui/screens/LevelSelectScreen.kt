@@ -8,13 +8,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -53,21 +52,28 @@ fun LevelSelectScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
                 title = "Levels",
-                subtitle = "${levels.count { it.isUnlocked }} unlocked · ${LevelCatalog.MAX_LEVEL} total",
+                subtitle = "${levels.count { it.isUnlocked }} of ${LevelCatalog.MAX_LEVEL} unlocked",
                 onBack = onBack,
             )
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 148.dp),
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentAlignment = Alignment.TopCenter,
             ) {
-                items(items = levels, key = { it.levelId }) { level ->
-                    LevelCard(
-                        level = level,
-                        onClick = { onLevelSelected(level.levelId) },
-                    )
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 96.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 28.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(items = levels, key = { it.levelId }) { level ->
+                        LevelTile(
+                            level = level,
+                            onClick = { onLevelSelected(level.levelId) },
+                        )
+                    }
                 }
             }
         }
@@ -75,89 +81,80 @@ fun LevelSelectScreen(
 }
 
 @Composable
-private fun LevelCard(level: LevelItem, onClick: () -> Unit) {
+private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
     val unlocked = level.isUnlocked
-    val shape = RoundedCornerShape(20.dp)
+    val completed = level.bestScore > 0
+    val shape = RoundedCornerShape(22.dp)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(154.dp)
+            .aspectRatio(1f)
             .clip(shape)
             .background(
-                if (unlocked) {
-                    Brush.verticalGradient(listOf(AppSurfaceRaised, AppSurface))
-                } else {
-                    Brush.verticalGradient(listOf(AppSurface.copy(alpha = 0.6f), AppSurface.copy(alpha = 0.9f)))
+                when {
+                    completed -> Brush.verticalGradient(
+                        listOf(AppSurfaceRaised, AppSurface),
+                    )
+                    unlocked -> Brush.verticalGradient(
+                        listOf(
+                            AppSurface.copy(alpha = 0.85f),
+                            AppSurface.copy(alpha = 0.95f),
+                        ),
+                    )
+                    else -> Brush.verticalGradient(
+                        listOf(
+                            AppSurface.copy(alpha = 0.4f),
+                            AppSurface.copy(alpha = 0.6f),
+                        ),
+                    )
                 },
             )
             .border(
                 BorderStroke(
                     1.dp,
-                    if (unlocked) AppGridLine.copy(alpha = 0.85f) else AppGridLine.copy(alpha = 0.35f),
+                    when {
+                        completed -> AppPrimary.copy(alpha = 0.55f)
+                        unlocked -> AppGridLine.copy(alpha = 0.7f)
+                        else -> AppGridLine.copy(alpha = 0.25f)
+                    },
                 ),
                 shape,
             )
             .clickable(enabled = unlocked, onClick = onClick)
-            .padding(16.dp),
+            .padding(12.dp),
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
-            ) {
-                Column {
-                    Text(
-                        text = "LEVEL",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = AppTextMuted,
-                    )
-                    Text(
-                        text = level.levelId.toString(),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = if (unlocked) AppText else AppTextMuted.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(9.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(if (unlocked) AppPrimary else AppGridLine),
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
             Text(
-                text = "${level.openArrowCount} open",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (unlocked) AppTextMuted else AppTextMuted.copy(alpha = 0.45f),
+                text = level.levelId.toString(),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = when {
+                    completed -> AppPrimary
+                    unlocked -> AppText
+                    else -> AppTextMuted.copy(alpha = 0.45f)
+                },
             )
-            Spacer(Modifier.height(7.dp))
-            when {
-                !unlocked -> Text(
-                    text = "LOCKED",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = AppTextMuted.copy(alpha = 0.55f),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
-                )
-                level.bestScore > 0 -> Text(
-                    text = "BEST  ${String.format(Locale.US, "%,d", level.bestScore)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = AppAccent,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
-                )
-                else -> Text(
-                    text = "READY",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = AppSecondary,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
-                )
-            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = when {
+                    completed -> "✓  " + String.format(Locale.US, "%,d", level.bestScore)
+                    unlocked -> "PLAY"
+                    else -> "LOCKED"
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = when {
+                    completed -> AppAccent
+                    unlocked -> AppSecondary
+                    else -> AppTextMuted.copy(alpha = 0.5f)
+                },
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
         }
     }
 }

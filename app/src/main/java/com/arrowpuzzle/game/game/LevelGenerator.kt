@@ -1,5 +1,6 @@
 package com.arrowpuzzle.game.game
 
+import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.data.model.Arrow
 import com.arrowpuzzle.game.data.model.ArrowDirection
 import com.arrowpuzzle.game.data.model.ComplexityLevel
@@ -22,7 +23,9 @@ class LevelGenerator(
 ) {
     fun generate(config: LevelConfig, seed: Long = System.nanoTime()): GeneratedLevel {
         require(config.arrowCount in 1..200) { "Arrow count must be between 1 and 200" }
-        require(config.maxFailures in 1..99) { "Max failures must be between 1 and 99" }
+        require(
+            config.maxFailures in 1..99 || config.maxFailures == AppSettings.NO_FAILURE_LIMIT,
+        ) { "Max failures must be between 1 and 99, or off" }
 
         val random = Random(seed)
         val layoutSize = layoutSizeFor(config)

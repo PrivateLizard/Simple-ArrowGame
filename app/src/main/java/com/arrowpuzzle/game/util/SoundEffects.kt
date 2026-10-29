@@ -150,7 +150,7 @@ class SoundEffects(private val context: Context) {
     /** Writes the synthesised cue once into the cache dir and returns the file. */
     private fun writeWav(kind: GameFeedback.Kind): File? = runCatching {
         val body = when (kind) {
-            GameFeedback.Kind.CORRECT -> synthesizePlop(700.0, 320.0, 0.13)
+            GameFeedback.Kind.CORRECT -> synthesizeBottlePlop()
             GameFeedback.Kind.WRONG -> synthesizeThud()
             GameFeedback.Kind.VICTORY -> concatenate(
                 synthesizePlop(540.0, 640.0, 0.13),
@@ -188,6 +188,35 @@ class SoundEffects(private val context: Context) {
             val attack = (seconds / ATTACK_SECONDS).coerceAtMost(1.0)
             val decay = exp(-5.0 * progress)
             val sample = sin(phase) * attack * decay * LEVEL
+            out[i] = (sample * Short.MAX_VALUE).toInt().coerceIn(-32768, 32767).toShort()
+        }
+        return out
+    }
+
+    /**
+     * Deep, ploppy "bottle cap" cue for a successful tap: a fast downward
+     * pitch drop with a little second harmonic and a short cap-release click.
+     */
+    private fun synthesizeBottlePlop(): ShortArray {
+        val duration = 0.17
+        val count = (SAMPLE_RATE * duration).toInt()
+        val out = ShortArray(count)
+        var phase = 0.0
+        var harmonicPhase = 0.0
+        for (i in 0 until count) {
+            val progress = i.toDouble() / count
+            val seconds = i.toDouble() / SAMPLE_RATE
+            // 280 Hz down to ~74 Hz quickly: that is the "plop".
+            val frequency = 70.0 + 210.0 * exp(-4.0 * progress)
+            phase += 2.0 * PI * frequency / SAMPLE_RATE
+            harmonicPhase += 2.0 * PI * (frequency * 2.0) / SAMPLE_RATE
+            val attack = (seconds / 0.004).coerceAtMost(1.0)
+            val decay = exp(-5.0 * progress)
+            val body = sin(phase) * 0.80 + sin(harmonicPhase) * 0.15
+            // Very short bright click for the cap releasing, gone in ~10 ms.
+            val click = sin(2.0 * PI * 1200.0 * seconds) *
+                exp(-seconds / 0.004) * 0.10
+            val sample = (body * attack * decay + click) * LEVEL
             out[i] = (sample * Short.MAX_VALUE).toInt().coerceIn(-32768, 32767).toShort()
         }
         return out

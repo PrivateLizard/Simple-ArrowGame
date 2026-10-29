@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.data.model.Arrow
 import com.arrowpuzzle.game.data.model.GridPoint
 import com.arrowpuzzle.game.data.model.LevelConfig
@@ -204,7 +205,12 @@ private fun PlayingContent(
     val progress = if (level.arrowCount == 0) 0f else {
         removedCount.toFloat() / level.arrowCount
     }
-    val failuresTint = if (state.failures >= config.maxFailures - 1) AppDanger else AppAccent
+    val unlimitedFailures = config.maxFailures == AppSettings.NO_FAILURE_LIMIT
+    val failuresTint = if (!unlimitedFailures && state.failures >= config.maxFailures - 1) {
+        AppDanger
+    } else {
+        AppAccent
+    }
     val available = remember(level, state.removedIds) {
         ArrowGeometry.availableArrows(level, state.removedIds)
     }
@@ -240,7 +246,11 @@ private fun PlayingContent(
                 )
                 StatPill(
                     label = "Failures",
-                    value = "${state.failures}/${config.maxFailures}",
+                    value = if (unlimitedFailures) {
+                        "${state.failures}/∞"
+                    } else {
+                        "${state.failures}/${config.maxFailures}"
+                    },
                     tint = failuresTint,
                     modifier = Modifier.weight(1f),
                 )
@@ -423,16 +433,15 @@ private fun GameBoard(
             .graphicsLayer()
             .drawWithContent {
                 drawContent()
+                // Fade towards the actual screen background colour, so the
+                // transition is dark in dark mode and light in light mode.
                 drawRect(
                     brush = Brush.verticalGradient(
-                        // Fade in slowly under the top UI (top bar, stat pills,
-                        // progress bar) and only a soft fade at the bottom edge.
-                        0f to Color.Transparent,
-                        0.26f to Color.White,
-                        0.965f to Color.White,
-                        1f to Color.Transparent,
+                        0f to palette.backgroundDeep,
+                        0.26f to palette.backgroundDeep.copy(alpha = 0f),
+                        0.965f to palette.backgroundDeep.copy(alpha = 0f),
+                        1f to palette.backgroundDeep,
                     ),
-                    blendMode = BlendMode.DstIn,
                 )
             }
             .onSizeChanged {
@@ -508,8 +517,13 @@ private fun GameBoard(
 
             remaining.forEach { arrow ->
                 val isWrong = wrongVisible && arrow.id == state.wrongFlashId
-                val shakeX = if (isWrong) {
-                    sin(wrongProgress * 26f) * geometry.spacing * 0.22f * (1f - wrongProgress)
+                // Twice the frequency of before and only for the first third
+                // of the red flash, so the shake reads as a quick jolt while
+                // the red tint keeps its existing timing.
+                val shakeWindow = 0.35f
+                val shakeProgress = (wrongProgress / shakeWindow).coerceIn(0f, 1f)
+                val shakeX = if (isWrong && wrongProgress < shakeWindow) {
+                    sin(wrongProgress * 52f) * geometry.spacing * 0.22f * (1f - shakeProgress)
                 } else {
                     0f
                 }

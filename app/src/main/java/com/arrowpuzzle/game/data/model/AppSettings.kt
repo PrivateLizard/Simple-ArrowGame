@@ -8,5 +8,14 @@ data class AppSettings(
 ) {
     companion object {
         const val DEFAULT_MAX_FAILURES = 5
+
+        /**
+         * Sentinel for "failures off": the failure counter never reaches this
+         * value, so a level cannot be lost by wrong taps.
+         */
+        const val NO_FAILURE_LIMIT = Int.MAX_VALUE
+
+        /** The fixed choices offered in Settings. */
+        val FAILURE_OPTIONS = listOf(1, 2, 3, 5, 10, 20, NO_FAILURE_LIMIT)
     }
 }

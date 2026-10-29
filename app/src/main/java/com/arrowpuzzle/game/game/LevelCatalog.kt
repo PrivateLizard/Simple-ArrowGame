@@ -97,7 +97,11 @@ object LevelCatalog {
             levelId = safeLevel,
             gridSize = size to size,
             arrowCount = arrowCountForLevel(safeLevel),
-            maxFailures = maxFailures.coerceIn(1, 99),
+            maxFailures = if (maxFailures == AppSettings.NO_FAILURE_LIMIT) {
+                AppSettings.NO_FAILURE_LIMIT
+            } else {
+                maxFailures.coerceIn(1, 99)
+            },
             timeLimitSeconds = null,
             complexity = complexityForLevel(safeLevel),
         )

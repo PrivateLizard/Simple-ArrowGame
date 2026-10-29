@@ -75,25 +75,12 @@ fun HomeScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(vertical = 28.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "OFFLINE  ·  NO ADS  ·  NO TRACKING",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = AppTextMuted,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(AppPrimary),
-                    )
-                }
+                Text(
+                    text = "OFFLINE  ·  NO ADS  ·  NO TRACKING",
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AppTextMuted,
+                )
 
                 Spacer(Modifier.height(24.dp))
 
@@ -212,16 +199,20 @@ fun HomeScreen(
                         )
                     }
 
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                    TextButton(
+                    OutlinedButton(
                         onClick = onSettings,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(58.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppGridLine),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
                     ) {
                         Text(
                             text = "SETTINGS",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = AppTextMuted,
+                            style = MaterialTheme.typography.titleMedium,
                             letterSpacing = 1.sp,
                         )
                     }

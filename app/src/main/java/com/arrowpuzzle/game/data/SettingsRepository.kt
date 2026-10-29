@@ -14,7 +14,7 @@ class SettingsRepository(context: Context) {
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
 
     fun setMaxFailures(value: Int) = update {
-        it.copy(maxFailures = value.coerceIn(1, 99))
+        it.copy(maxFailures = normalizeMaxFailures(value))
     }
 
     fun setNightMode(enabled: Boolean) = update {
@@ -43,14 +43,20 @@ class SettingsRepository(context: Context) {
     }
 
     private fun load(): AppSettings = AppSettings(
-        maxFailures = preferences.getInt(
-            KEY_MAX_FAILURES,
-            AppSettings.DEFAULT_MAX_FAILURES,
-        ).coerceIn(1, 99),
+        maxFailures = normalizeMaxFailures(
+            preferences.getInt(KEY_MAX_FAILURES, AppSettings.DEFAULT_MAX_FAILURES),
+        ),
         nightMode = preferences.getBoolean(KEY_NIGHT_MODE, true),
         soundEnabled = preferences.getBoolean(KEY_SOUND, true),
         hapticEnabled = preferences.getBoolean(KEY_HAPTICS, true),
     )
+
+    private fun normalizeMaxFailures(value: Int): Int =
+        if (value == AppSettings.NO_FAILURE_LIMIT) {
+            AppSettings.NO_FAILURE_LIMIT
+        } else {
+            value.coerceIn(1, 99)
+        }
 
     private companion object {
         const val PREFERENCES_NAME = "arrow_puzzle_settings"
