@@ -41,15 +41,28 @@ fun AppNavHost(container: AppContainer) {
         composable(AppRoutes.HOME) {
             val viewModel: HomeViewModel = viewModel(
                 factory = remember(container) {
-                    SimpleViewModelFactory { HomeViewModel(container.scoreRepository) }
+                    SimpleViewModelFactory {
+                        HomeViewModel(container.scoreRepository, container.progressRepository)
+                    }
                 },
             )
-            val highScore by viewModel.globalHighScore.collectAsState()
+            val campaignScore by viewModel.campaignScoreTotal.collectAsState()
             val highestUnlocked by viewModel.highestUnlocked.collectAsState()
+            val savedGame by viewModel.savedGame.collectAsState()
 
             HomeScreen(
-                highScore = highScore,
+                highScore = campaignScore,
                 highestUnlocked = highestUnlocked.coerceAtMost(LevelCatalog.MAX_LEVEL),
+                resumeLevel = savedGame?.config?.levelId,
+                resumeRemaining = savedGame?.remainingCount,
+                onResume = {
+                    savedGame?.let { game ->
+                        container.progressRepository.requestResume()
+                        navController.navigate(AppRoutes.game(game.config)) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
                 onPlay = {
                     navController.navigate(AppRoutes.LEVELS) { launchSingleTop = true }
                 },
@@ -133,6 +146,7 @@ fun AppNavHost(container: AppContainer) {
                             levelGenerator = container.levelGenerator,
                             settingsRepository = container.settingsRepository,
                             scoreRepository = container.scoreRepository,
+                            progressRepository = container.progressRepository,
                         )
                     }
                 },

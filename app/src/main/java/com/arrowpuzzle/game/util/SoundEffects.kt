@@ -149,16 +149,27 @@ class SoundEffects(private val context: Context) {
 
     /** Writes the synthesised cue once into the cache dir and returns the file. */
     private fun writeWav(kind: GameFeedback.Kind): File? = runCatching {
-        val samples = when (kind) {
-            GameFeedback.Kind.CORRECT -> synthesizePlop(640.0, 300.0, 0.085)
+        val body = when (kind) {
+            GameFeedback.Kind.CORRECT -> synthesizePlop(700.0, 320.0, 0.13)
             GameFeedback.Kind.WRONG -> synthesizeThud()
             GameFeedback.Kind.VICTORY -> concatenate(
-                synthesizePlop(520.0, 620.0, 0.09),
-                silence(0.03),
-                synthesizePlop(700.0, 860.0, 0.09),
+                synthesizePlop(540.0, 640.0, 0.13),
+                silence(0.04),
+                synthesizePlop(720.0, 880.0, 0.13),
             )
-            GameFeedback.Kind.DEFEAT -> synthesizePlop(420.0, 240.0, 0.16)
+            GameFeedback.Kind.DEFEAT -> synthesizePlop(420.0, 230.0, 0.24)
         }
+        // Pad both ends with silence. The leading gap is the important part: a
+        // cold audio path (after idle time or with the screen just back on)
+        // swallows the first few dozen milliseconds of a stream. Without this
+        // padding that latency ate into the attack and the cue sounded clipped
+        // off - exactly like the first tap of a level. The trailing silence
+        // gives the decay room to reach true zero before the stream ends.
+        val samples = concatenate(
+            silence(LEAD_IN_SECONDS),
+            body,
+            silence(TAIL_OUT_SECONDS),
+        )
         val file = File(context.cacheDir, "cue_${kind.name.lowercase()}.wav")
         file.outputStream().use { out -> out.write(toWavBytes(samples)) }
         file
@@ -171,10 +182,11 @@ class SoundEffects(private val context: Context) {
         var phase = 0.0
         for (i in 0 until count) {
             val progress = i.toDouble() / count
+            val seconds = i.toDouble() / SAMPLE_RATE
             val frequency = start + (end - start) * progress
             phase += 2.0 * PI * frequency / SAMPLE_RATE
-            val attack = (progress / 0.06).coerceAtMost(1.0)
-            val decay = exp(-6.0 * progress)
+            val attack = (seconds / ATTACK_SECONDS).coerceAtMost(1.0)
+            val decay = exp(-5.0 * progress)
             val sample = sin(phase) * attack * decay * LEVEL
             out[i] = (sample * Short.MAX_VALUE).toInt().coerceIn(-32768, 32767).toShort()
         }
@@ -183,16 +195,17 @@ class SoundEffects(private val context: Context) {
 
     /** Duller, lower thud for a wrong tap. */
     private fun synthesizeThud(): ShortArray {
-        val duration = 0.13
+        val duration = 0.18
         val count = (SAMPLE_RATE * duration).toInt()
         val out = ShortArray(count)
         var phase = 0.0
         for (i in 0 until count) {
             val progress = i.toDouble() / count
+            val seconds = i.toDouble() / SAMPLE_RATE
             val frequency = 210.0 - 90.0 * progress
             phase += 2.0 * PI * frequency / SAMPLE_RATE
-            val attack = (progress / 0.05).coerceAtMost(1.0)
-            val decay = exp(-8.0 * progress)
+            val attack = (seconds / ATTACK_SECONDS).coerceAtMost(1.0)
+            val decay = exp(-6.0 * progress)
             val sample = (sin(phase) * 0.8 + sin(phase * 2.0) * 0.2) * attack * decay * LEVEL
             out[i] = (sample * Short.MAX_VALUE).toInt().coerceIn(-32768, 32767).toShort()
         }
@@ -264,6 +277,23 @@ class SoundEffects(private val context: Context) {
 
         const val VOLUME = 1.0f
         const val PRIORITY = 1
+
+        /**
+         * Fast attack so a crisp transient survives even when the very start
+         * of the stream is lost to audio-path wake-up latency.
+         */
+        const val ATTACK_SECONDS = 0.01
+
+        /**
+         * Silence before the audible cue. This is deliberately consumed by the
+         * cold-start latency of the audio output path instead of the attack.
+         * 60 ms is long enough to cover typical device wake-up times while
+         * staying below the ~100 ms where a game cue starts to feel laggy.
+         */
+        const val LEAD_IN_SECONDS = 0.06
+
+        /** Lets the decay reach true zero before the stream is stopped. */
+        const val TAIL_OUT_SECONDS = 0.02
 
         /**
          * Enough streams that a fast tap series never steals the previous

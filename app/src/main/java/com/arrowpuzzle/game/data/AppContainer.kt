@@ -9,6 +9,7 @@ class AppContainer(context: Context) {
 
     val settingsRepository = SettingsRepository(appContext)
     val scoreRepository = ScoreRepository(appContext)
+    val progressRepository = ProgressRepository(appContext)
     val levelGenerator = LevelGenerator()
 
     /**

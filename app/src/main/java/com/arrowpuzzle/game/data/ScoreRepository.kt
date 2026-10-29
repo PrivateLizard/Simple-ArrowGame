@@ -17,6 +17,13 @@ class ScoreRepository(context: Context) {
     private val _globalHighScore = MutableStateFlow(preferences.getInt(KEY_GLOBAL_BEST, 0))
     val globalHighScore: StateFlow<Int> = _globalHighScore.asStateFlow()
 
+    /**
+     * Sum of the best score of every campaign level. Custom runs (level id 0)
+     * are excluded, because the home screen shows campaign progress only.
+     */
+    private val _campaignScoreTotal = MutableStateFlow(campaignTotal(_bestScores.value))
+    val campaignScoreTotal: StateFlow<Int> = _campaignScoreTotal.asStateFlow()
+
     private val _highestUnlocked = MutableStateFlow(preferences.getInt(KEY_UNLOCKED, 1).coerceAtLeast(1))
     val highestUnlocked: StateFlow<Int> = _highestUnlocked.asStateFlow()
 
@@ -32,6 +39,7 @@ class ScoreRepository(context: Context) {
                 val updated = _bestScores.value.toMutableMap()
                 updated[record.levelId] = record.points
                 _bestScores.value = updated
+                _campaignScoreTotal.value = campaignTotal(updated)
                 preferences.edit().putInt(levelKey(record.levelId), record.points).apply()
             }
 
@@ -76,10 +84,16 @@ class ScoreRepository(context: Context) {
                 .remove(KEY_UNLOCKED)
                 .apply()
             _bestScores.value = emptyMap()
+            _campaignScoreTotal.value = 0
             _globalHighScore.value = 0
             _highestUnlocked.value = 1
         }
     }
+
+    private fun campaignTotal(scores: Map<Int, Int>): Int =
+        scores.entries
+            .filter { (levelId, _) -> levelId > 0 }
+            .sumOf { (_, points) -> points }
 
     private fun loadBestScores(): Map<Int, Int> {
         return preferences.all.mapNotNull { (key, value) ->
@@ -92,6 +106,7 @@ class ScoreRepository(context: Context) {
     }
 
     private fun levelKey(levelId: Int): String = "$LEVEL_KEY_PREFIX$levelId"
+
 
     private companion object {
         const val PREFERENCES_NAME = "arrow_puzzle_scores"

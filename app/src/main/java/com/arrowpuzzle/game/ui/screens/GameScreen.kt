@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,7 +43,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -51,13 +54,18 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.arrowpuzzle.game.data.model.Arrow
 import com.arrowpuzzle.game.data.model.GridPoint
 import com.arrowpuzzle.game.data.model.LevelConfig
@@ -86,6 +94,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlin.math.hypot
 import kotlin.math.min
+import kotlin.math.sin
 
 @Composable
 fun GameScreen(
@@ -97,7 +106,29 @@ fun GameScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val view = LocalView.current
-    var showQuitDialog by remember { mutableStateOf(false) }
+
+    // Leaving a level always keeps the progress; there is no confirmation
+    // dialog and no lost board. The home screen then offers to resume it.
+    val exitLevel: () -> Unit = {
+        viewModel.saveProgress()
+        onExit()
+    }
+
+    // Save when the app is backgrounded, and as a last safety net when this
+    // screen is disposed (for example when the activity is closed).
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.saveProgress()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.saveProgress()
+        }
+    }
 
     // Start decoding as early as possible. The sound object is app-scoped, so
     // this is a no-op after the first level; the aim is that samples are ready
@@ -141,7 +172,7 @@ fun GameScreen(
 
     val canExit = state is GameState.Playing || state is GameState.Loading
     BackHandler(enabled = canExit) {
-        showQuitDialog = true
+        exitLevel()
     }
 
     ScreenBackground {
@@ -151,39 +182,12 @@ fun GameScreen(
             is GameState.Playing -> PlayingContent(
                 state = current,
                 onArrowTap = viewModel::onArrowClick,
-                onExit = { showQuitDialog = true },
+                onExit = exitLevel,
             )
 
             is GameState.Victory -> ResultTransition("ALL CLEAR", AppPrimary)
             is GameState.Defeat -> ResultTransition("TOO MANY MISTAKES", AppDanger)
         }
-    }
-
-    if (showQuitDialog) {
-        AlertDialog(
-            onDismissRequest = { showQuitDialog = false },
-            title = { Text("Quit level?") },
-            text = { Text("Your current progress in this level will be lost.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showQuitDialog = false
-                        onExit()
-                    },
-                ) {
-                    Text("Quit", color = AppDanger)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showQuitDialog = false }) {
-                    Text("Keep playing", color = AppTextMuted)
-                }
-            },
-            containerColor = AppSurfaceRaised,
-            titleContentColor = AppText,
-            textContentColor = AppTextMuted,
-            shape = RoundedCornerShape(20.dp),
-        )
     }
 }
 
@@ -271,17 +275,7 @@ private fun PlayingContent(
             )
         }
 
-        Text(
-            text = "Tap only arrows whose path ahead is clear. Clear every arrow.\nPinch to zoom · drag to pan.",
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = AppTextMuted,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(10.dp))
     }
 }
 
@@ -305,10 +299,10 @@ private fun GameTopBar(
     ) {
         TextButton(onClick = onExit) {
             Text(
-                text = "EXIT",
-                style = MaterialTheme.typography.labelMedium,
-                color = AppTextMuted,
-                letterSpacing = 1.sp,
+                text = "<",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppText,
             )
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -346,7 +340,8 @@ private fun GameBoard(
 ) {
     val palette = ArrowTheme.colors
     val shape = RoundedCornerShape(22.dp)
-    val wrongAlpha = remember { Animatable(0f) }
+    // Drives both the red tint and the shake of a wrongly tapped arrow.
+    val wrongAnim = remember { Animatable(0f) }
     val exitProgress = remember { Animatable(1f) }
     var boardScale by remember { mutableFloatStateOf(MIN_BOARD_SCALE) }
     var boardOffset by remember { mutableStateOf(Offset.Zero) }
@@ -362,8 +357,14 @@ private fun GameBoard(
     }
     LaunchedEffect(state.wrongFlashToken) {
         if (state.wrongFlashToken > 0) {
-            wrongAlpha.snapTo(1f)
-            wrongAlpha.animateTo(0f, animationSpec = tween(540))
+            // A single 0..1 progress keeps the red tint and the shake in sync.
+            // The tint holds for the first half, then fades out, so a mistake
+            // stays readable noticeably longer than before.
+            wrongAnim.snapTo(0f)
+            wrongAnim.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(900, easing = LinearEasing),
+            )
         }
     }
     LaunchedEffect(state.correctFlashToken) {
@@ -382,14 +383,34 @@ private fun GameBoard(
         }
     }
 
-    val wrongAlphaValue = wrongAlpha.value
+    val wrongProgress = wrongAnim.value
+    val wrongAlphaValue = when {
+        wrongProgress <= 0f -> 0f
+        wrongProgress < 0.55f -> 1f
+        wrongProgress < 0.85f -> 1f - (wrongProgress - 0.55f) / 0.30f
+        else -> 0f
+    }
+    val wrongVisible = wrongAlphaValue > 0.01f
     val exitValue = exitProgress.value
 
     Box(
         modifier = modifier
             .clip(shape)
-            .background(palette.boardBackground)
-            .border(1.dp, palette.gridLine.copy(alpha = 0.55f), shape)
+            // Isolated layer so the DstIn fade below only masks the board and
+            // not whatever is drawn behind the screen.
+            .graphicsLayer()
+            .drawWithContent {
+                drawContent()
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.12f to Color.White,
+                        0.88f to Color.White,
+                        1f to Color.Transparent,
+                    ),
+                    blendMode = BlendMode.DstIn,
+                )
+            }
             .onSizeChanged {
                 viewportSize = it
                 boardOffset = clampBoardOffset(boardOffset, boardScale, it)
@@ -449,22 +470,41 @@ private fun GameBoard(
             val lineWidth = geometry.spacing * 0.09f
             val remaining = level.arrows.filter { it.id !in removedIds }
 
-            remaining.forEach { arrow ->
-                drawPolylineArrow(
-                    route = arrow.route.map(geometry::toOffset),
-                    spacing = geometry.spacing,
-                    lineWidth = lineWidth,
-                    color = palette.boardLine,
-                )
+            // Faint dots on every lattice point hint at the grid the arrows
+            // travel on, without drawing a visible frame around the board.
+            val dotRadius = (geometry.spacing * 0.055f).coerceAtLeast(0.6f)
+            val dotColor = palette.gridLine.copy(alpha = 0.55f)
+            for (gx in 0 until level.layoutSize) {
+                for (gy in 0 until level.layoutSize) {
+                    drawCircle(
+                        color = dotColor,
+                        radius = dotRadius,
+                        center = geometry.toOffset(GridPoint(gx, gy)),
+                    )
+                }
             }
 
-            val wrongArrow = remaining.firstOrNull { it.id == state.wrongFlashId }
-            if (wrongArrow != null && wrongAlphaValue > 0.01f) {
+            remaining.forEach { arrow ->
+                val isWrong = wrongVisible && arrow.id == state.wrongFlashId
+                val shakeX = if (isWrong) {
+                    sin(wrongProgress * 26f) * geometry.spacing * 0.22f * (1f - wrongProgress)
+                } else {
+                    0f
+                }
+                val route = if (shakeX != 0f) {
+                    arrow.route.map { geometry.toOffset(it) + Offset(shakeX, 0f) }
+                } else {
+                    arrow.route.map(geometry::toOffset)
+                }
                 drawPolylineArrow(
-                    route = wrongArrow.route.map(geometry::toOffset),
+                    route = route,
                     spacing = geometry.spacing,
-                    lineWidth = lineWidth * 1.8f,
-                    color = palette.boardLineWrong.copy(alpha = wrongAlphaValue),
+                    lineWidth = if (isWrong) lineWidth * 1.4f else lineWidth,
+                    color = if (isWrong) {
+                        lerp(palette.boardLine, palette.boardLineWrong, wrongAlphaValue)
+                    } else {
+                        palette.boardLine
+                    },
                 )
             }
 

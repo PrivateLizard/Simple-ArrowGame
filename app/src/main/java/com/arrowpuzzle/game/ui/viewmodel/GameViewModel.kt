@@ -2,6 +2,8 @@ package com.arrowpuzzle.game.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arrowpuzzle.game.data.ProgressRepository
+import com.arrowpuzzle.game.data.SavedGame
 import com.arrowpuzzle.game.data.ScoreRepository
 import com.arrowpuzzle.game.data.SettingsRepository
 import com.arrowpuzzle.game.data.model.LevelConfig
@@ -31,6 +33,7 @@ class GameViewModel(
     private val levelGenerator: LevelGenerator,
     private val settingsRepository: SettingsRepository,
     private val scoreRepository: ScoreRepository,
+    private val progressRepository: ProgressRepository,
 ) : ViewModel() {
     private val clickLock = Any()
     private val _state = MutableStateFlow<GameState>(GameState.Loading)
@@ -44,6 +47,13 @@ class GameViewModel(
     private var startedNanos = 0L
 
     init {
+        // Only restore when the home screen explicitly asked for it and the
+        // saved level matches the one we were navigated to.
+        val resumeCandidate = if (progressRepository.consumeResumeRequest()) {
+            progressRepository.savedGame.value?.takeIf { it.config == config }
+        } else {
+            null
+        }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) {
                 val seed = if (config.isCustom) {
@@ -55,13 +65,31 @@ class GameViewModel(
             }
             result.onSuccess { level ->
                 synchronized(clickLock) {
-                    startedNanos = System.nanoTime()
-                    _state.value = GameState.Playing(
-                        level = level,
-                        removedIds = emptySet(),
-                        failures = 0,
-                        elapsedSeconds = 0.0,
-                    )
+                    if (resumeCandidate != null) {
+                        val validRemoved = resumeCandidate.removedIds
+                            .filter { level.arrowById(it) != null }
+                            .toSet()
+                        // Continue the clock where the saved game stopped, so a
+                        // resumed run is scored like the same uninterrupted run.
+                        startedNanos = System.nanoTime() -
+                            (resumeCandidate.elapsedSeconds * NANOS_PER_SECOND).toLong()
+                        _state.value = GameState.Playing(
+                            level = level,
+                            removedIds = validRemoved,
+                            failures = resumeCandidate.failures,
+                            elapsedSeconds = resumeCandidate.elapsedSeconds,
+                        )
+                    } else {
+                        // A fresh start replaces whatever level was pending.
+                        progressRepository.clear()
+                        startedNanos = System.nanoTime()
+                        _state.value = GameState.Playing(
+                            level = level,
+                            removedIds = emptySet(),
+                            failures = 0,
+                            elapsedSeconds = 0.0,
+                        )
+                    }
                 }
                 startTimer()
             }.onFailure { error ->
@@ -74,6 +102,8 @@ class GameViewModel(
 
     fun onArrowClick(arrowId: Int) {
         var feedback: GameFeedback? = null
+        var persist = false
+        var clearProgress = false
 
         synchronized(clickLock) {
             val current = _state.value as? GameState.Playing ?: return@synchronized
@@ -88,6 +118,7 @@ class GameViewModel(
                         failures = current.failures,
                         elapsedSeconds = elapsed,
                     )
+                    clearProgress = true
                     feedback = defeatFeedback()
                     return@synchronized
                 }
@@ -120,6 +151,7 @@ class GameViewModel(
                             timestamp = System.currentTimeMillis(),
                         )
                         val isNewHighScore = scoreRepository.recordScore(record)
+                        clearProgress = true
                         _state.value = current.copy(
                             removedIds = removedIds,
                             failures = current.failures,
@@ -147,6 +179,7 @@ class GameViewModel(
                             correctFlashToken = current.correctFlashToken + 1,
                             wrongFlashId = null,
                         )
+                        persist = true
                         feedback = correctFeedback()
                     }
                 }
@@ -160,14 +193,17 @@ class GameViewModel(
                             failures = result.failures,
                             elapsedSeconds = elapsedSeconds(),
                         )
+                        clearProgress = true
                         feedback = defeatFeedback()
                     } else {
                         _state.value = current.copy(
                             failures = result.failures,
+                            elapsedSeconds = elapsedSeconds(),
                             wrongFlashId = arrowId,
                             wrongFlashToken = current.wrongFlashToken + 1,
                             correctFlashId = null,
                         )
+                        persist = true
                         feedback = wrongFeedback()
                     }
                 }
@@ -178,7 +214,40 @@ class GameViewModel(
             }
         }
 
+        when {
+            clearProgress -> progressRepository.clear()
+            persist -> (_state.value as? GameState.Playing)?.let(::persistProgress)
+        }
+
         feedback?.let(_feedback::tryEmit)
+    }
+
+    /**
+     * Writes the current playing state so it can be resumed later. Safe to call
+     * repeatedly and from lifecycle callbacks.
+     */
+    fun saveProgress() {
+        synchronized(clickLock) {
+            val current = _state.value as? GameState.Playing ?: return
+            persistProgress(current)
+        }
+    }
+
+    private fun persistProgress(state: GameState.Playing) {
+        if (config.isCustom) return
+        // Never persist a board that is already fully cleared; victory is
+        // recorded separately and nothing should be resumable at that point.
+        if (state.removedIds.size >= state.level.arrowCount) return
+        progressRepository.save(
+            SavedGame(
+                config = state.level.config,
+                levelArrowCount = state.level.arrowCount,
+                removedIds = state.removedIds,
+                failures = state.failures,
+                elapsedSeconds = elapsedSeconds(),
+                savedAtMillis = System.currentTimeMillis(),
+            ),
+        )
     }
 
     private fun startTimer() {

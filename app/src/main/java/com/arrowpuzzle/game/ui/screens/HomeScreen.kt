@@ -1,9 +1,7 @@
 package com.arrowpuzzle.game.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,15 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.arrowpuzzle.game.R
 import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
@@ -61,6 +57,9 @@ fun HomeScreen(
     onSettings: () -> Unit,
     isAllUnlocked: Boolean = false,
     onToggleUnlockAll: (Boolean) -> Unit = {},
+    resumeLevel: Int? = null,
+    resumeRemaining: Int? = null,
+    onResume: () -> Unit = {},
 ) {
     var showDevOptions by rememberSaveable { mutableStateOf(false) }
     ScreenBackground {
@@ -88,32 +87,22 @@ fun HomeScreen(
                 )
             }
 
-            Spacer(Modifier.height(34.dp))
+            Spacer(Modifier.height(40.dp))
 
             Text(
-                text = "ARROW",
-                style = MaterialTheme.typography.displayLarge,
-                color = AppText,
-                letterSpacing = (-1).sp,
-            )
-            Text(
-                text = "PUZZLE",
-                style = MaterialTheme.typography.displayLarge,
-                color = AppPrimary,
-                letterSpacing = (-1).sp,
-            )
-            Spacer(Modifier.height(14.dp))
-            Text(
-                text = "Clear every arrow. Only open paths can be tapped.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = AppTextMuted,
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = AppText)) { append("SIMPLE ") }
+                    withStyle(SpanStyle(color = AppPrimary)) { append("ARROW PUZZLE") }
+                },
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = 27.sp,
+                    letterSpacing = (-0.5).sp,
+                ),
+                maxLines = 1,
+                softWrap = false,
             )
 
-            Spacer(Modifier.height(26.dp))
-
-            ArrowTrail()
-
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(30.dp))
 
             SectionCard {
                 Row(
@@ -149,6 +138,36 @@ fun HomeScreen(
             }
 
             Spacer(Modifier.height(26.dp))
+
+            if (resumeLevel != null) {
+                OutlinedButton(
+                    onClick = onResume,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        AppSecondary.copy(alpha = 0.8f),
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppSecondary),
+                ) {
+                    Text(
+                        text = buildString {
+                            append("RESUME · LEVEL ")
+                            append(resumeLevel.toString().padStart(2, '0'))
+                            if (resumeRemaining != null) {
+                                append(" · ")
+                                append(resumeRemaining)
+                                append(" LEFT")
+                            }
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        letterSpacing = 0.8.sp,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+            }
 
             Button(
                 onClick = onPlay,
@@ -292,34 +311,3 @@ private fun DevOptionsCard(
     }
 }
 
-@Composable
-private fun ArrowTrail() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(AppSurface.copy(alpha = 0.55f))
-            .border(1.dp, AppGridLine.copy(alpha = 0.55f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 20.dp, vertical = 18.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ArrowIcon(R.drawable.ic_arrow_right, 0f, AppSecondary)
-        ArrowIcon(R.drawable.ic_arrow_right, 45f, AppPrimary)
-        ArrowIcon(R.drawable.ic_arrow_right, 90f, AppTextMuted)
-        ArrowIcon(R.drawable.ic_arrow_right, 135f, AppPrimary)
-        ArrowIcon(R.drawable.ic_arrow_right, 180f, AppAccent)
-    }
-}
-
-@Composable
-private fun ArrowIcon(drawable: Int, rotation: Float, tint: Color) {
-    Image(
-        painter = painterResource(drawable),
-        contentDescription = null,
-        modifier = Modifier
-            .size(34.dp)
-            .graphicsLayer(rotationZ = rotation),
-        colorFilter = ColorFilter.tint(tint),
-    )
-}
