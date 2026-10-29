@@ -1,0 +1,25 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild
+.cxx
+app/build/
+
+# --- Secrets: niemals ins Repo ---
+# Der Release-Keystore kann gefälschte Updates signieren. Er bleibt lokal.
+keystore/
+*.jks
+*.keystore
+# Passwörter, falls sie je in einer Properties-Datei landen.
+keystore.properties
+/secrets.properties
+
+# --- Build-Artefakte: jederzeit reproduzierbar ---
+dist/
+*.apk
+*.idsig
+*.aab

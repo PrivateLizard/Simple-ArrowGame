@@ -1,0 +1,21 @@
+{
+  "levelId": 3,
+  "gridSize": { "width": 4, "height": 4 },
+  "layoutSize": 22,
+  "arrowCount": 10,
+  "maxFailures": 6,
+  "timeLimitSeconds": null,
+  "complexity": "HARD",
+  "arrows": [
+    { "id": 0, "direction": "RIGHT", "route": [{ "x": 1, "y": 1 }, { "x": 6, "y": 1 }] },
+    { "id": 1, "direction": "DOWN", "route": [{ "x": 9, "y": 2 }, { "x": 9, "y": 6 }] },
+    { "id": 2, "direction": "DOWN", "route": [{ "x": 11, "y": 1 }, { "x": 15, "y": 1 }, { "x": 15, "y": 4 }] },
+    { "id": 3, "direction": "DOWN", "route": [{ "x": 18, "y": 2 }, { "x": 18, "y": 7 }] },
+    { "id": 4, "direction": "DOWN", "route": [{ "x": 2, "y": 4 }, { "x": 5, "y": 4 }, { "x": 5, "y": 7 }] },
+    { "id": 5, "direction": "RIGHT", "route": [{ "x": 8, "y": 5 }, { "x": 12, "y": 5 }] },
+    { "id": 6, "direction": "DOWN", "route": [{ "x": 14, "y": 6 }, { "x": 17, "y": 6 }, { "x": 17, "y": 9 }] },
+    { "id": 7, "direction": "RIGHT", "route": [{ "x": 3, "y": 9 }, { "x": 7, "y": 9 }] },
+    { "id": 8, "direction": "DOWN", "route": [{ "x": 10, "y": 8 }, { "x": 10, "y": 12 }] },
+    { "id": 9, "direction": "RIGHT", "route": [{ "x": 1, "y": 13 }, { "x": 5, "y": 13 }] }
+  ]
+}
