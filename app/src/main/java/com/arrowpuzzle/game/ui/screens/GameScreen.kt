@@ -354,6 +354,23 @@ private fun GameBoard(
     val lastCorrectArrow = remember(state.correctFlashId, level) {
         state.correctFlashId?.let(level::arrowById)
     }
+    // Lattice points that are no longer covered by an arrow. They are the only
+    // places where the dot grid is shown, so the grid is revealed step by step
+    // as arrows are cleared.
+    val revealedGridPoints = remember(level, removedIds) {
+        val covered = level.arrows
+            .filter { it.id !in removedIds }
+            .flatMap { ArrowGeometry.routePoints(it.route) }
+            .toSet()
+        buildList {
+            for (gx in 0 until level.layoutSize) {
+                for (gy in 0 until level.layoutSize) {
+                    val point = GridPoint(gx, gy)
+                    if (point !in covered) add(point)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(level, viewportSize) {
         if (viewportSize.width > 0 && viewportSize.height > 0) {
@@ -477,18 +494,16 @@ private fun GameBoard(
             val lineWidth = geometry.spacing * 0.09f
             val remaining = level.arrows.filter { it.id !in removedIds }
 
-            // Faint dots on every lattice point hint at the grid the arrows
-            // travel on, without drawing a visible frame around the board.
-            val dotRadius = (geometry.spacing * 0.085f).coerceAtLeast(1f)
-            val dotColor = palette.textMuted.copy(alpha = 0.28f)
-            for (gx in 0 until level.layoutSize) {
-                for (gy in 0 until level.layoutSize) {
-                    drawCircle(
-                        color = dotColor,
-                        radius = dotRadius,
-                        center = geometry.toOffset(GridPoint(gx, gy)),
-                    )
-                }
+            // Only the points of already cleared arrows are dotted, so the
+            // grid appears where the lines are gone.
+            val dotRadius = (geometry.spacing * 0.09f).coerceAtLeast(1f)
+            val dotColor = palette.textMuted.copy(alpha = 0.38f)
+            revealedGridPoints.forEach { point ->
+                drawCircle(
+                    color = dotColor,
+                    radius = dotRadius,
+                    center = geometry.toOffset(point),
+                )
             }
 
             remaining.forEach { arrow ->
@@ -651,30 +666,35 @@ private fun centeredBoardOffset(scale: Float, viewport: IntSize): Offset {
 
 private data class BoardGeometry(
     val layoutSize: Int,
-    val inset: Float,
-    val spacingX: Float,
-    val spacingY: Float,
+    val originX: Float,
+    val originY: Float,
+    val spacing: Float,
 ) {
-    val spacing: Float get() = min(spacingX, spacingY)
     val hitRadius: Float get() = spacing * 0.38f
 
     fun toOffset(point: GridPoint): Offset = Offset(
-        x = inset + point.x * spacingX,
-        y = inset + point.y * spacingY,
+        x = originX + point.x * spacing,
+        y = originY + point.y * spacing,
     )
 }
 
+/**
+ * Square cells on purpose: the shorter screen side defines the cell size, so
+ * the field is never stretched vertically. The resulting square is centred in
+ * the viewport; zoom and pan move it from there.
+ */
 private fun boardGeometry(width: Float, height: Float, layoutSize: Int): BoardGeometry {
     val shortest = min(width, height)
     val inset = shortest * BOARD_INSET_FRACTION
-    val innerWidth = (width - inset * 2f).coerceAtLeast(1f)
-    val innerHeight = (height - inset * 2f).coerceAtLeast(1f)
+    val inner = (shortest - inset * 2f).coerceAtLeast(1f)
     val divisions = (layoutSize - 1).coerceAtLeast(1)
+    val spacing = inner / divisions
+    val boardExtent = spacing * divisions
     return BoardGeometry(
         layoutSize = layoutSize,
-        inset = inset,
-        spacingX = innerWidth / divisions,
-        spacingY = innerHeight / divisions,
+        originX = (width - boardExtent) / 2f,
+        originY = (height - boardExtent) / 2f,
+        spacing = spacing,
     )
 }
 
