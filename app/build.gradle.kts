@@ -3,6 +3,27 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+/**
+ * Internal build number = number of commits on the current branch. It therefore
+ * increments by one with every commit, no manual bumping required.
+ *
+ * If git is unavailable (for example a source copy without `.git`), the value
+ * can be supplied with `-PappVersionCode=<n>`; otherwise it falls back to 1.
+ */
+fun gitCommitCount(): Int? = runCatching {
+    val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+        .directory(rootDir)
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+    process.waitFor()
+    output.toIntOrNull()
+}.getOrNull()
+
+val appVersionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull()
+    ?: gitCommitCount()
+    ?: 1
+
 android {
     namespace = "com.arrowpuzzle.game"
     compileSdk = 34
@@ -11,8 +32,8 @@ android {
         applicationId = "com.arrowpuzzle.game"
         minSdk = 24
         targetSdk = 34
-        // Internal build number shown in Settings. Bump by 1 for every release.
-        versionCode = 2
+        // Build number follows the commit count (see appVersionCode above).
+        versionCode = appVersionCode
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
     }
