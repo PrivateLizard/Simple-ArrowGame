@@ -40,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.data.model.AppSettings
+import com.arrowpuzzle.game.i18n.AppLanguage
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
@@ -57,16 +59,18 @@ fun SettingsScreen(
     onNightModeChange: (Boolean) -> Unit,
     onSoundChange: (Boolean) -> Unit,
     onHapticChange: (Boolean) -> Unit,
+    onLanguageChange: (String) -> Unit,
     onResetProgress: () -> Unit,
     onBack: () -> Unit,
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    val s = LocalStrings.current
 
     ScreenBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Settings",
-                subtitle = "Stored only on this device",
+                title = s.t("settings_title"),
+                subtitle = s.t("settings_subtitle"),
                 onBack = onBack,
             )
             Box(
@@ -90,22 +94,22 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Max Failures",
+                                    text = s.t("max_failures"),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = AppText,
                                 )
                                 Text(
                                     text = if (failuresOff) {
-                                        "Failures are off. Wrong taps never end a level."
+                                        s.t("max_failures_off_desc")
                                     } else {
-                                        "A level ends after this many wrong taps."
+                                        s.t("max_failures_desc")
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = AppTextMuted,
                                 )
                             }
                             Text(
-                                text = if (failuresOff) "AUS" else settings.maxFailures.toString(),
+                                text = if (failuresOff) s.t("off") else settings.maxFailures.toString(),
                                 style = MaterialTheme.typography.headlineMedium,
                                 color = AppPrimary,
                                 fontWeight = FontWeight.Black,
@@ -124,24 +128,46 @@ fun SettingsScreen(
                 SectionCard {
                     Column {
                         ToggleRow(
-                            title = "Night Mode",
-                            description = "Use the dark color palette. Colors are theme-controlled.",
+                            title = s.t("night_mode"),
+                            description = s.t("night_mode_desc"),
                             checked = settings.nightMode,
                             onCheckedChange = onNightModeChange,
                         )
                         Spacer(Modifier.height(16.dp))
                         ToggleRow(
-                            title = "Sound Effects",
-                            description = "Short tones for taps, wins and losses.",
+                            title = s.t("sound"),
+                            description = s.t("sound_desc"),
                             checked = settings.soundEnabled,
                             onCheckedChange = onSoundChange,
                         )
                         Spacer(Modifier.height(16.dp))
                         ToggleRow(
-                            title = "Haptic Feedback",
-                            description = "Vibration feedback on supported devices.",
+                            title = s.t("haptics"),
+                            description = s.t("haptics_desc"),
                             checked = settings.hapticEnabled,
                             onCheckedChange = onHapticChange,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+
+                SectionCard {
+                    Column {
+                        Text(
+                            text = s.t("language"),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = AppText,
+                        )
+                        Text(
+                            text = s.t("language_desc"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppTextMuted,
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        LanguageOptions(
+                            selected = settings.language,
+                            onSelect = onLanguageChange,
                         )
                     }
                 }
@@ -158,7 +184,7 @@ fun SettingsScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = AppDanger),
                 ) {
                     Text(
-                        text = "RESET PROGRESS",
+                        text = s.t("reset_progress"),
                         style = MaterialTheme.typography.labelLarge,
                         letterSpacing = 1.sp,
                     )
@@ -167,7 +193,7 @@ fun SettingsScreen(
                 Spacer(Modifier.height(18.dp))
 
                 Text(
-                    text = "Arrow Puzzle works completely offline. The app has no internet permission, no ads and no analytics.",
+                    text = s.t("settings_footer"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppTextMuted.copy(alpha = 0.8f),
                 )
@@ -179,11 +205,9 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Reset Progress") },
+            title = { Text(s.t("reset_title")) },
             text = {
-                Text(
-                    "This clears all high scores and resets level progression. Settings are kept. This cannot be undone.",
-                )
+                Text(s.t("reset_text"))
             },
             confirmButton = {
                 TextButton(
@@ -192,12 +216,12 @@ fun SettingsScreen(
                         showResetDialog = false
                     },
                 ) {
-                    Text("Reset", color = AppDanger)
+                    Text(s.t("reset"), color = AppDanger)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel", color = AppTextMuted)
+                    Text(s.t("cancel"), color = AppTextMuted)
                 }
             },
             containerColor = AppSurfaceRaised,
@@ -214,6 +238,7 @@ private fun FailureOptions(
     selected: Int,
     onSelect: (Int) -> Unit,
 ) {
+    val s = LocalStrings.current
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -232,10 +257,48 @@ private fun FailureOptions(
             ) {
                 Text(
                     text = if (option == AppSettings.NO_FAILURE_LIMIT) {
-                        "AUS"
+                        s.t("off")
                     } else {
                         option.toString()
                     },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else AppText,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LanguageOptions(
+    selected: String,
+    onSelect: (String) -> Unit,
+) {
+    val s = LocalStrings.current
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        AppLanguage.entries.forEach { language ->
+            val isSelected = selected == language.code
+            val shape = RoundedCornerShape(12.dp)
+            val label = if (language == AppLanguage.SYSTEM) {
+                s.t("language_system")
+            } else {
+                language.displayName
+            }
+            Box(
+                modifier = Modifier
+                    .clip(shape)
+                    .background(if (isSelected) AppPrimary else AppSurfaceRaised)
+                    .border(1.dp, if (isSelected) AppPrimary else AppGridLine, shape)
+                    .clickable { onSelect(language.code) }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = label,
                     style = MaterialTheme.typography.labelLarge,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary else AppText,
                 )

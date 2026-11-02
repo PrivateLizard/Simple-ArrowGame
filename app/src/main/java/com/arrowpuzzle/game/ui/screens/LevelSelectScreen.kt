@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.arrowpuzzle.game.game.LevelCatalog
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.theme.AppAccent
@@ -64,6 +65,7 @@ fun LevelSelectScreen(
     onBack: () -> Unit,
     onLevelSelected: (Int) -> Unit,
 ) {
+    val s = LocalStrings.current
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
 
@@ -93,8 +95,12 @@ fun LevelSelectScreen(
     ScreenBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Levels",
-                subtitle = "${levels.count { it.isUnlocked }} of ${LevelCatalog.MAX_LEVEL} unlocked",
+                title = s.t("levels_title"),
+                subtitle = s.f(
+                    "levels_subtitle",
+                    levels.count { it.isUnlocked },
+                    LevelCatalog.MAX_LEVEL,
+                ),
                 onBack = onBack,
             )
             Box(modifier = Modifier.fillMaxSize()) {
@@ -134,7 +140,7 @@ fun LevelSelectScreen(
                         ),
                     ) {
                         Text(
-                            text = "CURRENT LEVEL",
+                            text = s.t("current_level"),
                             style = MaterialTheme.typography.labelLarge,
                         )
                     }
@@ -157,6 +163,7 @@ private suspend fun LazyGridState.centerItem(index: Int) {
 
 @Composable
 private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
+    val s = LocalStrings.current
     val unlocked = level.isUnlocked
     val completed = level.bestScore > 0
     val shape = RoundedCornerShape(22.dp)
@@ -218,8 +225,8 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
             Text(
                 text = when {
                     completed -> "✓  " + String.format(Locale.US, "%,d", level.bestScore)
-                    unlocked -> "PLAY"
-                    else -> "LOCKED"
+                    unlocked -> s.t("play")
+                    else -> s.t("locked")
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = when {

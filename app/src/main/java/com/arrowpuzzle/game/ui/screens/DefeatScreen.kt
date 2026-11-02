@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.game.DefeatReason
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
 import com.arrowpuzzle.game.ui.theme.AppAccent
@@ -51,9 +52,10 @@ fun DefeatScreen(
     onLevels: () -> Unit,
     onHome: () -> Unit,
 ) {
+    val s = LocalStrings.current
     val reasonText = when (reason) {
-        DefeatReason.TOO_MANY_FAILURES -> "Too many wrong taps."
-        DefeatReason.TIME_EXPIRED -> "The time limit was reached."
+        DefeatReason.TOO_MANY_FAILURES -> s.t("reason_failures")
+        DefeatReason.TIME_EXPIRED -> s.t("reason_time")
     }
 
     ScreenBackground {
@@ -64,12 +66,12 @@ fun DefeatScreen(
                 .padding(horizontal = 22.dp, vertical = 30.dp),
         ) {
             Text(
-                text = "NOT",
+                text = s.t("defeat_not"),
                 style = MaterialTheme.typography.displayMedium,
                 color = AppText,
             )
             Text(
-                text = "CLEARED",
+                text = s.t("defeat_cleared"),
                 style = MaterialTheme.typography.displayMedium,
                 color = AppDanger,
                 letterSpacing = 1.sp,
@@ -77,9 +79,9 @@ fun DefeatScreen(
             Spacer(Modifier.height(8.dp))
             Text(
                 text = if (config.isCustom) {
-                    "Custom puzzle · ${config.arrowCount} arrows"
+                    s.f("custom_info", config.arrowCount)
                 } else {
-                    "Level ${config.levelId} · ${config.arrowCount} arrows"
+                    s.f("level_info", config.levelId, config.arrowCount)
                 },
                 style = MaterialTheme.typography.titleMedium,
                 color = AppTextMuted,
@@ -96,7 +98,7 @@ fun DefeatScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Tap only arrows with a clear path ahead. A wrong tap costs one failure.",
+                        text = s.t("defeat_hint"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppTextMuted,
                     )
@@ -106,19 +108,19 @@ fun DefeatScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         DefeatStat(
-                            label = "FAILURES",
+                            label = s.t("failures"),
                             value = "$failures/${max(1, config.maxFailures)}",
                             tint = AppDanger,
                             modifier = Modifier.weight(1f),
                         )
                         DefeatStat(
-                            label = "TIME",
+                            label = s.t("time"),
                             value = GridUtils.formatTime(elapsedSeconds),
                             tint = AppSecondary,
                             modifier = Modifier.weight(1f),
                         )
                         DefeatStat(
-                            label = "ARROWS",
+                            label = s.t("arrows"),
                             value = arrowCount.toString(),
                             tint = AppAccent,
                             modifier = Modifier.weight(1f),
@@ -131,9 +133,9 @@ fun DefeatScreen(
 
             Text(
                 text = if (reason == DefeatReason.TOO_MANY_FAILURES) {
-                    "Clear the first open arrows to unlock the next ones."
+                    s.t("defeat_hint_fail")
                 } else {
-                    "Speed matters, but accuracy matters more."
+                    s.t("defeat_hint_time")
                 },
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
@@ -155,7 +157,7 @@ fun DefeatScreen(
                 ),
             ) {
                 Text(
-                    text = if (config.isCustom) "TRY AGAIN" else "RETRY LEVEL",
+                    text = s.t(if (config.isCustom) "try_again" else "retry_level"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.5.sp,
@@ -174,7 +176,7 @@ fun DefeatScreen(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
             ) {
                 Text(
-                    text = "LEVELS",
+                    text = s.t("levels"),
                     style = MaterialTheme.typography.labelLarge,
                     letterSpacing = 1.sp,
                 )
@@ -187,7 +189,7 @@ fun DefeatScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = "HOME",
+                    text = s.t("home"),
                     color = AppTextMuted,
                     style = MaterialTheme.typography.labelLarge,
                 )

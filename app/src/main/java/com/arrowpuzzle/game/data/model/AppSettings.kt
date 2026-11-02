@@ -5,6 +5,8 @@ data class AppSettings(
     val nightMode: Boolean = true,
     val soundEnabled: Boolean = true,
     val hapticEnabled: Boolean = true,
+    /** Empty means: follow the device language. */
+    val language: String = "",
 ) {
     companion object {
         const val DEFAULT_MAX_FAILURES = 5

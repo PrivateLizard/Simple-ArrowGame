@@ -21,5 +21,7 @@ class SettingsViewModel(
 
     fun setHapticEnabled(enabled: Boolean) = settingsRepository.setHapticEnabled(enabled)
 
+    fun setLanguage(code: String) = settingsRepository.setLanguage(code)
+
     fun resetProgress() = scoreRepository.clearProgress()
 }

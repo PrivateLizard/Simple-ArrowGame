@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.game.GameResult
 import com.arrowpuzzle.game.game.LevelCatalog
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.scoring.ScoreBreakdown
 import com.arrowpuzzle.game.scoring.ScoreCalculator
 import com.arrowpuzzle.game.ui.components.ScreenBackground
@@ -55,6 +56,7 @@ fun VictoryScreen(
     onLevels: () -> Unit,
     onHome: () -> Unit,
 ) {
+    val s = LocalStrings.current
     val record = result.record
     val config = result.config
     val breakdown = ScoreCalculator.calculate(
@@ -72,12 +74,12 @@ fun VictoryScreen(
                 .padding(horizontal = 22.dp, vertical = 28.dp),
         ) {
             Text(
-                text = "ALL",
+                text = s.t("victory_all"),
                 style = MaterialTheme.typography.displayMedium,
                 color = AppText,
             )
             Text(
-                text = "CLEAR",
+                text = s.t("victory_clear"),
                 style = MaterialTheme.typography.displayMedium,
                 color = AppPrimary,
                 letterSpacing = 1.sp,
@@ -85,9 +87,9 @@ fun VictoryScreen(
             Spacer(Modifier.height(8.dp))
             Text(
                 text = if (config.isCustom) {
-                    "Custom puzzle · ${config.arrowCount} arrows"
+                    s.f("custom_info", config.arrowCount)
                 } else {
-                    "Level ${config.levelId} · ${config.arrowCount} arrows"
+                    s.f("level_info", config.levelId, config.arrowCount)
                 },
                 style = MaterialTheme.typography.titleMedium,
                 color = AppTextMuted,
@@ -103,7 +105,7 @@ fun VictoryScreen(
                         .padding(horizontal = 14.dp, vertical = 7.dp),
                 ) {
                     Text(
-                        text = "NEW HIGH SCORE",
+                        text = s.t("new_high"),
                         style = MaterialTheme.typography.labelMedium,
                         color = AppAccent,
                         letterSpacing = 1.sp,
@@ -128,7 +130,7 @@ fun VictoryScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "TOTAL SCORE",
+                        text = s.t("total_score"),
                         style = MaterialTheme.typography.labelMedium,
                         color = AppTextMuted,
                         letterSpacing = 1.5.sp,
@@ -140,7 +142,7 @@ fun VictoryScreen(
                         fontWeight = FontWeight.Black,
                     )
                     Text(
-                        text = "points",
+                        text = s.t("points"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppTextMuted,
                     )
@@ -160,19 +162,19 @@ fun VictoryScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 InfoBox(
-                    label = "TIME",
+                    label = s.t("time"),
                     value = GridUtils.formatTime(record.timeElapsed),
                     tint = AppSecondary,
                     modifier = Modifier.weight(1f),
                 )
                 InfoBox(
-                    label = "ARROWS",
+                    label = s.t("arrows"),
                     value = record.arrowsUsed.toString(),
                     tint = AppText,
                     modifier = Modifier.weight(1f),
                 )
                 InfoBox(
-                    label = "FAILURES",
+                    label = s.t("failures"),
                     value = record.failures.toString(),
                     tint = if (record.failures == 0) AppPrimary else AppAccent,
                     modifier = Modifier.weight(1f),
@@ -182,11 +184,11 @@ fun VictoryScreen(
             Spacer(Modifier.height(24.dp))
 
             if (hasNextLevel) {
-                PrimaryAction(text = "NEXT LEVEL", onClick = onNextLevel)
+                PrimaryAction(text = s.t("next_level"), onClick = onNextLevel)
                 Spacer(Modifier.height(10.dp))
             } else if (!config.isCustom) {
                 Text(
-                    text = "All levels cleared. Every arrow has been removed.",
+                    text = s.t("all_cleared"),
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppAccent,
@@ -205,7 +207,7 @@ fun VictoryScreen(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
             ) {
                 Text(
-                    text = if (config.isCustom) "PLAY AGAIN" else "REPLAY LEVEL",
+                    text = s.t(if (config.isCustom) "play_again" else "replay_level"),
                     style = MaterialTheme.typography.labelLarge,
                     letterSpacing = 1.sp,
                 )
@@ -218,10 +220,10 @@ fun VictoryScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 TextButton(onClick = onLevels) {
-                    Text("LEVELS", color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
+                    Text(s.t("levels"), color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
                 }
                 TextButton(onClick = onHome) {
-                    Text("HOME", color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
+                    Text(s.t("home"), color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -230,12 +232,13 @@ fun VictoryScreen(
 
 @Composable
 private fun ScoreRows(breakdown: ScoreBreakdown, failures: Int) {
+    val s = LocalStrings.current
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Base points", color = AppTextMuted, style = MaterialTheme.typography.bodyMedium)
+            Text(s.t("base_points"), color = AppTextMuted, style = MaterialTheme.typography.bodyMedium)
             Text(
                 "+${breakdown.basePoints}",
                 color = AppText,
@@ -247,7 +250,7 @@ private fun ScoreRows(breakdown: ScoreBreakdown, failures: Int) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Time bonus", color = AppTextMuted, style = MaterialTheme.typography.bodyMedium)
+            Text(s.t("time_bonus"), color = AppTextMuted, style = MaterialTheme.typography.bodyMedium)
             Text(
                 "+${breakdown.timeBonus}",
                 color = AppSecondary,
@@ -260,7 +263,7 @@ private fun ScoreRows(breakdown: ScoreBreakdown, failures: Int) {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = if (failures == 0) "No-failure bonus" else "No-failure bonus (missed)",
+                text = if (failures == 0) s.t("no_failure_bonus") else s.t("no_failure_bonus_missed"),
                 color = AppTextMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -282,7 +285,7 @@ private fun ScoreRows(breakdown: ScoreBreakdown, failures: Int) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Total", color = AppText, style = MaterialTheme.typography.titleMedium)
+            Text(s.t("total"), color = AppText, style = MaterialTheme.typography.titleMedium)
             Text(
                 breakdown.total.toString(),
                 color = AppPrimary,

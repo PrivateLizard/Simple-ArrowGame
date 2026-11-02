@@ -29,6 +29,10 @@ class SettingsRepository(context: Context) {
         it.copy(hapticEnabled = enabled)
     }
 
+    fun setLanguage(code: String) = update {
+        it.copy(language = code)
+    }
+
     private fun update(transform: (AppSettings) -> AppSettings) {
         synchronized(lock) {
             val updated = transform(_settings.value)
@@ -37,6 +41,7 @@ class SettingsRepository(context: Context) {
                 .putBoolean(KEY_NIGHT_MODE, updated.nightMode)
                 .putBoolean(KEY_SOUND, updated.soundEnabled)
                 .putBoolean(KEY_HAPTICS, updated.hapticEnabled)
+                .putString(KEY_LANGUAGE, updated.language)
                 .apply()
             _settings.value = updated
         }
@@ -49,6 +54,7 @@ class SettingsRepository(context: Context) {
         nightMode = preferences.getBoolean(KEY_NIGHT_MODE, true),
         soundEnabled = preferences.getBoolean(KEY_SOUND, true),
         hapticEnabled = preferences.getBoolean(KEY_HAPTICS, true),
+        language = preferences.getString(KEY_LANGUAGE, "") ?: "",
     )
 
     private fun normalizeMaxFailures(value: Int): Int =
@@ -64,5 +70,6 @@ class SettingsRepository(context: Context) {
         const val KEY_NIGHT_MODE = "night_mode"
         const val KEY_SOUND = "sound_enabled"
         const val KEY_HAPTICS = "haptics_enabled"
+        const val KEY_LANGUAGE = "language"
     }
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.data.model.ComplexityLevel
 import com.arrowpuzzle.game.data.model.LevelConfig
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
@@ -67,11 +68,12 @@ fun CustomModeScreen(
         if (arrowCount < 6) arrowCount = 6
     }
 
+    val s = LocalStrings.current
     ScreenBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Custom Mode",
-                subtitle = "Build your own puzzle",
+                title = s.t("custom_title"),
+                subtitle = s.t("custom_subtitle"),
                 onBack = onBack,
             )
             Column(
@@ -83,7 +85,7 @@ fun CustomModeScreen(
                 SectionCard {
                     Column {
                         SliderHeader(
-                            label = "Grid Size",
+                            label = s.t("grid_size"),
                             value = "${gridSize}x${gridSize}",
                         )
                         Slider(
@@ -99,7 +101,7 @@ fun CustomModeScreen(
                             colors = customSliderColors(),
                         )
                         Text(
-                            text = "Between 3x3 and 8x8.",
+                            text = s.t("grid_hint"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = AppTextMuted,
                         )
@@ -111,7 +113,7 @@ fun CustomModeScreen(
                 SectionCard {
                     Column {
                         SliderHeader(
-                            label = "Minimum Arrows",
+                            label = s.t("min_arrows"),
                             value = safeArrowCount.toString(),
                         )
                         Slider(
@@ -131,7 +133,7 @@ fun CustomModeScreen(
                                 color = AppTextMuted,
                             )
                             Text(
-                                text = "More arrows may be added to fill the board",
+                                text = s.t("arrows_count_hint"),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = AppTextMuted,
                             )
@@ -144,7 +146,7 @@ fun CustomModeScreen(
                 SectionCard {
                     Column {
                         SliderHeader(
-                            label = "Max Failures",
+                            label = s.t("max_failures"),
                             value = maxFailures.toString(),
                         )
                         Slider(
@@ -168,15 +170,15 @@ fun CustomModeScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "Time Limit",
+                                    text = s.t("time_limit"),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = AppText,
                                 )
                                 Text(
                                     text = if (timeLimitEnabled) {
-                                        "$timeLimitSeconds seconds"
+                                        s.f("seconds", timeLimitSeconds)
                                     } else {
-                                        "No time limit"
+                                        s.t("no_time_limit")
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = AppTextMuted,
@@ -226,16 +228,16 @@ fun CustomModeScreen(
                 SectionCard {
                     Column {
                         Text(
-                            text = "Complexity",
+                            text = s.t("complexity"),
                             style = MaterialTheme.typography.titleMedium,
                             color = AppText,
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = when (complexity) {
-                                ComplexityLevel.EASY -> "Straight connections only."
-                                ComplexityLevel.MEDIUM -> "Straight and diagonal connections."
-                                ComplexityLevel.HARD -> "Dense, fully tangled paths."
+                                ComplexityLevel.EASY -> s.t("complexity_easy")
+                                ComplexityLevel.MEDIUM -> s.t("complexity_medium")
+                                ComplexityLevel.HARD -> s.t("complexity_hard")
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = AppTextMuted,
@@ -252,7 +254,11 @@ fun CustomModeScreen(
                                     onClick = { complexityName = option.name },
                                     label = {
                                         Text(
-                                            text = option.name.lowercase().replaceFirstChar { it.uppercase() },
+                                            text = when (option) {
+                                                ComplexityLevel.EASY -> s.t("easy")
+                                                ComplexityLevel.MEDIUM -> s.t("medium")
+                                                ComplexityLevel.HARD -> s.t("hard")
+                                            },
                                             fontSize = 12.sp,
                                         )
                                     },
@@ -300,7 +306,7 @@ fun CustomModeScreen(
                     ),
                 ) {
                     Text(
-                        text = "START GAME",
+                        text = s.t("start_game"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.5.sp,

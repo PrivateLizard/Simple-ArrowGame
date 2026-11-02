@@ -76,6 +76,7 @@ import com.arrowpuzzle.game.game.GameFeedback
 import com.arrowpuzzle.game.game.GameResult
 import com.arrowpuzzle.game.game.GameState
 import com.arrowpuzzle.game.game.GeneratedLevel
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.StatPill
 import com.arrowpuzzle.game.ui.theme.AppAccent
@@ -108,6 +109,7 @@ fun GameScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val view = LocalView.current
+    val s = LocalStrings.current
 
     // Leaving a level always keeps the progress; there is no confirmation
     // dialog and no lost board. The home screen then offers to resume it.
@@ -187,8 +189,8 @@ fun GameScreen(
                 onExit = exitLevel,
             )
 
-            is GameState.Victory -> ResultTransition("ALL CLEAR", AppPrimary)
-            is GameState.Defeat -> ResultTransition("TOO MANY MISTAKES", AppDanger)
+            is GameState.Victory -> ResultTransition(s.t("all_clear"), AppPrimary)
+            is GameState.Defeat -> ResultTransition(s.t("too_many"), AppDanger)
         }
     }
 }
@@ -206,6 +208,7 @@ private fun PlayingContent(
         removedCount.toFloat() / level.arrowCount
     }
     val unlimitedFailures = config.maxFailures == AppSettings.NO_FAILURE_LIMIT
+    val s = LocalStrings.current
     val failuresTint = if (!unlimitedFailures && state.failures >= config.maxFailures - 1) {
         AppDanger
     } else {
@@ -239,13 +242,13 @@ private fun PlayingContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StatPill(
-                    label = "Cleared",
+                    label = s.t("cleared"),
                     value = "$removedCount/${level.arrowCount}",
                     tint = AppPrimary,
                     modifier = Modifier.weight(1f),
                 )
                 StatPill(
-                    label = "Failures",
+                    label = s.t("failures"),
                     value = if (unlimitedFailures) {
                         "${state.failures}/∞"
                     } else {
@@ -255,7 +258,7 @@ private fun PlayingContent(
                     modifier = Modifier.weight(1f),
                 )
                 StatPill(
-                    label = "Time",
+                    label = s.t("time"),
                     value = GridUtils.formatTime(state.elapsedSeconds),
                     tint = AppSecondary,
                     modifier = Modifier.weight(1f),
@@ -291,11 +294,12 @@ private fun GameTopBar(
     availableCount: Int,
     onExit: () -> Unit,
 ) {
+    val s = LocalStrings.current
     val level = state.level
     val title = if (level.config.isCustom) {
-        "CUSTOM PUZZLE"
+        s.t("custom_puzzle")
     } else {
-        "LEVEL ${level.config.levelId.toString().padStart(2, '0')}"
+        s.f("level_title", level.config.levelId.toString().padStart(2, '0'))
     }
     Row(
         modifier = Modifier
@@ -319,7 +323,7 @@ private fun GameTopBar(
                 letterSpacing = 1.sp,
             )
             Text(
-                text = "${level.arrowCount} arrows  /  $availableCount open",
+                text = s.f("arrows_open", level.arrowCount, availableCount),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTextMuted,
             )
@@ -841,7 +845,7 @@ private fun LoadingContent() {
         )
         Spacer(Modifier.height(18.dp))
         Text(
-            text = "Building the tangle...",
+            text = LocalStrings.current.t("building"),
             style = MaterialTheme.typography.titleMedium,
             color = AppTextMuted,
         )
@@ -858,7 +862,7 @@ private fun ErrorContent(message: String, onExit: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "Level generation failed",
+            text = LocalStrings.current.t("gen_failed"),
             style = MaterialTheme.typography.headlineMedium,
             color = AppDanger,
             textAlign = TextAlign.Center,
@@ -878,7 +882,7 @@ private fun ErrorContent(message: String, onExit: () -> Unit) {
                 contentColor = AppSurface,
             ),
         ) {
-            Text("BACK")
+            Text(LocalStrings.current.t("back"))
         }
     }
 }

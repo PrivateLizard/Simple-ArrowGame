@@ -40,6 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.game.LevelCatalog
+import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
 import com.arrowpuzzle.game.ui.theme.AppAccent
@@ -65,6 +66,7 @@ fun HomeScreen(
     onResume: () -> Unit = {},
 ) {
     var showDevOptions by rememberSaveable { mutableStateOf(false) }
+    val s = LocalStrings.current
     ScreenBackground {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             // 10 % of the screen height above and below the personal-best card.
@@ -76,7 +78,7 @@ fun HomeScreen(
                     .padding(vertical = 28.dp),
             ) {
                 Text(
-                    text = "OFFLINE  ·  NO ADS  ·  NO TRACKING",
+                    text = s.t("home_status"),
                     modifier = Modifier.padding(horizontal = 24.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = AppTextMuted,
@@ -101,7 +103,7 @@ fun HomeScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "PERSONAL BEST",
+                                    text = s.t("personal_best"),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = AppTextMuted,
                                 )
@@ -113,7 +115,7 @@ fun HomeScreen(
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "PROGRESS",
+                                    text = s.t("progress"),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = AppTextMuted,
                                 )
@@ -146,14 +148,17 @@ fun HomeScreen(
                             ),
                         ) {
                             Text(
-                                text = buildString {
-                                    append("RESUME · LEVEL ")
-                                    append(resumeLevel.toString().padStart(2, '0'))
-                                    if (resumeRemaining != null) {
-                                        append(" · ")
-                                        append(resumeRemaining)
-                                        append(" LEFT")
-                                    }
+                                text = if (resumeRemaining != null) {
+                                    s.f(
+                                        "resume",
+                                        resumeLevel.toString().padStart(2, '0'),
+                                        resumeRemaining,
+                                    )
+                                } else {
+                                    s.f(
+                                        "resume_simple",
+                                        resumeLevel.toString().padStart(2, '0'),
+                                    )
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 letterSpacing = 0.8.sp,
@@ -174,7 +179,7 @@ fun HomeScreen(
                         ),
                     ) {
                         Text(
-                            text = "PLAY",
+                            text = s.t("play"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.5.sp,
@@ -193,7 +198,7 @@ fun HomeScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
                     ) {
                         Text(
-                            text = "CUSTOM MODE",
+                            text = s.t("custom_mode"),
                             style = MaterialTheme.typography.titleMedium,
                             letterSpacing = 1.sp,
                         )
@@ -211,7 +216,7 @@ fun HomeScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
                     ) {
                         Text(
-                            text = "SETTINGS",
+                            text = s.t("settings"),
                             style = MaterialTheme.typography.titleMedium,
                             letterSpacing = 1.sp,
                         )
@@ -226,7 +231,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
-                            text = if (showDevOptions) "DEV \u25B4" else "DEV \u25BE",
+                            text = s.t("dev") + if (showDevOptions) " \u25B4" else " \u25BE",
                             style = MaterialTheme.typography.labelSmall,
                             color = AppTextMuted.copy(alpha = 0.55f),
                             letterSpacing = 1.5.sp,
@@ -245,7 +250,7 @@ fun HomeScreen(
                 Spacer(Modifier.height(26.dp))
 
                 Text(
-                    text = "Every level is generated and validated on-device.\nNo internet permission is requested.",
+                    text = s.t("footer"),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
@@ -265,14 +270,15 @@ fun HomeScreen(
  */
 @Composable
 private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
+    val s = LocalStrings.current
     val measurer = rememberTextMeasurer()
     val baseStyle = MaterialTheme.typography.headlineLarge.copy(
         fontWeight = FontWeight.Black,
         letterSpacing = 0.sp,
     )
     val title = buildAnnotatedString {
-        withStyle(SpanStyle(color = AppText)) { append("SIMPLE ") }
-        withStyle(SpanStyle(color = AppPrimary)) { append("ARROW PUZZLE") }
+        withStyle(SpanStyle(color = AppText)) { append(s.t("title_simple")) }
+        withStyle(SpanStyle(color = AppPrimary)) { append(s.t("title_arrow")) }
     }
     val baseSize = 40f
     val measured = measurer.measure(
@@ -318,17 +324,18 @@ private fun DevOptionsCard(
     highestUnlocked: Int,
     onToggleUnlockAll: (Boolean) -> Unit,
 ) {
+    val s = LocalStrings.current
     SectionCard {
         Column(Modifier.fillMaxWidth()) {
             Text(
-                text = "DEV OPTIONS",
+                text = s.t("dev_options"),
                 style = MaterialTheme.typography.labelMedium,
                 color = AppSecondary,
                 letterSpacing = 1.2.sp,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "Progress: $highestUnlocked / ${LevelCatalog.MAX_LEVEL}",
+                text = s.f("dev_progress", highestUnlocked, LevelCatalog.MAX_LEVEL),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTextMuted,
             )
@@ -344,9 +351,9 @@ private fun DevOptionsCard(
             ) {
                 Text(
                     text = if (isAllUnlocked) {
-                        "LOCK ALL LEVELS"
+                        s.t("dev_lock_all")
                     } else {
-                        "UNLOCK ALL ${LevelCatalog.MAX_LEVEL} LEVELS"
+                        s.f("dev_unlock_all", LevelCatalog.MAX_LEVEL)
                     },
                     style = MaterialTheme.typography.labelLarge,
                     letterSpacing = 0.8.sp,
@@ -355,9 +362,9 @@ private fun DevOptionsCard(
             Spacer(Modifier.height(6.dp))
             Text(
                 text = if (isAllUnlocked) {
-                    "All levels are open. Locking resets progress to level 1; best scores are kept."
+                    s.t("dev_all_open")
                 } else {
-                    "Temporary test switch. Scores and settings are never touched."
+                    s.t("dev_temp")
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTextMuted.copy(alpha = 0.8f),

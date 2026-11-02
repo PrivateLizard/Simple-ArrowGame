@@ -114,6 +114,7 @@ fun AppNavHost(container: AppContainer) {
                 onNightModeChange = viewModel::setNightMode,
                 onSoundChange = viewModel::setSoundEnabled,
                 onHapticChange = viewModel::setHapticEnabled,
+                onLanguageChange = viewModel::setLanguage,
                 onResetProgress = viewModel::resetProgress,
                 onBack = { navController.popBackStack() },
             )
