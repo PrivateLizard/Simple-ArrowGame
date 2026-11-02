@@ -94,6 +94,7 @@ import com.arrowpuzzle.game.util.GridUtils
 import com.arrowpuzzle.game.util.SoundEffects
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
@@ -383,6 +384,19 @@ private fun GameBoard(
     // Lattice points that are no longer covered by an arrow. They are the only
     // places where the dot grid is shown, so the grid is revealed step by step
     // as arrows are cleared.
+    // Render each arrow's shaft one cell further back so it starts exactly
+    // where the previous arrow's head ends. The logical routes stay untouched;
+    // this only closes the visual gap between neighbouring strokes.
+    val extendedRoutes = remember(level) {
+        val result = HashMap<Int, List<GridPoint>>(level.arrows.size)
+        level.arrows.forEachIndexed { index, arrow ->
+            val prevEnd = if (index > 0) level.arrows[index - 1].endPosition else null
+            val flush = prevEnd != null &&
+                abs(prevEnd.x - arrow.position.x) + abs(prevEnd.y - arrow.position.y) == 1
+            result[arrow.id] = if (flush) listOf(prevEnd!!) + arrow.route else arrow.route
+        }
+        result
+    }
     val revealedGridPoints = remember(level, removedIds) {
         val covered = level.arrows
             .filter { it.id !in removedIds }
@@ -574,10 +588,11 @@ private fun GameBoard(
                     0f
                 }
                 val shakeX = wrongShake + hintShake
+                val points = extendedRoutes[arrow.id] ?: arrow.route
                 val route = if (shakeX != 0f) {
-                    arrow.route.map { geometry.toOffset(it) + Offset(shakeX, 0f) }
+                    points.map { geometry.toOffset(it) + Offset(shakeX, 0f) }
                 } else {
-                    arrow.route.map(geometry::toOffset)
+                    points.map(geometry::toOffset)
                 }
                 drawPolylineArrow(
                     route = route,
@@ -592,9 +607,10 @@ private fun GameBoard(
             }
 
             if (lastCorrectArrow != null && exitValue < 0.999f) {
+                val exitPoints = extendedRoutes[lastCorrectArrow.id] ?: lastCorrectArrow.route
                 val exitRoute = exitRouteFor(
                     arrow = lastCorrectArrow,
-                    route = lastCorrectArrow.route.map(geometry::toOffset),
+                    route = exitPoints.map(geometry::toOffset),
                     progress = exitValue,
                     width = size.width,
                     height = size.height,

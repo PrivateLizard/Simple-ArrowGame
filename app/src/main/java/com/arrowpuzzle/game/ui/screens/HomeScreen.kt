@@ -1,6 +1,5 @@
 package com.arrowpuzzle.game.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,12 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,11 +55,11 @@ fun HomeScreen(
     onSettings: () -> Unit,
     isAllUnlocked: Boolean = false,
     onToggleUnlockAll: (Boolean) -> Unit = {},
+    devModeEnabled: Boolean = false,
     resumeLevel: Int? = null,
     resumeRemaining: Int? = null,
     onResume: () -> Unit = {},
 ) {
-    var showDevOptions by rememberSaveable { mutableStateOf(false) }
     val s = LocalStrings.current
     ScreenBackground {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -222,23 +216,8 @@ fun HomeScreen(
                         )
                     }
 
-                    Spacer(Modifier.height(10.dp))
-
-                    // Developer options stay hidden until the small DEV label is
-                    // tapped, so normal players never see level skipping.
-                    TextButton(
-                        onClick = { showDevOptions = !showDevOptions },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = s.t("dev") + if (showDevOptions) " \u25B4" else " \u25BE",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AppTextMuted.copy(alpha = 0.55f),
-                            letterSpacing = 1.5.sp,
-                        )
-                    }
-
-                    AnimatedVisibility(visible = showDevOptions) {
+                    if (devModeEnabled) {
+                        Spacer(Modifier.height(14.dp))
                         DevOptionsCard(
                             isAllUnlocked = isAllUnlocked,
                             highestUnlocked = highestUnlocked,

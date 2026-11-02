@@ -9,6 +9,8 @@ data class AppSettings(
     val hintsEnabled: Boolean = true,
     /** Empty means: follow the device language. */
     val language: String = "",
+    /** Hidden developer tools; toggled from the build number in Settings. */
+    val devModeEnabled: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_MAX_FAILURES = 5

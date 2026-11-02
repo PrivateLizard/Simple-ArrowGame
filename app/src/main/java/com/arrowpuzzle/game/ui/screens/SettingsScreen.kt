@@ -37,8 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arrowpuzzle.game.BuildConfig
 import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.i18n.AppLanguage
 import com.arrowpuzzle.game.i18n.LocalStrings
@@ -61,10 +63,12 @@ fun SettingsScreen(
     onHapticChange: (Boolean) -> Unit,
     onHintsChange: (Boolean) -> Unit,
     onLanguageChange: (String) -> Unit,
+    onDevModeChange: (Boolean) -> Unit,
     onResetProgress: () -> Unit,
     onBack: () -> Unit,
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var showDevDialog by remember { mutableStateOf(false) }
     val s = LocalStrings.current
 
     ScreenBackground {
@@ -205,9 +209,59 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppTextMuted.copy(alpha = 0.8f),
                 )
+
+                Text(
+                    text = s.f("build", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showDevDialog = true }
+                        .padding(vertical = 14.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AppTextMuted.copy(alpha = 0.45f),
+                    textAlign = TextAlign.Center,
+                )
             }
             }
         }
+    }
+
+    if (showDevDialog) {
+        AlertDialog(
+            onDismissRequest = { showDevDialog = false },
+            title = { Text(s.t("dev_mode_title")) },
+            text = {
+                Text(
+                    if (settings.devModeEnabled) {
+                        s.t("dev_mode_disable")
+                    } else {
+                        s.t("dev_mode_enable")
+                    },
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDevModeChange(!settings.devModeEnabled)
+                        showDevDialog = false
+                    },
+                ) {
+                    Text(
+                        if (settings.devModeEnabled) s.t("disable") else s.t("enable"),
+                        color = AppPrimary,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDevDialog = false }) {
+                    Text(s.t("cancel"), color = AppTextMuted)
+                }
+            },
+            containerColor = AppSurfaceRaised,
+            titleContentColor = AppText,
+            textContentColor = AppTextMuted,
+            shape = RoundedCornerShape(20.dp),
+        )
     }
 
     if (showResetDialog) {

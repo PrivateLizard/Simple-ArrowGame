@@ -37,6 +37,10 @@ class SettingsRepository(context: Context) {
         it.copy(language = code)
     }
 
+    fun setDevModeEnabled(enabled: Boolean) = update {
+        it.copy(devModeEnabled = enabled)
+    }
+
     private fun update(transform: (AppSettings) -> AppSettings) {
         synchronized(lock) {
             val updated = transform(_settings.value)
@@ -47,6 +51,7 @@ class SettingsRepository(context: Context) {
                 .putBoolean(KEY_HAPTICS, updated.hapticEnabled)
                 .putBoolean(KEY_HINTS, updated.hintsEnabled)
                 .putString(KEY_LANGUAGE, updated.language)
+                .putBoolean(KEY_DEV_MODE, updated.devModeEnabled)
                 .apply()
             _settings.value = updated
         }
@@ -61,6 +66,7 @@ class SettingsRepository(context: Context) {
         hapticEnabled = preferences.getBoolean(KEY_HAPTICS, true),
         hintsEnabled = preferences.getBoolean(KEY_HINTS, true),
         language = preferences.getString(KEY_LANGUAGE, "") ?: "",
+        devModeEnabled = preferences.getBoolean(KEY_DEV_MODE, false),
     )
 
     private fun normalizeMaxFailures(value: Int): Int =
@@ -78,5 +84,6 @@ class SettingsRepository(context: Context) {
         const val KEY_HAPTICS = "haptics_enabled"
         const val KEY_HINTS = "hints_enabled"
         const val KEY_LANGUAGE = "language"
+        const val KEY_DEV_MODE = "dev_mode_enabled"
     }
 }

@@ -49,6 +49,7 @@ fun AppNavHost(container: AppContainer) {
             val campaignScore by viewModel.campaignScoreTotal.collectAsState()
             val highestUnlocked by viewModel.highestUnlocked.collectAsState()
             val savedGame by viewModel.savedGame.collectAsState()
+            val homeSettings by container.settingsRepository.settings.collectAsState()
 
             HomeScreen(
                 highScore = campaignScore,
@@ -76,6 +77,7 @@ fun AppNavHost(container: AppContainer) {
                 onToggleUnlockAll = { unlocked ->
                     viewModel.setAllLevelsUnlocked(unlocked)
                 },
+                devModeEnabled = homeSettings.devModeEnabled,
             )
         }
 
@@ -116,6 +118,7 @@ fun AppNavHost(container: AppContainer) {
                 onHapticChange = viewModel::setHapticEnabled,
                 onHintsChange = viewModel::setHintsEnabled,
                 onLanguageChange = viewModel::setLanguage,
+                onDevModeChange = viewModel::setDevModeEnabled,
                 onResetProgress = viewModel::resetProgress,
                 onBack = { navController.popBackStack() },
             )

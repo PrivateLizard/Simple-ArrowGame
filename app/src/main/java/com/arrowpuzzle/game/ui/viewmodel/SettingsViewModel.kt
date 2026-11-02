@@ -25,5 +25,7 @@ class SettingsViewModel(
 
     fun setLanguage(code: String) = settingsRepository.setLanguage(code)
 
+    fun setDevModeEnabled(enabled: Boolean) = settingsRepository.setDevModeEnabled(enabled)
+
     fun resetProgress() = scoreRepository.clearProgress()
 }
