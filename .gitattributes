@@ -1,0 +1,28 @@
+# Normalize text files to LF in the repository.
+* text=auto
+
+# Windows scripts stay CRLF so they keep working when checked out on Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Unix scripts / wrapper stay LF.
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Binaries must never be line-ending converted or diffed as text.
+*.jar binary
+*.apk binary
+*.aab binary
+*.idsig binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ttf binary
+*.otf binary
+
+# Internal handoff notes are local-only; keep them out of `git archive` too.
+HANDOFF.md export-ignore
+SESSION_NOTES.md export-ignore

@@ -214,3 +214,16 @@ The app requests no runtime permissions and no INTERNET permission. There is no
 analytics SDK and no ad SDK. The only manifest permission is the signature-level
 `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` added automatically by AndroidX for
 safe internal broadcast receiver registration.
+
+## License
+
+This project is **source-available** and released under the
+[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0).
+
+You may use, study, modify and share the source code for **noncommercial**
+purposes. **Commercial use is not permitted.** See the [LICENSE](LICENSE) file
+for the full terms.
+
+Because it restricts commercial use, this is **not** an OSI-approved
+"open source" license. It is a noncommercial source-available license; the
+copyright stays with the author.
