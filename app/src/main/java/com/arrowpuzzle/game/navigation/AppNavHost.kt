@@ -77,6 +77,9 @@ fun AppNavHost(container: AppContainer) {
                 onToggleUnlockAll = { unlocked ->
                     viewModel.setAllLevelsUnlocked(unlocked)
                 },
+                onUnlockLevelCount = { count ->
+                    viewModel.setLevelsUnlocked(count)
+                },
                 devModeEnabled = homeSettings.devModeEnabled,
             )
         }

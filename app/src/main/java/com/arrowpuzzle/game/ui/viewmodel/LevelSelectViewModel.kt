@@ -6,6 +6,7 @@ import com.arrowpuzzle.game.data.ScoreRepository
 import com.arrowpuzzle.game.data.SettingsRepository
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.game.LevelCatalog
+import com.arrowpuzzle.game.scoring.ScoreCalculator
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -15,8 +16,15 @@ data class LevelItem(
     val levelId: Int,
     val openArrowCount: Int,
     val bestScore: Int,
+    /** Theoretical best score for this level (no failures, instant clear). */
+    val maxScore: Int,
     val isUnlocked: Boolean,
 )
+
+private fun maxScoreForLevel(levelId: Int): Int {
+    val arrows = LevelCatalog.expectedArrowCountForLevel(levelId)
+    return ScoreCalculator.calculate(arrows, 0.0, 0).total
+}
 
 class LevelSelectViewModel(
     scoreRepository: ScoreRepository,
@@ -31,6 +39,7 @@ class LevelSelectViewModel(
                 levelId = levelId,
                 openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
                 bestScore = bestScores[levelId] ?: 0,
+                maxScore = maxScoreForLevel(levelId),
                 isUnlocked = levelId <= highestUnlocked,
             )
         }
@@ -54,6 +63,7 @@ class LevelSelectViewModel(
                     levelId = levelId,
                     openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
                     bestScore = best[levelId] ?: 0,
+                    maxScore = maxScoreForLevel(levelId),
                     isUnlocked = levelId <= unlocked,
                 )
             }

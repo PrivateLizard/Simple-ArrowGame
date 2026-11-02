@@ -77,6 +77,18 @@ class ScoreRepository(context: Context) {
         }
     }
 
+    /** Developer helper: unlock exactly [level] levels (1..MAX_LEVEL). */
+    fun setHighestUnlocked(level: Int) {
+        synchronized(lock) {
+            val value = level.coerceIn(
+                LevelCatalog.INITIALLY_UNLOCKED_LEVELS,
+                LevelCatalog.MAX_LEVEL,
+            )
+            _highestUnlocked.value = value
+            preferences.edit().putInt(KEY_UNLOCKED, value).apply()
+        }
+    }
+
     fun clearProgress() {
         synchronized(lock) {
             val editor = preferences.edit()

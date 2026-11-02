@@ -39,9 +39,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.AppTopBar
@@ -222,18 +226,34 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 },
             )
             Spacer(Modifier.height(4.dp))
+            val status = buildAnnotatedString {
+                when {
+                    completed -> {
+                        withStyle(SpanStyle(color = AppAccent)) {
+                            append("✓  ")
+                            append(String.format(Locale.US, "%,d", level.bestScore))
+                        }
+                        withStyle(
+                            SpanStyle(
+                                color = AppTextMuted.copy(alpha = 0.55f),
+                                fontSize = 8.sp,
+                            ),
+                        ) {
+                            append(" / ")
+                            append(String.format(Locale.US, "%,d", level.maxScore))
+                        }
+                    }
+                    unlocked -> withStyle(SpanStyle(color = AppSecondary)) {
+                        append(s.t("play"))
+                    }
+                    else -> withStyle(SpanStyle(color = AppTextMuted.copy(alpha = 0.5f))) {
+                        append(s.t("locked"))
+                    }
+                }
+            }
             Text(
-                text = when {
-                    completed -> "✓  " + String.format(Locale.US, "%,d", level.bestScore)
-                    unlocked -> s.t("play")
-                    else -> s.t("locked")
-                },
+                text = status,
                 style = MaterialTheme.typography.labelSmall,
-                color = when {
-                    completed -> AppAccent
-                    unlocked -> AppSecondary
-                    else -> AppTextMuted.copy(alpha = 0.5f)
-                },
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )

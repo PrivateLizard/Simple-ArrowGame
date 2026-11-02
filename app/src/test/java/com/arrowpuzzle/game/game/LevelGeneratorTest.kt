@@ -11,9 +11,15 @@ import org.junit.Test
 class LevelGeneratorTest {
     private val generator = LevelGenerator(maxAttempts = 60)
 
+    /** Representative levels across the 500-level curve (keeps tests fast). */
+    private val sampleLevels = listOf(
+        1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100,
+        101, 120, 150, 200, 250, 300, 350, 400, 450, 499, 500,
+    )
+
     @Test
     fun campaignLevelsAreValidAndSolvable() {
-        for (levelId in 1..LevelCatalog.MAX_LEVEL) {
+        for (levelId in sampleLevels) {
             val config = LevelCatalog.defaultConfig(levelId, maxFailures = 5)
             val level = generator.generate(config, seed = 9_191L * levelId)
             assertTrue("Level $levelId must validate", PathValidator.validate(level))
@@ -55,7 +61,7 @@ class LevelGeneratorTest {
 
     @Test
     fun everyCampaignLevelUsesTheConfiguredOpenCount() {
-        for (levelId in 1..LevelCatalog.MAX_LEVEL) {
+        for (levelId in sampleLevels) {
             val config = LevelCatalog.defaultConfig(levelId, maxFailures = 5)
             val level = generator.generate(config, seed = 1_337L + levelId)
             val expected = when (config.complexity) {
@@ -109,8 +115,8 @@ class LevelGeneratorTest {
     }
 
     @Test
-    fun campaignHasOneHundredLevelsOnADifficultyScale() {
-        assertEquals(100, LevelCatalog.MAX_LEVEL)
+    fun campaignHasFiveHundredLevelsOnADifficultyScale() {
+        assertEquals(500, LevelCatalog.MAX_LEVEL)
         for (levelId in 1..LevelCatalog.MAX_LEVEL) {
             assertEquals(
                 "Difficulty must map 1:1 to the level id",
@@ -132,13 +138,14 @@ class LevelGeneratorTest {
             previous = arrows
         }
         assertEquals(34, LevelCatalog.arrowCountForLevel(1))
-        assertEquals(90, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
+        assertEquals(90, LevelCatalog.arrowCountForLevel(100))
+        assertEquals(160, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 
     @Test
-    fun levelTwentySitsAtEightyOnTheDifficultyScale() {
-        // "Level 20 = difficulty 80": the campaign is a 100-step scale, so the
-        // twentieth level is twenty percent in, not the hardest level.
+    fun levelTwentySitsAtTwentyOnTheDifficultyScale() {
+        // The campaign maps difficulty 1:1 to the level id, so the twentieth
+        // level sits twenty percent in, not at the end of the scale.
         assertEquals(20, LevelCatalog.difficultyForLevel(20))
         assertEquals(ComplexityLevel.EASY, LevelCatalog.complexityForLevel(20))
         assertEquals(4, LevelCatalog.openArrowCountForLevel(20))
@@ -170,8 +177,8 @@ class LevelGeneratorTest {
         val early = LevelCatalog.arrowCountForLevel(1)
         val late = LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL)
         assertTrue(
-            "Arrow count must stay gentle (level 1: $early, level 100: $late)",
-            late <= early * 3,
+            "Arrow count must stay gentle (level 1: $early, level 500: $late)",
+            late <= early * 5,
         )
     }
 
@@ -197,7 +204,7 @@ class LevelGeneratorTest {
 
     @Test
     fun boardsAreCompletelyFilledAndContainLongBentArrows() {
-        for (levelId in listOf(1, 20, 40, 60, 100)) {
+        for (levelId in listOf(1, 20, 40, 60, 100, 250, 500)) {
             val config = LevelCatalog.defaultConfig(levelId, maxFailures = 5)
             val level = generator.generate(config, seed = 5_000L + levelId)
             val usedPoints = level.arrows

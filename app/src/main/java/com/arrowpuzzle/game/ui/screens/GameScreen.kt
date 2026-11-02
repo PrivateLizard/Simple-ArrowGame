@@ -355,6 +355,13 @@ private const val START_BOARD_SCALE = 0.85f
 private const val MAX_BOARD_SCALE = 5f
 
 /**
+ * When zoomed in, the board may be panned until this fraction of the viewport
+ * is visible as free space on the leading/trailing side. This prevents the
+ * puzzle from being pushed flush against the screen edge.
+ */
+private const val PAN_MARGIN_FRACTION = 0.07f
+
+/**
  * Hint timing: the first hint comes after this long without a successful move,
  * subsequent ones after the repeat delay until the player makes a successful
  * move (which restarts the effect and therefore the first delay).
@@ -711,10 +718,25 @@ private fun clampBoardOffset(offset: Offset, scale: Float, viewport: IntSize): O
     val height = viewport.height.toFloat()
     val rangeX = width - width * scale
     val rangeY = height - height * scale
-    val minX = min(0f, rangeX)
-    val maxX = max(0f, rangeX)
-    val minY = min(0f, rangeY)
-    val maxY = max(0f, rangeY)
+    val marginX = width * PAN_MARGIN_FRACTION
+    val marginY = height * PAN_MARGIN_FRACTION
+    val minX: Float
+    val maxX: Float
+    val minY: Float
+    val maxY: Float
+    if (scale > 1f) {
+        // Keep a strip of background visible so the puzzle never sits flush
+        // against the screen edge while zoomed in.
+        minX = rangeX - marginX
+        maxX = marginX
+        minY = rangeY - marginY
+        maxY = marginY
+    } else {
+        minX = min(0f, rangeX)
+        maxX = max(0f, rangeX)
+        minY = min(0f, rangeY)
+        maxY = max(0f, rangeY)
+    }
     return Offset(
         x = offset.x.coerceIn(minX, maxX),
         y = offset.y.coerceIn(minY, maxY),

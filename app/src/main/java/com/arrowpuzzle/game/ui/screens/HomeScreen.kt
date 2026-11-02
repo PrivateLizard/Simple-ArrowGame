@@ -19,8 +19,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,9 +48,11 @@ import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSecondary
 import com.arrowpuzzle.game.ui.theme.AppSurface
+import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -55,6 +63,7 @@ fun HomeScreen(
     onSettings: () -> Unit,
     isAllUnlocked: Boolean = false,
     onToggleUnlockAll: (Boolean) -> Unit = {},
+    onUnlockLevelCount: (Int) -> Unit = {},
     devModeEnabled: Boolean = false,
     resumeLevel: Int? = null,
     resumeRemaining: Int? = null,
@@ -222,6 +231,7 @@ fun HomeScreen(
                             isAllUnlocked = isAllUnlocked,
                             highestUnlocked = highestUnlocked,
                             onToggleUnlockAll = onToggleUnlockAll,
+                            onUnlockLevelCount = onUnlockLevelCount,
                         )
                     }
                 }
@@ -302,8 +312,12 @@ private fun DevOptionsCard(
     isAllUnlocked: Boolean,
     highestUnlocked: Int,
     onToggleUnlockAll: (Boolean) -> Unit,
+    onUnlockLevelCount: (Int) -> Unit,
 ) {
     val s = LocalStrings.current
+    var target by remember(highestUnlocked) {
+        mutableFloatStateOf(highestUnlocked.toFloat())
+    }
     SectionCard {
         Column(Modifier.fillMaxWidth()) {
             Text(
@@ -347,6 +361,25 @@ private fun DevOptionsCard(
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTextMuted.copy(alpha = 0.8f),
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = s.f("dev_unlock_n", target.roundToInt()),
+                style = MaterialTheme.typography.bodySmall,
+                color = AppTextMuted,
+            )
+            Slider(
+                value = target,
+                onValueChange = { target = it },
+                onValueChangeFinished = {
+                    onUnlockLevelCount(target.roundToInt())
+                },
+                valueRange = 1f..LevelCatalog.MAX_LEVEL.toFloat(),
+                colors = SliderDefaults.colors(
+                    thumbColor = AppAccent,
+                    activeTrackColor = AppAccent,
+                    inactiveTrackColor = AppSurfaceRaised,
+                ),
             )
         }
     }

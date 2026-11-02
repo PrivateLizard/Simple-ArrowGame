@@ -25,4 +25,9 @@ class HomeViewModel(
     fun setAllLevelsUnlocked(unlocked: Boolean) {
         scoreRepository.setAllLevelsUnlocked(unlocked, LevelCatalog.MAX_LEVEL)
     }
+
+    /** Developer helper: unlock exactly [count] levels. */
+    fun setLevelsUnlocked(count: Int) {
+        scoreRepository.setHighestUnlocked(count)
+    }
 }
