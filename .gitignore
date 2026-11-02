@@ -23,3 +23,7 @@ dist/
 *.apk
 *.idsig
 *.aab
+
+# --- Private interne Notizen: bleiben lokal, nicht im Repo ---
+HANDOFF.md
+SESSION_NOTES.md
