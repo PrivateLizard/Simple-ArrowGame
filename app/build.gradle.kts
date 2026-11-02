@@ -11,7 +11,8 @@ android {
         applicationId = "com.arrowpuzzle.game"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
+        // Internal build number shown in Settings. Bump by 1 for every release.
+        versionCode = 2
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
     }

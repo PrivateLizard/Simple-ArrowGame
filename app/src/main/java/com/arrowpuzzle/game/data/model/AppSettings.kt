@@ -13,7 +13,7 @@ data class AppSettings(
     val devModeEnabled: Boolean = false,
 ) {
     companion object {
-        const val DEFAULT_MAX_FAILURES = 5
+        const val DEFAULT_MAX_FAILURES = 3
 
         /**
          * Sentinel for "failures off": the failure counter never reaches this

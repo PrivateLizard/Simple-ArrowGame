@@ -54,7 +54,7 @@ fun CustomModeScreen(
 ) {
     var gridSize by rememberSaveable { mutableIntStateOf(5) }
     var arrowCount by rememberSaveable { mutableIntStateOf(12) }
-    var maxFailures by rememberSaveable { mutableIntStateOf(5) }
+    var maxFailures by rememberSaveable { mutableIntStateOf(3) }
     var timeLimitEnabled by rememberSaveable { mutableStateOf(false) }
     var timeLimitSeconds by rememberSaveable { mutableIntStateOf(60) }
     var complexityName by rememberSaveable { mutableStateOf(ComplexityLevel.MEDIUM.name) }

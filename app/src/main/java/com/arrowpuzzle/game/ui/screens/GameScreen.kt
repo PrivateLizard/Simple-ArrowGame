@@ -354,8 +354,13 @@ private const val START_BOARD_SCALE = 0.85f
 
 private const val MAX_BOARD_SCALE = 5f
 
-/** Temporary hint: one open arrow wiggles every this many milliseconds. */
-private const val HINT_INTERVAL_MILLIS = 10_000L
+/**
+ * Hint timing: the first hint comes after this long without a successful move,
+ * subsequent ones after the repeat delay until the player makes a successful
+ * move (which restarts the effect and therefore the first delay).
+ */
+private const val HINT_FIRST_DELAY_MILLIS = 20_000L
+private const val HINT_REPEAT_DELAY_MILLIS = 10_000L
 private const val HINT_SHAKE_MILLIS = 650
 private const val HINT_SHAKE_FREQUENCY = 40f
 
@@ -398,16 +403,18 @@ private fun GameBoard(
         }
     }
 
-    // Temporary hint loop: every 10 s one of the currently open arrows wiggles
-    // briefly. It restarts after every removed arrow, so the timer is measured
-    // from the last progress. Purely visual; no state/score effect.
+    // Temporary hint loop: first hint after 20 s without a successful move,
+    // then one every 10 s. A successful removal changes removedIds, restarts
+    // this effect and resets the delay to 20 s. Purely visual; no score effect.
     LaunchedEffect(level, removedIds, hintsEnabled) {
         // Stop any running wiggle when hints are switched off or the board changes.
         hintArrowId = null
         hintAnim.snapTo(1f)
         if (!hintsEnabled) return@LaunchedEffect
+        var firstHint = true
         while (true) {
-            delay(HINT_INTERVAL_MILLIS)
+            delay(if (firstHint) HINT_FIRST_DELAY_MILLIS else HINT_REPEAT_DELAY_MILLIS)
+            firstHint = false
             val available = ArrowGeometry.availableArrows(level, removedIds)
             if (available.isNotEmpty()) {
                 hintArrowId = available.random().id

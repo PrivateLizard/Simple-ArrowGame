@@ -134,28 +134,24 @@ fun SettingsScreen(
                     Column {
                         ToggleRow(
                             title = s.t("night_mode"),
-                            description = s.t("night_mode_desc"),
                             checked = settings.nightMode,
                             onCheckedChange = onNightModeChange,
                         )
                         Spacer(Modifier.height(16.dp))
                         ToggleRow(
                             title = s.t("sound"),
-                            description = s.t("sound_desc"),
                             checked = settings.soundEnabled,
                             onCheckedChange = onSoundChange,
                         )
                         Spacer(Modifier.height(16.dp))
                         ToggleRow(
                             title = s.t("haptics"),
-                            description = s.t("haptics_desc"),
                             checked = settings.hapticEnabled,
                             onCheckedChange = onHapticChange,
                         )
                         Spacer(Modifier.height(16.dp))
                         ToggleRow(
                             title = s.t("hints"),
-                            description = s.t("hints_desc"),
                             checked = settings.hintsEnabled,
                             onCheckedChange = onHintsChange,
                         )
@@ -211,7 +207,7 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = s.f("build", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+                    text = s.f("build", BuildConfig.VERSION_CODE),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
@@ -372,7 +368,7 @@ private fun LanguageOptions(
 @Composable
 private fun ToggleRow(
     title: String,
-    description: String,
+    description: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -387,11 +383,13 @@ private fun ToggleRow(
                 style = MaterialTheme.typography.titleMedium,
                 color = AppText,
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted,
-            )
+            if (description != null) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppTextMuted,
+                )
+            }
         }
         Switch(
             checked = checked,
