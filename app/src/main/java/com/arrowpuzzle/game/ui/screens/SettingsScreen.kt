@@ -59,6 +59,7 @@ fun SettingsScreen(
     onNightModeChange: (Boolean) -> Unit,
     onSoundChange: (Boolean) -> Unit,
     onHapticChange: (Boolean) -> Unit,
+    onHintsChange: (Boolean) -> Unit,
     onLanguageChange: (String) -> Unit,
     onResetProgress: () -> Unit,
     onBack: () -> Unit,
@@ -146,6 +147,13 @@ fun SettingsScreen(
                             description = s.t("haptics_desc"),
                             checked = settings.hapticEnabled,
                             onCheckedChange = onHapticChange,
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        ToggleRow(
+                            title = s.t("hints"),
+                            description = s.t("hints_desc"),
+                            checked = settings.hintsEnabled,
+                            onCheckedChange = onHintsChange,
                         )
                     }
                 }

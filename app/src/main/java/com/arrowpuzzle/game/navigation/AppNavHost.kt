@@ -114,6 +114,7 @@ fun AppNavHost(container: AppContainer) {
                 onNightModeChange = viewModel::setNightMode,
                 onSoundChange = viewModel::setSoundEnabled,
                 onHapticChange = viewModel::setHapticEnabled,
+                onHintsChange = viewModel::setHintsEnabled,
                 onLanguageChange = viewModel::setLanguage,
                 onResetProgress = viewModel::resetProgress,
                 onBack = { navController.popBackStack() },
@@ -153,9 +154,11 @@ fun AppNavHost(container: AppContainer) {
                 },
             )
 
+            val gameSettings by container.settingsRepository.settings.collectAsState()
             GameScreen(
                 viewModel = viewModel,
                 soundEffects = container.soundEffects,
+                hintsEnabled = gameSettings.hintsEnabled,
                 onExit = { navController.popBackStack() },
                 onVictory = { result ->
                     navController.navigate(AppRoutes.victory(result)) {

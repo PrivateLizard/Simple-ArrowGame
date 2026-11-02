@@ -103,6 +103,7 @@ import kotlin.math.sin
 fun GameScreen(
     viewModel: GameViewModel,
     soundEffects: SoundEffects,
+    hintsEnabled: Boolean = true,
     onExit: () -> Unit,
     onVictory: (GameResult) -> Unit,
     onDefeat: (GameState.Defeat, LevelConfig) -> Unit,
@@ -187,6 +188,7 @@ fun GameScreen(
                 state = current,
                 onArrowTap = viewModel::onArrowClick,
                 onExit = exitLevel,
+                hintsEnabled = hintsEnabled,
             )
 
             is GameState.Victory -> ResultTransition(s.t("all_clear"), AppPrimary)
@@ -200,6 +202,7 @@ private fun PlayingContent(
     state: GameState.Playing,
     onArrowTap: (Int) -> Unit,
     onExit: () -> Unit,
+    hintsEnabled: Boolean,
 ) {
     val level = state.level
     val config = level.config
@@ -225,6 +228,7 @@ private fun PlayingContent(
             level = level,
             state = state,
             onArrowTap = onArrowTap,
+            hintsEnabled = hintsEnabled,
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -360,6 +364,7 @@ private fun GameBoard(
     level: GeneratedLevel,
     state: GameState.Playing,
     onArrowTap: (Int) -> Unit,
+    hintsEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val palette = ArrowTheme.colors
@@ -396,7 +401,11 @@ private fun GameBoard(
     // Temporary hint loop: every 10 s one of the currently open arrows wiggles
     // briefly. It restarts after every removed arrow, so the timer is measured
     // from the last progress. Purely visual; no state/score effect.
-    LaunchedEffect(level, removedIds) {
+    LaunchedEffect(level, removedIds, hintsEnabled) {
+        // Stop any running wiggle when hints are switched off or the board changes.
+        hintArrowId = null
+        hintAnim.snapTo(1f)
+        if (!hintsEnabled) return@LaunchedEffect
         while (true) {
             delay(HINT_INTERVAL_MILLIS)
             val available = ArrowGeometry.availableArrows(level, removedIds)

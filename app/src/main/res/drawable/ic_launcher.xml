@@ -17,14 +17,24 @@
             android:fillColor="#0B1020"
             android:pathData="M0,54h108v54H0z" />
 
-        <!-- Light mode: dark arrow pointing left -->
+        <!-- Light mode: thin shaft + triangular head, like the in-game arrows -->
+        <path
+            android:pathData="M82,30 L48,30"
+            android:strokeColor="#1D3557"
+            android:strokeWidth="6"
+            android:strokeLineCap="round" />
         <path
             android:fillColor="#1D3557"
-            android:pathData="M74,22 H48 V12 L30,30 L48,48 V38 H74 Z" />
+            android:pathData="M28,30 L48,19 L48,41 Z" />
 
-        <!-- Dark mode: bright arrow pointing right -->
+        <!-- Dark mode: thin shaft + triangular head, pointing right -->
+        <path
+            android:pathData="M26,78 L62,78"
+            android:strokeColor="#39D98A"
+            android:strokeWidth="6"
+            android:strokeLineCap="round" />
         <path
             android:fillColor="#39D98A"
-            android:pathData="M34,70 H60 V60 L78,78 L60,96 V86 H34 Z" />
+            android:pathData="M80,78 L62,67 L62,89 Z" />
     </group>
 </vector>

@@ -5,6 +5,8 @@ data class AppSettings(
     val nightMode: Boolean = true,
     val soundEnabled: Boolean = true,
     val hapticEnabled: Boolean = true,
+    /** Periodic visual hint (one open arrow wiggles). */
+    val hintsEnabled: Boolean = true,
     /** Empty means: follow the device language. */
     val language: String = "",
 ) {
