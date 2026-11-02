@@ -2,6 +2,7 @@ package com.arrowpuzzle.game.data
 
 import android.content.Context
 import com.arrowpuzzle.game.data.model.ScoreRecord
+import com.arrowpuzzle.game.game.LevelCatalog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,10 @@ class ScoreRepository(context: Context) {
     private val _campaignScoreTotal = MutableStateFlow(campaignTotal(_bestScores.value))
     val campaignScoreTotal: StateFlow<Int> = _campaignScoreTotal.asStateFlow()
 
-    private val _highestUnlocked = MutableStateFlow(preferences.getInt(KEY_UNLOCKED, 1).coerceAtLeast(1))
+    private val _highestUnlocked = MutableStateFlow(
+        preferences.getInt(KEY_UNLOCKED, LevelCatalog.INITIALLY_UNLOCKED_LEVELS)
+            .coerceAtLeast(LevelCatalog.INITIALLY_UNLOCKED_LEVELS),
+    )
     val highestUnlocked: StateFlow<Int> = _highestUnlocked.asStateFlow()
 
     /**
@@ -49,7 +53,7 @@ class ScoreRepository(context: Context) {
             }
 
             if (record.levelId > 0) {
-                val nextLevel = record.levelId + 1
+                val nextLevel = record.levelId + LevelCatalog.LEVELS_UNLOCKED_PER_CLEAR
                 if (nextLevel > _highestUnlocked.value) {
                     _highestUnlocked.value = nextLevel
                     preferences.edit().putInt(KEY_UNLOCKED, nextLevel).apply()
@@ -86,7 +90,7 @@ class ScoreRepository(context: Context) {
             _bestScores.value = emptyMap()
             _campaignScoreTotal.value = 0
             _globalHighScore.value = 0
-            _highestUnlocked.value = 1
+            _highestUnlocked.value = LevelCatalog.INITIALLY_UNLOCKED_LEVELS
         }
     }
 

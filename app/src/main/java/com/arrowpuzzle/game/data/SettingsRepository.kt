@@ -55,7 +55,7 @@ class SettingsRepository(context: Context) {
         if (value == AppSettings.NO_FAILURE_LIMIT) {
             AppSettings.NO_FAILURE_LIMIT
         } else {
-            value.coerceIn(1, 99)
+            value.coerceIn(0, 99)
         }
 
     private companion object {

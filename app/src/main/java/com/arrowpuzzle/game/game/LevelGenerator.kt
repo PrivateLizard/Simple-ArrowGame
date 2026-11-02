@@ -24,8 +24,8 @@ class LevelGenerator(
     fun generate(config: LevelConfig, seed: Long = System.nanoTime()): GeneratedLevel {
         require(config.arrowCount in 1..200) { "Arrow count must be between 1 and 200" }
         require(
-            config.maxFailures in 1..99 || config.maxFailures == AppSettings.NO_FAILURE_LIMIT,
-        ) { "Max failures must be between 1 and 99, or off" }
+            config.maxFailures in 0..99 || config.maxFailures == AppSettings.NO_FAILURE_LIMIT,
+        ) { "Max failures must be between 0 and 99, or off" }
 
         val random = Random(seed)
         val layoutSize = layoutSizeFor(config)

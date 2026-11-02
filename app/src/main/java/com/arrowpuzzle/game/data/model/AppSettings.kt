@@ -15,7 +15,7 @@ data class AppSettings(
          */
         const val NO_FAILURE_LIMIT = Int.MAX_VALUE
 
-        /** The fixed choices offered in Settings. */
-        val FAILURE_OPTIONS = listOf(1, 2, 3, 5, 10, 20, NO_FAILURE_LIMIT)
+        /** The fixed choices offered in Settings. 0 means "no mistake allowed". */
+        val FAILURE_OPTIONS = listOf(0, 1, 2, 3, 5, 10, 20, NO_FAILURE_LIMIT)
     }
 }

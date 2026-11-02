@@ -346,6 +346,11 @@ private const val START_BOARD_SCALE = 0.85f
 
 private const val MAX_BOARD_SCALE = 5f
 
+/** Temporary hint: one open arrow wiggles every this many milliseconds. */
+private const val HINT_INTERVAL_MILLIS = 10_000L
+private const val HINT_SHAKE_MILLIS = 650
+private const val HINT_SHAKE_FREQUENCY = 40f
+
 @Composable
 private fun GameBoard(
     level: GeneratedLevel,
@@ -357,6 +362,8 @@ private fun GameBoard(
     // Drives both the red tint and the shake of a wrongly tapped arrow.
     val wrongAnim = remember { Animatable(0f) }
     val exitProgress = remember { Animatable(1f) }
+    val hintAnim = remember { Animatable(1f) }
+    var hintArrowId by remember { mutableStateOf<Int?>(null) }
     var boardScale by remember { mutableFloatStateOf(START_BOARD_SCALE) }
     var boardOffset by remember { mutableStateOf(Offset.Zero) }
     var viewportSize by remember { mutableStateOf(IntSize.Zero) }
@@ -378,6 +385,25 @@ private fun GameBoard(
                     val point = GridPoint(gx, gy)
                     if (point !in covered) add(point)
                 }
+            }
+        }
+    }
+
+    // Temporary hint loop: every 10 s one of the currently open arrows wiggles
+    // briefly. It restarts after every removed arrow, so the timer is measured
+    // from the last progress. Purely visual; no state/score effect.
+    LaunchedEffect(level, removedIds) {
+        while (true) {
+            delay(HINT_INTERVAL_MILLIS)
+            val available = ArrowGeometry.availableArrows(level, removedIds)
+            if (available.isNotEmpty()) {
+                hintArrowId = available.random().id
+                hintAnim.snapTo(0f)
+                hintAnim.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(HINT_SHAKE_MILLIS, easing = LinearEasing),
+                )
+                hintArrowId = null
             }
         }
     }
@@ -417,6 +443,7 @@ private fun GameBoard(
     }
 
     val wrongProgress = wrongAnim.value
+    val hintProgress = hintAnim.value
     val wrongAlphaValue = when {
         wrongProgress <= 0f -> 0f
         wrongProgress < 0.55f -> 1f
@@ -522,11 +549,18 @@ private fun GameBoard(
                 // the red tint keeps its existing timing.
                 val shakeWindow = 0.35f
                 val shakeProgress = (wrongProgress / shakeWindow).coerceIn(0f, 1f)
-                val shakeX = if (isWrong && wrongProgress < shakeWindow) {
+                val wrongShake = if (isWrong && wrongProgress < shakeWindow) {
                     sin(wrongProgress * 52f) * geometry.spacing * 0.22f * (1f - shakeProgress)
                 } else {
                     0f
                 }
+                val hintShake = if (hintArrowId == arrow.id && hintProgress < 1f) {
+                    sin(hintProgress * HINT_SHAKE_FREQUENCY) *
+                        geometry.spacing * 0.18f * (1f - hintProgress)
+                } else {
+                    0f
+                }
+                val shakeX = wrongShake + hintShake
                 val route = if (shakeX != 0f) {
                     arrow.route.map { geometry.toOffset(it) + Offset(shakeX, 0f) }
                 } else {

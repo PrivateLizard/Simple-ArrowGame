@@ -21,6 +21,22 @@ import kotlin.math.roundToInt
 object LevelCatalog {
     const val MAX_LEVEL = 100
 
+    /**
+     * Unlock rule for the campaign.
+     *
+     * Levels unlock sequentially: [INITIALLY_UNLOCKED_LEVELS] levels are open
+     * at the start, and clearing a level unlocks the next
+     * [LEVELS_UNLOCKED_PER_CLEAR] levels. Only levels up to
+     * [lastUnlockedLevel] are playable, so the player never has the whole
+     * campaign open at once. Increase the constants to unlock in batches.
+     */
+    const val INITIALLY_UNLOCKED_LEVELS = 1
+    const val LEVELS_UNLOCKED_PER_CLEAR = 1
+
+    /** Highest playable level id for a given progress value. */
+    fun lastUnlockedLevel(highestUnlocked: Int): Int =
+        highestUnlocked.coerceIn(INITIALLY_UNLOCKED_LEVELS, MAX_LEVEL)
+
     /** Difficulty values used for the level-difficulty badge and the tuning. */
     const val MAX_DIFFICULTY = 100
 
@@ -100,7 +116,7 @@ object LevelCatalog {
             maxFailures = if (maxFailures == AppSettings.NO_FAILURE_LIMIT) {
                 AppSettings.NO_FAILURE_LIMIT
             } else {
-                maxFailures.coerceIn(1, 99)
+                maxFailures.coerceIn(0, 99)
             },
             timeLimitSeconds = null,
             complexity = complexityForLevel(safeLevel),
