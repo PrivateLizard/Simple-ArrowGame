@@ -80,8 +80,8 @@ fun LevelSelectScreen(
     }
 
     // Start a few screens above the current level. Entering the screen then
-    // shows a visible, smooth scroll of the last stretch instead of a huge
-    // 500-item animation (or an instant teleport).
+    // shows a visible, smooth scroll of the last stretch instead of a long
+    // animation across the whole list (or an instant teleport).
     val initialIndex = remember(currentIndex) { (currentIndex - 30).coerceAtLeast(0) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = initialIndex)
     val scope = rememberCoroutineScope()
@@ -271,38 +271,40 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                     else -> AppTextMuted.copy(alpha = 0.45f)
                 },
             )
-            Spacer(Modifier.height(4.dp))
-            val status = buildAnnotatedString {
-                when {
-                    completed -> {
+            Spacer(Modifier.height(if (completed) 2.dp else 4.dp))
+            if (completed) {
+                Text(
+                    text = buildAnnotatedString {
                         withStyle(SpanStyle(color = AppAccent)) {
                             append("✓  ")
                             append(String.format(Locale.US, "%,d", level.bestScore))
                         }
-                        withStyle(
-                            SpanStyle(
-                                color = AppTextMuted.copy(alpha = 0.55f),
-                                fontSize = 8.sp,
-                            ),
-                        ) {
-                            append(" / ")
-                            append(String.format(Locale.US, "%,d", level.maxScore))
-                        }
-                    }
-                    unlocked -> withStyle(SpanStyle(color = AppSecondary)) {
-                        append(s.t("play"))
-                    }
-                    else -> withStyle(SpanStyle(color = AppTextMuted.copy(alpha = 0.5f))) {
-                        append(s.t("locked"))
-                    }
-                }
+                    },
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+                Text(
+                    text = "/ " + String.format(Locale.US, "%,d", level.maxScore),
+                    fontSize = 8.sp,
+                    color = AppTextMuted.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+            } else {
+                Text(
+                    text = if (unlocked) s.t("play") else s.t("locked"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (unlocked) {
+                        AppSecondary
+                    } else {
+                        AppTextMuted.copy(alpha = 0.5f)
+                    },
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
             }
-            Text(
-                text = status,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-            )
         }
     }
 }

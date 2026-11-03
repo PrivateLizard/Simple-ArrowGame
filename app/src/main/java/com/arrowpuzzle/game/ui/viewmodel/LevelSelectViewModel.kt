@@ -34,7 +34,7 @@ class LevelSelectViewModel(
         scoreRepository.bestScores,
         scoreRepository.highestUnlocked,
     ) { bestScores, highestUnlocked ->
-        (1..LevelCatalog.MAX_LEVEL).map { levelId ->
+        (1..LevelCatalog.visibleLevelCount(highestUnlocked)).map { levelId ->
             LevelItem(
                 levelId = levelId,
                 openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
@@ -58,7 +58,7 @@ class LevelSelectViewModel(
         fun buildInitialLevels(scoreRepository: ScoreRepository): List<LevelItem> {
             val best = scoreRepository.bestScores.value
             val unlocked = scoreRepository.highestUnlocked.value
-            return (1..LevelCatalog.MAX_LEVEL).map { levelId ->
+            return (1..LevelCatalog.visibleLevelCount(unlocked)).map { levelId ->
                 LevelItem(
                     levelId = levelId,
                     openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),

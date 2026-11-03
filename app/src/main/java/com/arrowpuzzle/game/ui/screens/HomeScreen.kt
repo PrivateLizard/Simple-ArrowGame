@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,26 +19,28 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
 import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
@@ -48,11 +50,9 @@ import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSecondary
 import com.arrowpuzzle.game.ui.theme.AppSurface
-import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
 import java.util.Locale
-import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -315,9 +315,15 @@ private fun DevOptionsCard(
     onUnlockLevelCount: (Int) -> Unit,
 ) {
     val s = LocalStrings.current
-    var target by remember(highestUnlocked) {
-        mutableFloatStateOf(highestUnlocked.toFloat())
+    val focusManager = LocalFocusManager.current
+    var levelText by remember(highestUnlocked) {
+        mutableStateOf(
+            highestUnlocked.coerceIn(1, LevelCatalog.MAX_LEVEL).toString(),
+        )
     }
+    val requestedLevel = levelText.toIntOrNull()
+    val inputValid = requestedLevel != null &&
+        requestedLevel in 1..LevelCatalog.MAX_LEVEL
     SectionCard {
         Column(Modifier.fillMaxWidth()) {
             Text(
@@ -364,23 +370,53 @@ private fun DevOptionsCard(
             )
             Spacer(Modifier.height(14.dp))
             Text(
-                text = s.f("dev_unlock_n", target.roundToInt()),
+                text = s.f("dev_unlock_to", LevelCatalog.MAX_LEVEL),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTextMuted,
             )
-            Slider(
-                value = target,
-                onValueChange = { target = it },
-                onValueChangeFinished = {
-                    onUnlockLevelCount(target.roundToInt())
-                },
-                valueRange = 1f..LevelCatalog.MAX_LEVEL.toFloat(),
-                colors = SliderDefaults.colors(
-                    thumbColor = AppAccent,
-                    activeTrackColor = AppAccent,
-                    inactiveTrackColor = AppSurfaceRaised,
-                ),
-            )
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedTextField(
+                    value = levelText,
+                    onValueChange = { input ->
+                        levelText = input.filter { it.isDigit() }.take(4)
+                    },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    isError = levelText.isNotEmpty() && !inputValid,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    label = { Text(s.t("dev_level")) },
+                )
+                Spacer(Modifier.width(10.dp))
+                Button(
+                    onClick = {
+                        requestedLevel?.let { level ->
+                            onUnlockLevelCount(
+                                level.coerceIn(1, LevelCatalog.MAX_LEVEL),
+                            )
+                            focusManager.clearFocus()
+                        }
+                    },
+                    enabled = inputValid,
+                    modifier = Modifier.height(56.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppAccent,
+                        contentColor = AppSurface,
+                    ),
+                ) {
+                    Text(
+                        text = s.t("dev_apply"),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
         }
     }
 }

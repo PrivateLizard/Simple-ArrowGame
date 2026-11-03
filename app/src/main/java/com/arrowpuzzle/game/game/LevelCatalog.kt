@@ -19,7 +19,7 @@ import kotlin.math.roundToInt
  * goal for the finale is a tangled board that is still solvable by reasoning.
  */
 object LevelCatalog {
-    const val MAX_LEVEL = 500
+    const val MAX_LEVEL = 2000
 
     /**
      * Unlock rule for the campaign.
@@ -37,11 +37,30 @@ object LevelCatalog {
     fun lastUnlockedLevel(highestUnlocked: Int): Int =
         highestUnlocked.coerceIn(INITIALLY_UNLOCKED_LEVELS, MAX_LEVEL)
 
+    /**
+     * Number of tiles the level list shows: all unlocked levels plus the locked
+     * ones up to the next full hundred. This keeps the list short instead of
+     * rendering thousands of locked entries at once.
+     */
+    fun visibleLevelCount(highestUnlocked: Int): Int {
+        val safe = highestUnlocked.coerceIn(1, MAX_LEVEL)
+        return (((safe / LEVEL_BLOCK) + 1) * LEVEL_BLOCK)
+            .coerceAtMost(MAX_LEVEL)
+    }
+
+    private const val LEVEL_BLOCK = 100
+
     /** Difficulty values used for the level-difficulty badge and the tuning. */
     const val MAX_DIFFICULTY = MAX_LEVEL
 
     /** The original 100-level campaign; its curve stays exactly as it was. */
     private const val LEGACY_MAX_LEVEL = 100
+
+    /**
+     * Level at which the arrow count reaches [FINAL_ARROWS]. Levels above this
+     * keep the same density; more arrows would only make the board easier.
+     */
+    private const val CURVE_MAX_LEVEL = 500
 
     /** Arrow count of the very first level. */
     private const val BASE_ARROWS = 34
@@ -50,7 +69,7 @@ object LevelCatalog {
     private const val ARROWS_AT_LEGACY_MAX = 90
 
     /**
-     * Arrow count at [MAX_LEVEL]. Kept modest on purpose: see
+     * Arrow count at [CURVE_MAX_LEVEL] and above. Kept modest on purpose: see
      * [arrowCountForLevel] for why more arrows means easier, not harder.
      */
     private const val FINAL_ARROWS = 160
@@ -83,11 +102,14 @@ object LevelCatalog {
         return if (safe <= LEGACY_MAX_LEVEL) {
             val t = (safe - 1).toDouble() / (LEGACY_MAX_LEVEL - 1)
             (BASE_ARROWS + (ARROWS_AT_LEGACY_MAX - BASE_ARROWS) * t).roundToInt()
-        } else {
+        } else if (safe <= CURVE_MAX_LEVEL) {
             val t = (safe - LEGACY_MAX_LEVEL).toDouble() /
-                (MAX_LEVEL - LEGACY_MAX_LEVEL)
+                (CURVE_MAX_LEVEL - LEGACY_MAX_LEVEL)
             (ARROWS_AT_LEGACY_MAX + (FINAL_ARROWS - ARROWS_AT_LEGACY_MAX) * t)
                 .roundToInt()
+        } else {
+            // Levels 501..MAX_LEVEL stay at the finale density.
+            FINAL_ARROWS
         }
     }
 
