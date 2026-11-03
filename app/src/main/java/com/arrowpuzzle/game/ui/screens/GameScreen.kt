@@ -79,7 +79,6 @@ import com.arrowpuzzle.game.game.GeneratedLevel
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.StatPill
-import com.arrowpuzzle.game.ui.theme.AppAccent
 import com.arrowpuzzle.game.ui.theme.AppDanger
 import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
@@ -211,11 +210,6 @@ private fun PlayingContent(
     }
     val unlimitedFailures = config.maxFailures == AppSettings.NO_FAILURE_LIMIT
     val s = LocalStrings.current
-    val failuresTint = if (!unlimitedFailures && state.failures >= config.maxFailures - 1) {
-        AppDanger
-    } else {
-        AppAccent
-    }
     val available = remember(level, state.removedIds) {
         ArrowGeometry.availableArrows(level, state.removedIds)
     }
@@ -247,7 +241,7 @@ private fun PlayingContent(
                 StatPill(
                     label = s.t("cleared"),
                     value = "$removedCount/${level.arrowCount}",
-                    tint = AppPrimary,
+                    tint = AppText,
                     modifier = Modifier.weight(1f),
                 )
                 StatPill(
@@ -257,13 +251,13 @@ private fun PlayingContent(
                     } else {
                         "${state.failures}/${config.maxFailures}"
                     },
-                    tint = failuresTint,
+                    tint = AppText,
                     modifier = Modifier.weight(1f),
                 )
                 StatPill(
                     label = s.t("time"),
                     value = GridUtils.formatTime(state.elapsedSeconds),
-                    tint = AppSecondary,
+                    tint = AppText,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -331,12 +325,6 @@ private fun GameTopBar(
                 color = AppTextMuted,
             )
         }
-        Text(
-            text = "${state.removedIds.size * 100 / level.arrowCount.coerceAtLeast(1)}%",
-            style = MaterialTheme.typography.titleMedium,
-            color = AppPrimary,
-            modifier = Modifier.padding(end = 12.dp),
-        )
     }
 }
 

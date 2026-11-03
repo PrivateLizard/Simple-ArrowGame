@@ -45,7 +45,6 @@ import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
-import com.arrowpuzzle.game.ui.theme.AppAccent
 import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSecondary
@@ -113,7 +112,7 @@ fun HomeScreen(
                                 Text(
                                     text = String.format(Locale.US, "%,d", highScore),
                                     style = MaterialTheme.typography.headlineLarge,
-                                    color = AppAccent,
+                                    color = AppPrimary,
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
@@ -125,7 +124,7 @@ fun HomeScreen(
                                 Text(
                                     text = "$highestUnlocked / ${LevelCatalog.MAX_LEVEL}",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = AppSecondary,
+                                    color = AppPrimary,
                                 )
                             }
                         }
@@ -329,7 +328,7 @@ private fun DevOptionsCard(
             Text(
                 text = s.t("dev_options"),
                 style = MaterialTheme.typography.labelMedium,
-                color = AppSecondary,
+                color = AppPrimary,
                 letterSpacing = 1.2.sp,
             )
             Spacer(Modifier.height(6.dp))
@@ -345,8 +344,8 @@ private fun DevOptionsCard(
                     .fillMaxWidth()
                     .height(48.dp),
                 shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AppAccent.copy(alpha = 0.7f)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = AppAccent),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.7f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AppPrimary),
             ) {
                 Text(
                     text = if (isAllUnlocked) {
@@ -407,7 +406,7 @@ private fun DevOptionsCard(
                     modifier = Modifier.height(56.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AppAccent,
+                        containerColor = AppPrimary,
                         contentColor = AppSurface,
                     ),
                 ) {

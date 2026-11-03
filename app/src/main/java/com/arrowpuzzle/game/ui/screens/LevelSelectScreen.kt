@@ -267,7 +267,7 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 text = level.levelId.toString(),
                 style = numberStyle,
                 color = when {
-                    completed -> AppPrimary
+                    completed -> AppText
                     unlocked -> AppText
                     else -> AppTextMuted.copy(alpha = 0.45f)
                 },
