@@ -359,7 +359,7 @@ private const val MAX_BOARD_SCALE = 5f
  * is visible as free space on the leading/trailing side. This prevents the
  * puzzle from being pushed flush against the screen edge.
  */
-private const val PAN_MARGIN_FRACTION = 0.07f
+private const val PAN_MARGIN_FRACTION = 0.21f
 
 /**
  * Hint timing: the first hint comes after this long without a successful move,

@@ -1,13 +1,15 @@
 package com.arrowpuzzle.game.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +64,7 @@ import com.arrowpuzzle.game.ui.viewmodel.LevelItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.abs
 
 @Composable
 fun LevelSelectScreen(
@@ -70,19 +73,23 @@ fun LevelSelectScreen(
     onLevelSelected: (Int) -> Unit,
 ) {
     val s = LocalStrings.current
-    val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
 
     // Last unlocked campaign level: the one the player should continue from.
     val currentIndex = remember(levels) {
         levels.indexOfLast { it.isUnlocked }.coerceAtLeast(0)
     }
 
-    // Jump to the current level once, so it sits near the middle when possible.
+    // Start a few screens above the current level. Entering the screen then
+    // shows a visible, smooth scroll of the last stretch instead of a huge
+    // 500-item animation (or an instant teleport).
+    val initialIndex = remember(currentIndex) { (currentIndex - 30).coerceAtLeast(0) }
+    val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = initialIndex)
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.isNotEmpty() }.first { it }
         if (currentIndex > 0) {
-            gridState.centerItem(currentIndex)
+            gridState.animateCenterItem(currentIndex)
         }
     }
 
@@ -136,7 +143,9 @@ fun LevelSelectScreen(
                     exit = fadeOut(),
                 ) {
                     Button(
-                        onClick = { scope.launch { gridState.centerItem(currentIndex) } },
+                        onClick = {
+                            scope.launch { gridState.animateCenterItem(currentIndex) }
+                        },
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = AppPrimary,
@@ -154,15 +163,52 @@ fun LevelSelectScreen(
     }
 }
 
-/** Scrolls so that [index] sits in the vertical middle of the viewport. */
-private suspend fun LazyGridState.centerItem(index: Int) {
-    scrollToItem(index)
+/**
+ * Smoothly scrolls so that [index] sits in the vertical middle of the viewport.
+ *
+ * The distance is estimated from the visible rows and then animated with a
+ * fixed duration, so a far jump does not turn into an instant teleport. A
+ * short correction pass afterwards fixes any estimation error.
+ */
+private suspend fun LazyGridState.animateCenterItem(index: Int) {
     val info = layoutInfo
-    val item = info.visibleItemsInfo.firstOrNull { it.index == index } ?: return
-    val viewportStart = info.viewportStartOffset
-    val viewportSize = info.viewportEndOffset - viewportStart
-    val desiredTop = viewportStart + (viewportSize - item.size.height) / 2
-    scrollBy((item.offset.y - desiredTop).toFloat())
+    if (info.visibleItemsInfo.isEmpty()) return
+
+    val rows = info.visibleItemsInfo.groupBy { it.offset.y }
+    val columns = rows.values.maxOf { it.size }.coerceAtLeast(1)
+    val rowYs = rows.keys.sorted()
+    val itemHeight = info.visibleItemsInfo.first().size.height
+    val rowStep = if (rowYs.size >= 2) {
+        (rowYs[1] - rowYs[0]).toFloat()
+    } else {
+        itemHeight * 1.2f
+    }
+
+    val firstIndex = info.visibleItemsInfo.minOf { it.index }
+    val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
+    val desiredTop = (viewportHeight - itemHeight) / 2f
+    val currentRow = firstIndex / columns
+    val targetRow = index / columns
+    val roughDelta = (targetRow - currentRow) * rowStep - desiredTop
+    if (abs(roughDelta) > 1f) {
+        // Roughly 2500 px/s, clamped so short moves stay snappy and very long
+        // moves never take more than about a second.
+        val duration = (abs(roughDelta) / 2.5f).toInt().coerceIn(250, 1100)
+        animateScrollBy(
+            roughDelta,
+            tween(durationMillis = duration, easing = FastOutSlowInEasing),
+        )
+    }
+
+    val newInfo = layoutInfo
+    val item = newInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return
+    val viewportStart = newInfo.viewportStartOffset
+    val viewportSize = newInfo.viewportEndOffset - viewportStart
+    val exactTop = viewportStart + (viewportSize - item.size.height) / 2
+    animateScrollBy(
+        (item.offset.y - exactTop).toFloat(),
+        tween(durationMillis = 220, easing = FastOutSlowInEasing),
+    )
 }
 
 @Composable
