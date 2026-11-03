@@ -14,7 +14,7 @@ of its arrowhead. Every board is generated and validated on-device.
 
 ## Features
 
-- 100 campaign levels (3x3 → 8x8 boards) plus a Custom Mode
+- 2000 campaign levels (3x3 → 8x8 boards) plus a Custom Mode
 - Dense, fully covered arrow fields with no crossing strokes
 - Short and very long, heavily bent arrows
 - Removed arrows unspool head-first along their path
@@ -58,6 +58,17 @@ gradlew.bat lint
 
 The first Gradle run needs network access for Gradle/AndroidX; the installed app
 itself is fully offline.
+
+## AI assistance & disclaimer
+
+This project was built with the help of AI coding assistants (large language
+models). The code, the level generator and the UI were reviewed and tested, but
+**no guarantee** is given for correctness, completeness or fitness for any
+purpose.
+
+The software is provided **"as is"**, without warranty of any kind. Use it at
+your own risk. The author accepts no liability for any damage, data loss or
+other issues resulting from its use.
 
 ## License
 
