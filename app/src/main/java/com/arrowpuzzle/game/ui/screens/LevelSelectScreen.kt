@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ScreenBackground
-import com.arrowpuzzle.game.ui.theme.AppAccent
 import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSurface
@@ -265,35 +263,23 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = level.levelId.toString(),
-                    style = numberStyle,
-                    color = when {
-                        completed -> AppPrimary
-                        unlocked -> AppText
-                        else -> AppTextMuted.copy(alpha = 0.45f)
-                    },
-                    maxLines = 1,
-                )
-                if (completed) {
-                    Text(
-                        text = "✓",
-                        fontSize = 15.sp,
-                        color = AppAccent,
-                        modifier = Modifier.padding(start = 1.dp),
-                    )
-                }
-            }
+            Text(
+                text = level.levelId.toString(),
+                style = numberStyle,
+                color = when {
+                    completed -> AppPrimary
+                    unlocked -> AppText
+                    else -> AppTextMuted.copy(alpha = 0.45f)
+                },
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
             when {
                 completed -> {
                     Text(
                         text = String.format(Locale.US, "%,d", level.bestScore),
                         style = numberStyle,
-                        color = AppAccent,
+                        color = AppPrimary,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                     )
