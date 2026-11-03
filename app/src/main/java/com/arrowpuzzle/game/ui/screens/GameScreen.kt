@@ -355,9 +355,10 @@ private const val START_BOARD_SCALE = 0.85f
 private const val MAX_BOARD_SCALE = 5f
 
 /**
- * When zoomed in, the board may be panned until this fraction of the viewport
- * is visible as free space on the leading/trailing side. This prevents the
- * puzzle from being pushed flush against the screen edge.
+ * Upper bound for the free strip that can be left at the screen edge while
+ * zoomed in. The actual strip is capped by how far the board overshoots the
+ * viewport, so it grows smoothly with the zoom and disappears continuously at
+ * scale 1 instead of snapping.
  */
 private const val PAN_MARGIN_FRACTION = 0.21f
 
@@ -718,8 +719,13 @@ private fun clampBoardOffset(offset: Offset, scale: Float, viewport: IntSize): O
     val height = viewport.height.toFloat()
     val rangeX = width - width * scale
     val rangeY = height - height * scale
-    val marginX = width * PAN_MARGIN_FRACTION
-    val marginY = height * PAN_MARGIN_FRACTION
+    // Only allow a margin that the current zoom actually produced. At scale 1
+    // the overshoot is zero, so the margin fades out smoothly instead of
+    // snapping the board back when zooming out.
+    val overshootX = (-rangeX).coerceAtLeast(0f)
+    val overshootY = (-rangeY).coerceAtLeast(0f)
+    val marginX = min(width * PAN_MARGIN_FRACTION, overshootX)
+    val marginY = min(height * PAN_MARGIN_FRACTION, overshootY)
     val minX: Float
     val maxX: Float
     val minY: Float
