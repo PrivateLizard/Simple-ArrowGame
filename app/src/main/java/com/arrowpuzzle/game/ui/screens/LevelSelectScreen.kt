@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -41,21 +43,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.i18n.LocalStrings
-import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.theme.AppAccent
 import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
-import com.arrowpuzzle.game.ui.theme.AppSecondary
 import com.arrowpuzzle.game.ui.theme.AppSurface
 import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
@@ -105,15 +101,16 @@ fun LevelSelectScreen(
 
     ScreenBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-            AppTopBar(
-                title = s.t("levels_title"),
-                subtitle = s.f(
-                    "levels_subtitle",
-                    levels.count { it.isUnlocked },
-                    LevelCatalog.MAX_LEVEL,
-                ),
-                onBack = onBack,
-            )
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.padding(start = 4.dp),
+            ) {
+                Text(
+                    text = "‹",
+                    fontSize = 32.sp,
+                    color = AppText,
+                )
+            }
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
                     state = gridState,
@@ -217,11 +214,18 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
     val unlocked = level.isUnlocked
     val completed = level.bestScore > 0
     val shape = RoundedCornerShape(22.dp)
+    val numberStyle = MaterialTheme.typography.headlineLarge.copy(
+        fontSize = 32.sp,
+        lineHeight = 37.sp,
+        fontWeight = FontWeight.Black,
+    )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
+            // Slightly taller than wide so the big score and its maximum fit
+            // below the (equally big) level number.
+            .aspectRatio(0.86f)
             .clip(shape)
             .background(
                 when {
@@ -254,56 +258,63 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 shape,
             )
             .clickable(enabled = unlocked, onClick = onClick)
-            .padding(12.dp),
+            .padding(8.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                text = level.levelId.toString(),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Black,
-                color = when {
-                    completed -> AppPrimary
-                    unlocked -> AppText
-                    else -> AppTextMuted.copy(alpha = 0.45f)
-                },
-            )
-            Spacer(Modifier.height(if (completed) 2.dp else 4.dp))
-            if (completed) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
                 Text(
-                    text = buildAnnotatedString {
-                        withStyle(SpanStyle(color = AppAccent)) {
-                            append("✓  ")
-                            append(String.format(Locale.US, "%,d", level.bestScore))
-                        }
+                    text = level.levelId.toString(),
+                    style = numberStyle,
+                    color = when {
+                        completed -> AppPrimary
+                        unlocked -> AppText
+                        else -> AppTextMuted.copy(alpha = 0.45f)
                     },
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
                     maxLines = 1,
                 )
-                Text(
-                    text = "/ " + String.format(Locale.US, "%,d", level.maxScore),
-                    fontSize = 8.sp,
-                    color = AppTextMuted.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-            } else {
-                Text(
-                    text = if (unlocked) s.t("play") else s.t("locked"),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (unlocked) {
-                        AppSecondary
-                    } else {
-                        AppTextMuted.copy(alpha = 0.5f)
-                    },
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
+                if (completed) {
+                    Text(
+                        text = "✓",
+                        fontSize = 15.sp,
+                        color = AppAccent,
+                        modifier = Modifier.padding(start = 1.dp),
+                    )
+                }
+            }
+            when {
+                completed -> {
+                    Text(
+                        text = String.format(Locale.US, "%,d", level.bestScore),
+                        style = numberStyle,
+                        color = AppAccent,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                    )
+                    Text(
+                        text = "/ " + String.format(Locale.US, "%,d", level.maxScore),
+                        fontSize = 9.sp,
+                        color = AppTextMuted.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                    )
+                }
+                !unlocked -> {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = s.t("locked"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AppTextMuted.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
