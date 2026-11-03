@@ -95,7 +95,6 @@ import com.arrowpuzzle.game.util.SoundEffects
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlin.math.hypot
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -355,10 +354,9 @@ private const val START_BOARD_SCALE = 0.85f
 private const val MAX_BOARD_SCALE = 5f
 
 /**
- * Upper bound for the free strip that can be left at the screen edge while
- * zoomed in. The actual strip is capped by how far the board overshoots the
- * viewport, so it grows smoothly with the zoom and disappears continuously at
- * scale 1 instead of snapping.
+ * Fixed size of the free strip that can be left at the screen edge, as a
+ * fraction of the viewport. It stays the same at every zoom level; if the user
+ * gets lost in a zoomed-in area they can simply zoom out again.
  */
 private const val PAN_MARGIN_FRACTION = 0.21f
 
@@ -719,29 +717,30 @@ private fun clampBoardOffset(offset: Offset, scale: Float, viewport: IntSize): O
     val height = viewport.height.toFloat()
     val rangeX = width - width * scale
     val rangeY = height - height * scale
-    // Only allow a margin that the current zoom actually produced. At scale 1
-    // the overshoot is zero, so the margin fades out smoothly instead of
-    // snapping the board back when zooming out.
-    val overshootX = (-rangeX).coerceAtLeast(0f)
-    val overshootY = (-rangeY).coerceAtLeast(0f)
-    val marginX = min(width * PAN_MARGIN_FRACTION, overshootX)
-    val marginY = min(height * PAN_MARGIN_FRACTION, overshootY)
+    // Constant strip of background around the board, independent of the zoom.
+    val marginX = width * PAN_MARGIN_FRACTION
+    val marginY = height * PAN_MARGIN_FRACTION
+
+    // If the content is small enough, keep the full margin on both sides.
+    // Otherwise allow the margin on one side while the other side is cropped;
+    // both branches meet continuously, so zooming never snaps the board.
     val minX: Float
     val maxX: Float
-    val minY: Float
-    val maxY: Float
-    if (scale > 1f) {
-        // Keep a strip of background visible so the puzzle never sits flush
-        // against the screen edge while zoomed in.
+    if (rangeX < 2f * marginX) {
         minX = rangeX - marginX
         maxX = marginX
+    } else {
+        minX = marginX
+        maxX = rangeX - marginX
+    }
+    val minY: Float
+    val maxY: Float
+    if (rangeY < 2f * marginY) {
         minY = rangeY - marginY
         maxY = marginY
     } else {
-        minX = min(0f, rangeX)
-        maxX = max(0f, rangeX)
-        minY = min(0f, rangeY)
-        maxY = max(0f, rangeY)
+        minY = marginY
+        maxY = rangeY - marginY
     }
     return Offset(
         x = offset.x.coerceIn(minX, maxX),
