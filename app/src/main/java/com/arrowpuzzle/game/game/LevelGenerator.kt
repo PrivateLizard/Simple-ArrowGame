@@ -35,9 +35,9 @@ class LevelGenerator(
          * whose arrow ids no longer match.
          *
          * 1 = up to build 38, 2 = soft arrow length cap, 3 = 3000 levels with
-         * picture levels.
+         * picture levels, 4 = picture levels 35% larger.
          */
-        const val VERSION = 3
+        const val VERSION = 4
 
         private const val SHORT_ARROW = 8
         private const val MAX_MERGED_ARROW = 80

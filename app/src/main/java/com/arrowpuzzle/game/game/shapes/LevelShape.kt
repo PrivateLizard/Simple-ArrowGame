@@ -1021,9 +1021,9 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
 
 /** Size presets of the Test mode: target number of cells inside the shape. */
 enum class ShapeSize(val targetCells: Int) {
-    SMALL(420),
-    MEDIUM(1100),
-    LARGE(2200),
+    SMALL(567),
+    MEDIUM(1485),
+    LARGE(2970),
     ;
 
     /** Arrow count of a campaign picture level of this size. */
@@ -1040,7 +1040,7 @@ enum class ShapeSize(val targetCells: Int) {
  */
 object ShapeMask {
     private const val MIN_LAYOUT = 12
-    private const val MAX_LAYOUT = 96
+    private const val MAX_LAYOUT = 112
 
     /** Arrows per active cell, about the density of the campaign boards. */
     private const val ARROWS_PER_CELL = 0.08

@@ -94,12 +94,12 @@ class ShapeLevelsTest {
     fun knownBoardsStayTheSame() {
         val expected = mapOf(
             1 to "210c31e4",
-            5 to "ae60e304",
+            5 to "547a5db",
             151 to "521b8fd3",
             751 to "61ab6931",
-            2005 to "33143fec",
+            2005 to "a64cef4c",
             2999 to "232d3355",
-            3000 to "2cfe1bf5",
+            3000 to "3a2708",
         )
         for ((levelId, fingerprint) in expected) {
             val level = generator.generate(LevelCatalog.defaultConfig(levelId, 3), 1_000_003L * levelId)
