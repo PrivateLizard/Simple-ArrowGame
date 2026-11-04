@@ -96,6 +96,11 @@ itself is fully offline.
 by each commit). `versionName` is `1.0`. A source copy without `.git` can pass
 `-PappVersionCode=<n>`.
 
+## Privacy
+
+The app runs fully offline and does not collect or transmit any data. See
+[PRIVACY.md](PRIVACY.md).
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
