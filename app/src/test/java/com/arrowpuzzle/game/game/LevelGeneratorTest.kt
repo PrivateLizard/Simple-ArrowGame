@@ -100,6 +100,29 @@ class LevelGeneratorTest {
     }
 
     @Test
+    fun distantArrowsOnTheRayStillBlock() {
+        val level = generator.generate(
+            LevelCatalog.defaultConfig(100, maxFailures = 5),
+            seed = 1_000_003L * 100,
+        )
+        val blocked = level.arrows.first { arrow ->
+            ArrowGeometry.blockersFor(arrow, level.arrows, level.layoutSize).size >= 2
+        }
+        val front = com.arrowpuzzle.game.data.model.GridPoint(
+            blocked.endPosition.x + blocked.direction.dx,
+            blocked.endPosition.y + blocked.direction.dy,
+        )
+        val distant = ArrowGeometry.blockersFor(blocked, level.arrows, level.layoutSize)
+            .first { other -> !other.route.contains(front) }
+        val keep = setOf(blocked.id, distant.id)
+        val removed = level.arrows.map { it.id }.filter { it !in keep }.toSet()
+        assertFalse(
+            "A distant arrow on the same ray must still block",
+            ArrowGeometry.isClickable(level, removed, blocked.id),
+        )
+    }
+
+    @Test
     fun clearingArrowsRevealsNewOpenArrows() {
         val config = LevelConfig(0, 5 to 5, 20, 5, null, ComplexityLevel.MEDIUM)
         val level = generator.generate(config, seed = 88L)
