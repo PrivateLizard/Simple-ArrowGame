@@ -109,7 +109,7 @@ fun DefeatScreen(
                     Text(
                         text = buildAnnotatedString {
                             withStyle(SpanStyle(color = AppText)) { append(s.t("defeat_not")) }
-                            append(" ")
+                            append(s.wordGap)
                             withStyle(SpanStyle(color = AppDanger)) { append(s.t("defeat_cleared")) }
                         },
                         style = MaterialTheme.typography.headlineLarge,

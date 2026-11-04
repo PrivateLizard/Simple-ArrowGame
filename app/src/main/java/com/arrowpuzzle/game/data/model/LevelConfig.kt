@@ -4,10 +4,10 @@ enum class ComplexityLevel {
     /** Four arrows are open at the start. */
     EASY,
 
-    /** Two arrows are open at the start. */
+    /** Three arrows are open at the start. */
     MEDIUM,
 
-    /** Three arrows are open at the start. */
+    /** Two arrows are open at the start. */
     HARD,
 }
 

@@ -9,20 +9,16 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
 - **3000 levels:** the difficulty curve is stretched, so level 3000 is as hard
   as level 2000 was. Nearly all campaign boards look different; progress and
-  scores are kept, an unfinished level from an older build is discarded.
-- **Picture levels:** every fifth level is cut into a shape. Each block of 1000
-  levels shows all 200 shapes once: small, then medium, then large.
-- The Test mode is now called Picture Test and only shows with the developer
+  scores are kept, an unfinished level from an older build is discarded. Best
+  scores from older builds can be higher than the new maximum of a level.
+- **Picture levels:** every fifth level is cut into one of 200 shapes - geometric
+  forms, nature, animals and everyday things. Each block of 1000 levels shows
+  all 200 shapes once: small, then medium, then large. The board grows to make
+  up for the empty space around a shape. All levels stay fully solvable.
+- **Picture Test:** try any shape in any size. Only visible with the developer
   options on.
 - Smoother play, with no visible change: the board no longer redraws for the
-  clock or for animations, resting arrows are drawn from cached paths, and the
-  Test mode previews are painted once and reused.
-- **New Test mode** (Home): boards cut into one of 200 shapes - geometric
-  forms, nature, animals and everyday things (heart, star, teddy bear, cat,
-  rocket, guitar, ...) - in three sizes. The board is enlarged to make up for the empty
-  space around the shape. Levels stay fully solvable (checked by tests).
-  Campaign and Custom Mode boards are unchanged (all 2000 campaign boards are
-  bit-identical; a unit test guards this).
+  clock or for animations, and resting arrows are drawn from cached paths.
 - Redesigned level-complete screen: animated check badge, counting-up score,
   breakdown and stats revealed one after another, plus a short, subtle confetti
   shower in theme colours (skipped when system animations are off).
@@ -42,6 +38,10 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
   level-complete screen.
 - Dev options: switchable "win buttons" in levels - tap the next open arrow, or
   win the level instantly with a perfect result (counts as a normal win).
+- Translations reviewed: the Complexity texts in Custom Mode now say what they
+  really do (how many arrows are open at the start), Portuguese is consistently
+  European Portuguese, no two shapes share a name in any language, and Chinese
+  and Japanese headlines lose a stray space.
 
 ## 1.0.1 (Build 40) - 2026-11-04
 

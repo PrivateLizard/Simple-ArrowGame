@@ -20,8 +20,7 @@ page for the signed APK.
 - **3000 campaign levels** plus a Custom Mode
 - Every fifth level is a picture level: the board is cut into one of 200 shapes
   (small in the first 1000 levels, then medium, then large)
-- Board grows from 3x3 to 8x8 logical grid; the actual point lattice grows from
-  20x20 up to 72x72
+- The point lattice of the normal levels grows from 20x20 up to 72x72
 - Late levels carry more, shorter arrows (160 at level 750, 240 at the end)
 - Dense, fully covered arrow fields with no crossing or overlapping strokes
 - Short and long, heavily bent arrows
@@ -33,7 +32,8 @@ page for the signed APK.
 - Language selector with automatic device-language detection
   (English, German, French, Spanish, Italian, Portuguese, Russian, Chinese,
   Japanese)
-- No internet permission, no ads, no tracking, no third-party runtime libraries
+- No internet permission, no ads, no tracking; the only runtime libraries are
+  Android's own AndroidX/Jetpack
 
 ## How levels are generated
 
@@ -62,12 +62,18 @@ looks the same on every device.
    - the board is fully clearable (removing an arrow never blocks another, so
      an acyclic board can always be cleared, in any order of open taps)
 
+Picture levels use the same steps on a mask: the shape is rasterised onto the 2x2
+blocks, only the largest connected area is kept, and the path runs through those
+blocks alone. The square grows until the shape holds the planned number of cells,
+which makes up for the empty space around it. Empty cells never block an arrow.
+
 The blocking relation is computed once per board with a per-cell index, so a
 level of 240 arrows on a 72x72 lattice generates in a few tens of milliseconds
 on a desktop JVM.
 
-If a random layout cannot be cut safely, the generator falls back to a plain
-serpentine path for that level. The fallback is correct, just less irregular.
+If a random layout cannot be cut safely, a square board falls back to a plain
+serpentine path. The fallback is correct, just less irregular. Picture levels
+have no such fallback and simply try further random paths.
 
 ## Tech stack
 

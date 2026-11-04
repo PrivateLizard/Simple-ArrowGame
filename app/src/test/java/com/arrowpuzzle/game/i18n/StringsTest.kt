@@ -51,13 +51,21 @@ class StringsTest {
     }
 
     @Test
+    fun noTwoShapesShareANameInOneLanguage() {
+        for ((language, table) in translationTables) {
+            val names = table.filterKeys { it.startsWith("shape_") }.values
+            val duplicates = names.groupBy { it }.filterValues { it.size > 1 }.keys
+            assertTrue("$language duplicates: $duplicates", duplicates.isEmpty())
+        }
+    }
+
+    @Test
     fun formattedStringsDoNotThrow() {
         for (language in AppLanguage.translated) {
             val strings = AppStrings(language)
             strings.f("resume", "12", 34)
             strings.f("dev_progress", 1, 2000)
-            strings.f("arrows_open", 240, 2)
-            strings.f("level_info", 2000, 240)
+            strings.f("level_title", "2000")
             strings.f("seconds", 90)
         }
     }

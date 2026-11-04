@@ -121,7 +121,7 @@ fun VictoryScreen(
                         Text(
                             text = buildAnnotatedString {
                                 withStyle(SpanStyle(color = AppText)) { append(s.t("victory_all")) }
-                                append(" ")
+                                append(s.wordGap)
                                 withStyle(SpanStyle(color = AppPrimary)) { append(s.t("victory_clear")) }
                             },
                             style = MaterialTheme.typography.headlineLarge,

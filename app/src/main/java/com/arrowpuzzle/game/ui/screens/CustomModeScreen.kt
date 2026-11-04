@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.data.model.AppSettings
@@ -138,6 +139,10 @@ fun CustomModeScreen(
                                 text = s.t("arrows_count_hint"),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = AppTextMuted,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 12.dp),
                             )
                         }
                     }
