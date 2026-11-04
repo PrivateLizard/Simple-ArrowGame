@@ -78,7 +78,11 @@ class LevelGenerator(
     }
 
     private fun layoutSizeFor(config: LevelConfig): Int =
-        (10 + max(config.gridWidth, config.gridHeight) * 3).coerceIn(19, 38)
+        if (config.isCustom) {
+            (10 + max(config.gridWidth, config.gridHeight) * 3).coerceIn(19, 38)
+        } else {
+            LevelCatalog.layoutSizeForLevel(config.levelId)
+        }
 
     /**
      * Number of arrows open at the start.

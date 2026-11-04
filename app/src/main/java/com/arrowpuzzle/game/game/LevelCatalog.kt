@@ -77,9 +77,23 @@ object LevelCatalog {
     fun gridSizeForLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
         val growth = safe.coerceAtMost(LEGACY_MAX_LEVEL)
-        // 3x3 at level 1 up to 8x8, reaching the maximum early enough that the
-        // last levels grow in arrow count instead of board size.
+        // 3x3 at level 1 up to 8x8 at level 100. Levels above that widen the
+        // point lattice (see [layoutSizeForLevel]) instead of this label.
         return (3 + (growth - 1) * 5 / 99).coerceIn(3, 8)
+    }
+
+    /**
+     * Side length of the point lattice the arrows are routed on.
+     *
+     * Levels 1..100 keep the original 19..34 range. Above level 100 the field
+     * grows by one row/column every 50 levels, so the late campaign keeps
+     * opening up instead of staying at 34x34 forever. Level 2000 ends at 72x72.
+     */
+    fun layoutSizeForLevel(levelId: Int): Int {
+        val safe = levelId.coerceIn(1, MAX_LEVEL)
+        val legacy = 10 + gridSizeForLevel(safe) * 3
+        if (safe <= LEGACY_MAX_LEVEL) return legacy
+        return legacy + (safe - LEGACY_MAX_LEVEL) / 50
     }
 
     /**

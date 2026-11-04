@@ -126,6 +126,24 @@ class LevelGeneratorTest {
     }
 
     @Test
+    fun fieldGrowsEveryFiftyLevelsAfterOneHundred() {
+        assertEquals(34, LevelCatalog.layoutSizeForLevel(100))
+        assertEquals(34, LevelCatalog.layoutSizeForLevel(149))
+        assertEquals(35, LevelCatalog.layoutSizeForLevel(150))
+        assertEquals(36, LevelCatalog.layoutSizeForLevel(200))
+        assertEquals(38, LevelCatalog.layoutSizeForLevel(300))
+        assertEquals(50, LevelCatalog.layoutSizeForLevel(900))
+        assertEquals(72, LevelCatalog.layoutSizeForLevel(2000))
+        for (level in 2..LevelCatalog.MAX_LEVEL) {
+            assertTrue(
+                "Layout must never shrink at level $level",
+                LevelCatalog.layoutSizeForLevel(level) >=
+                    LevelCatalog.layoutSizeForLevel(level - 1),
+            )
+        }
+    }
+
+    @Test
     fun campaignHasTwoThousandLevelsOnADifficultyScale() {
         assertEquals(2000, LevelCatalog.MAX_LEVEL)
         for (levelId in 1..LevelCatalog.MAX_LEVEL) {
