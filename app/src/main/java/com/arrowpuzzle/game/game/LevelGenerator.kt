@@ -11,12 +11,13 @@ import kotlin.math.max
 import kotlin.random.Random
 
 /**
- * Builds a completely full board from a randomized Hamiltonian path.
+ * Builds a completely full board from an on-device Hamiltonian path.
  *
- * The path visits every lattice point exactly once. It is split into arrows.
- * Cuts at straight-through points leave the next arrow directly in front of the
- * arrowhead, so that arrow is blocked. Cuts at outward-facing boundary points
- * produce the K open arrows.
+ * The path is a Hamiltonian cycle (2x2 block cycles merged along a random
+ * spanning tree) broken at an outward-facing edge, or a serpentine fallback.
+ * It is cut into arrows: outward-facing cuts create the open arrows, and the
+ * remaining cuts are chosen from forward-facing candidates so the blocking
+ * graph stays acyclic. Very short same-direction runs are merged afterwards.
  */
 class LevelGenerator(
     private val maxAttempts: Int = 40,

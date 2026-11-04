@@ -12,11 +12,10 @@ import kotlin.math.roundToInt
  * scale: level `N` sits at difficulty `N`. The first [LEGACY_MAX_LEVEL] levels
  * keep exactly the original curve; levels above that continue it smoothly.
  *
- * Arrow counts grow non-linearly, so the early levels stay approachable while
- * the late ones become dense. Complexity controls how many arrows are open at
- * the start. The very last stretch of the campaign keeps more arrows open on
- * purpose: a single open arrow out of ~150 is close to guessing, and the design
- * goal for the finale is a tangled board that is still solvable by reasoning.
+ * Arrow counts grow in stages, so the early levels stay approachable while the
+ * late ones become dense. Complexity controls how many arrows are open at the
+ * start. Late HARD levels keep exactly two open arrows: a single open arrow on
+ * a board with up to 240 arrows would turn the finale into guessing.
  */
 object LevelCatalog {
     const val MAX_LEVEL = 2000
@@ -53,25 +52,23 @@ object LevelCatalog {
     /** Difficulty values used for the level-difficulty badge and the tuning. */
     const val MAX_DIFFICULTY = MAX_LEVEL
 
-    /** The original 100-level campaign; its curve stays exactly as it was. */
+    /** The legacy 100-level segment; its curve stays exactly as it was. */
     private const val LEGACY_MAX_LEVEL = 100
 
     /**
-     * Level at which the arrow count reaches [FINAL_ARROWS]. Levels above this
-     * keep the same density; more arrows would only make the board easier.
+     * Level at which the first arrow-count ramp ends ([FINAL_ARROWS]). Above
+     * this the late ramp grows to [LATE_FINAL_ARROWS] so the huge boards keep
+     * shorter arrows.
      */
     private const val CURVE_MAX_LEVEL = 500
 
     /** Arrow count of the very first level. */
     private const val BASE_ARROWS = 34
 
-    /** Arrow count at the end of the original 100-level curve. */
+    /** Arrow count at the end of the legacy 100-level segment. */
     private const val ARROWS_AT_LEGACY_MAX = 90
 
-    /**
-     * Arrow count at [CURVE_MAX_LEVEL] and above. Kept modest on purpose: see
-     * [arrowCountForLevel] for why more arrows means easier, not harder.
-     */
+    /** Arrow count at [CURVE_MAX_LEVEL] (start of the late ramp). */
     private const val FINAL_ARROWS = 160
 
     /** Late-game density: more, shorter arrows for the huge boards. */
@@ -157,9 +154,10 @@ object LevelCatalog {
      * Complexity tier of a level. This is the real difficulty driver.
      *
      * With many open arrows the player almost always has a safe move, so the
-     * board is easy. With two or three open arrows every mistake is a real
-     * mistake. HARD deliberately does not go down to a single open arrow: on a
-     * 150-arrow board that turns the game into guessing.
+     * board is easy. With two (HARD) or three (MEDIUM) open arrows every mistake
+     * is a real mistake. HARD deliberately does not go down to a single open
+     * arrow: on a board with up to 240 arrows that would turn the game into
+     * guessing.
      */
     fun complexityForLevel(levelId: Int): ComplexityLevel {
         val safe = levelId.coerceIn(1, MAX_LEVEL)

@@ -334,10 +334,10 @@ class LevelGeneratorTest {
 
     @Test
     fun laterLevelsAreDenserAndStaySolvable() {
-        // With a 100-level campaign the late levels are harder because they pack
-        // more arrows into the board, not because a single arrow is longer than
-        // in level 1. What must hold: late boards carry far more arrows, still
-        // cover the lattice completely and still have more than one open arrow.
+        // Late levels use the maximum board and carry many more arrows, while
+        // only two are open. What must hold: late boards carry far more arrows,
+        // still cover the lattice completely and still have more than one open
+        // arrow.
         val early = generator.generate(
             LevelCatalog.defaultConfig(1, maxFailures = 5),
             seed = 1_000_003L,
