@@ -40,6 +40,14 @@ class GameViewModel(
     private val _state = MutableStateFlow<GameState>(GameState.Loading)
     val state: StateFlow<GameState> = _state.asStateFlow()
 
+    /**
+     * Running clock of the level. Separate from [state] on purpose: the timer
+     * ticks ten times a second, and only the time display should react to it,
+     * not the whole board.
+     */
+    private val _elapsed = MutableStateFlow(0.0)
+    val elapsed: StateFlow<Double> = _elapsed.asStateFlow()
+
     private val _feedback = MutableSharedFlow<GameFeedback>(extraBufferCapacity = 12)
     val feedback: SharedFlow<GameFeedback> = _feedback.asSharedFlow()
 
@@ -74,6 +82,7 @@ class GameViewModel(
                         // resumed run is scored like the same uninterrupted run.
                         startedNanos = System.nanoTime() -
                             (resumeCandidate.elapsedSeconds * NANOS_PER_SECOND).toLong()
+                        _elapsed.value = resumeCandidate.elapsedSeconds
                         _state.value = GameState.Playing(
                             level = level,
                             removedIds = validRemoved,
@@ -316,7 +325,7 @@ class GameViewModel(
                         )
                         defeatFeedback()
                     } else {
-                        _state.value = current.copy(elapsedSeconds = elapsed)
+                        _elapsed.value = elapsed
                         null
                     }
                 }

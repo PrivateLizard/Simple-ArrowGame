@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +57,8 @@ fun ConfettiShower(
             withFrameNanos { now -> elapsed = (now - start) / 1_000_000_000f }
         }
     }
-    if (elapsed >= durationSeconds) return
+    val finished by remember { derivedStateOf { elapsed >= durationSeconds } }
+    if (finished) return
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val density = LocalDensity.current

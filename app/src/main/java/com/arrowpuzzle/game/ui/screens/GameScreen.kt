@@ -32,6 +32,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import kotlin.math.abs
+import kotlinx.coroutines.flow.StateFlow
+import androidx.compose.ui.graphics.PointMode
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.BorderStroke
@@ -191,6 +196,7 @@ fun GameScreen(
                 onArrowTap = viewModel::onArrowClick,
                 onExit = exitLevel,
                 hintsEnabled = hintsEnabled,
+                elapsed = viewModel.elapsed,
                 devWinButtons = devWinButtons,
                 onDevNextArrow = viewModel::devTapNextArrow,
                 onDevPerfectWin = viewModel::devPerfectWin,
@@ -208,6 +214,7 @@ private fun PlayingContent(
     onArrowTap: (Int) -> Unit,
     onExit: () -> Unit,
     hintsEnabled: Boolean,
+    elapsed: StateFlow<Double>,
     devWinButtons: Boolean,
     onDevNextArrow: () -> Unit,
     onDevPerfectWin: () -> Unit,
@@ -260,12 +267,7 @@ private fun PlayingContent(
                     tint = AppText,
                     modifier = Modifier.weight(1f),
                 )
-                StatPill(
-                    label = s.t("time"),
-                    value = GridUtils.formatTime(state.elapsedSeconds),
-                    tint = AppText,
-                    modifier = Modifier.weight(1f),
-                )
+                TimePill(elapsed = elapsed, modifier = Modifier.weight(1f))
             }
 
             Spacer(Modifier.height(12.dp))
@@ -293,6 +295,19 @@ private fun PlayingContent(
             }
         }
     }
+}
+
+/**
+ * The only part of the level that follows the clock. Reading the time here keeps
+ * the ticks away from the board; it recomposes once a second, when the text
+ * actually changes.
+ */
+@Composable
+private fun TimePill(elapsed: StateFlow<Double>, modifier: Modifier = Modifier) {
+    val s = LocalStrings.current
+    val seconds by elapsed.collectAsState()
+    val text by remember { derivedStateOf { GridUtils.formatTime(seconds) } }
+    StatPill(label = s.t("time"), value = text, tint = AppText, modifier = modifier)
 }
 
 /** Dev option: two test buttons at the bottom of the level. */
@@ -429,17 +444,18 @@ private fun GameBoard(
     // places where the dot grid is shown, so the grid is revealed step by step
     // as arrows are cleared.
     val revealedGridPoints = remember(level, removedIds) {
-        val covered = level.arrows
-            .filter { it.id !in removedIds }
-            .flatMap { ArrowGeometry.routePoints(it.route) }
-            .toSet()
+        val layout = level.layoutSize
+        val covered = BooleanArray(layout * layout)
+        level.arrows.forEach { arrow ->
+            if (arrow.id in removedIds) return@forEach
+            ArrowGeometry.routePoints(arrow.route).forEach { covered[it.y * layout + it.x] = true }
+        }
         buildList {
-            for (gx in 0 until level.layoutSize) {
-                for (gy in 0 until level.layoutSize) {
+            for (gx in 0 until layout) {
+                for (gy in 0 until layout) {
                     // Shaped boards: no dots outside the shape.
                     if (!level.isCellActive(gx, gy)) continue
-                    val point = GridPoint(gx, gy)
-                    if (point !in covered) add(point)
+                    if (!covered[gy * layout + gx]) add(GridPoint(gx, gy))
                 }
             }
         }
@@ -504,16 +520,8 @@ private fun GameBoard(
         }
     }
 
-    val wrongProgress = wrongAnim.value
-    val hintProgress = hintAnim.value
-    val wrongAlphaValue = when {
-        wrongProgress <= 0f -> 0f
-        wrongProgress < 0.55f -> 1f
-        wrongProgress < 0.85f -> 1f - (wrongProgress - 0.55f) / 0.30f
-        else -> 0f
-    }
-    val wrongVisible = wrongAlphaValue > 0.01f
-    val exitValue = exitProgress.value
+    val wrongFlashId = state.wrongFlashId
+    val shakingHintId = hintArrowId
 
     Box(
         modifier = modifier
@@ -577,7 +585,8 @@ private fun GameBoard(
                 }
             },
     ) {
-        Canvas(
+        // Zoom and pan only move this layer; nothing is redrawn for them.
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
@@ -588,79 +597,129 @@ private fun GameBoard(
                     transformOrigin = TransformOrigin(0f, 0f)
                 },
         ) {
-            val geometry = boardGeometry(size.width, size.height, level.layoutSize)
-            val lineWidth = geometry.spacing * 0.09f
-            val remaining = level.arrows.filter { it.id !in removedIds }
-
-            // Only the points of already cleared arrows are dotted, so the
-            // grid appears where the lines are gone.
-            val dotRadius = (geometry.spacing * 0.09f).coerceAtLeast(1f)
-            val dotColor = palette.textMuted.copy(alpha = 0.38f)
-            revealedGridPoints.forEach { point ->
-                drawCircle(
-                    color = dotColor,
-                    radius = dotRadius,
-                    center = geometry.toOffset(point),
-                )
-            }
-
-            remaining.forEach { arrow ->
-                val isWrong = wrongVisible && arrow.id == state.wrongFlashId
-                // Twice the frequency of before and only for the first third
-                // of the red flash, so the shake reads as a quick jolt while
-                // the red tint keeps its existing timing.
-                val shakeWindow = 0.35f
-                val shakeProgress = (wrongProgress / shakeWindow).coerceIn(0f, 1f)
-                val wrongShake = if (isWrong && wrongProgress < shakeWindow) {
-                    sin(wrongProgress * 52f) * geometry.spacing * 0.22f * (1f - shakeProgress)
-                } else {
-                    0f
-                }
-                val hintShake = if (hintArrowId == arrow.id && hintProgress < 1f) {
-                    sin(hintProgress * HINT_SHAKE_FREQUENCY) *
-                        geometry.spacing * 0.18f * (1f - hintProgress)
-                } else {
-                    0f
-                }
-                val shakeX = wrongShake + hintShake
-                val route = if (shakeX != 0f) {
-                    arrow.route.map { geometry.toOffset(it) + Offset(shakeX, 0f) }
-                } else {
-                    arrow.route.map(geometry::toOffset)
-                }
-                drawPolylineArrow(
-                    route = route,
-                    spacing = geometry.spacing,
-                    lineWidth = if (isWrong) lineWidth * 1.4f else lineWidth,
-                    color = if (isWrong) {
-                        lerp(palette.boardLine, palette.boardLineWrong, wrongAlphaValue)
-                    } else {
-                        palette.boardLine
+            // Everything that does not move: dots and resting arrows. The paths
+            // are built once per removed arrow and kept in their own layer, so
+            // the animations below never touch them.
+            Spacer(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer()
+                    .drawWithCache {
+                        val geometry = boardGeometry(size.width, size.height, level.layoutSize)
+                        val shafts = Path()
+                        val heads = Path()
+                        level.arrows.forEach { arrow ->
+                            val animated = arrow.id == wrongFlashId || arrow.id == shakingHintId
+                            if (arrow.id !in removedIds && !animated) {
+                                appendArrowPaths(
+                                    route = arrow.route.map(geometry::toOffset),
+                                    spacing = geometry.spacing,
+                                    shaft = shafts,
+                                    head = heads,
+                                )
+                            }
+                        }
+                        // Only the points of already cleared arrows are dotted,
+                        // so the grid appears where the lines are gone.
+                        val dots = revealedGridPoints.map(geometry::toOffset)
+                        val dotRadius = (geometry.spacing * 0.09f).coerceAtLeast(1f)
+                        val dotColor = palette.textMuted.copy(alpha = 0.38f)
+                        val shaftStroke = arrowStroke(geometry.spacing * 0.09f)
+                        onDrawBehind {
+                            drawPoints(
+                                points = dots,
+                                pointMode = PointMode.Points,
+                                color = dotColor,
+                                strokeWidth = dotRadius * 2f,
+                                cap = StrokeCap.Round,
+                            )
+                            drawPath(path = shafts, color = palette.boardLine, style = shaftStroke)
+                            drawPath(path = heads, color = palette.boardLine)
+                        }
                     },
-                )
-            }
+            )
 
-            if (lastCorrectArrow != null && exitValue < 0.999f) {
-                val exitRoute = exitRouteFor(
-                    arrow = lastCorrectArrow,
-                    route = lastCorrectArrow.route.map(geometry::toOffset),
-                    progress = exitValue,
-                    width = size.width,
-                    height = size.height,
-                    spacing = geometry.spacing,
-                )
-                if (exitRoute != null && exitRoute.size >= 2) {
-                    // No highlight colour: the movement itself is the feedback.
-                    // Only a gentle fade at the very end so the arrow does not
-                    // pop out of existence.
+            // The few things that move: a wrong or hinted arrow and the arrow
+            // flying out. Animation values are read here, in the draw phase,
+            // so an animation frame only repaints this small layer.
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(),
+            ) {
+                val geometry = boardGeometry(size.width, size.height, level.layoutSize)
+                val lineWidth = geometry.spacing * 0.09f
+                val wrongProgress = wrongAnim.value
+                val hintProgress = hintAnim.value
+                val exitValue = exitProgress.value
+                val wrongAlphaValue = when {
+                    wrongProgress <= 0f -> 0f
+                    wrongProgress < 0.55f -> 1f
+                    wrongProgress < 0.85f -> 1f - (wrongProgress - 0.55f) / 0.30f
+                    else -> 0f
+                }
+                val wrongVisible = wrongAlphaValue > 0.01f
+
+                listOfNotNull(wrongFlashId, shakingHintId).distinct().forEach { arrowId ->
+                    if (arrowId in removedIds) return@forEach
+                    val arrow = level.arrowById(arrowId) ?: return@forEach
+                    val isWrong = wrongVisible && arrow.id == wrongFlashId
+                    // Twice the frequency of before and only for the first third
+                    // of the red flash, so the shake reads as a quick jolt while
+                    // the red tint keeps its existing timing.
+                    val shakeWindow = 0.35f
+                    val shakeProgress = (wrongProgress / shakeWindow).coerceIn(0f, 1f)
+                    val wrongShake = if (isWrong && wrongProgress < shakeWindow) {
+                        sin(wrongProgress * 52f) * geometry.spacing * 0.22f * (1f - shakeProgress)
+                    } else {
+                        0f
+                    }
+                    val hintShake = if (shakingHintId == arrow.id && hintProgress < 1f) {
+                        sin(hintProgress * HINT_SHAKE_FREQUENCY) *
+                            geometry.spacing * 0.18f * (1f - hintProgress)
+                    } else {
+                        0f
+                    }
+                    val shakeX = wrongShake + hintShake
+                    val route = if (shakeX != 0f) {
+                        arrow.route.map { geometry.toOffset(it) + Offset(shakeX, 0f) }
+                    } else {
+                        arrow.route.map(geometry::toOffset)
+                    }
                     drawPolylineArrow(
-                        route = exitRoute,
+                        route = route,
                         spacing = geometry.spacing,
-                        lineWidth = lineWidth,
-                        color = palette.boardLine.copy(
-                            alpha = exitFadeAlpha(exitValue),
-                        ),
+                        lineWidth = if (isWrong) lineWidth * 1.4f else lineWidth,
+                        color = if (isWrong) {
+                            lerp(palette.boardLine, palette.boardLineWrong, wrongAlphaValue)
+                        } else {
+                            palette.boardLine
+                        },
                     )
+                }
+
+                if (lastCorrectArrow != null && exitValue < 0.999f) {
+                    val exitRoute = exitRouteFor(
+                        arrow = lastCorrectArrow,
+                        route = lastCorrectArrow.route.map(geometry::toOffset),
+                        progress = exitValue,
+                        width = size.width,
+                        height = size.height,
+                        spacing = geometry.spacing,
+                    )
+                    if (exitRoute != null && exitRoute.size >= 2) {
+                        // No highlight colour: the movement itself is the feedback.
+                        // Only a gentle fade at the very end so the arrow does not
+                        // pop out of existence.
+                        drawPolylineArrow(
+                            route = exitRoute,
+                            spacing = geometry.spacing,
+                            lineWidth = lineWidth,
+                            color = palette.boardLine.copy(
+                                alpha = exitFadeAlpha(exitValue),
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -849,11 +908,35 @@ private fun distanceToSegment(point: Offset, start: Offset, end: Offset): Float 
     return hypot(point.x - projection.x, point.y - projection.y)
 }
 
+private fun arrowStroke(lineWidth: Float) = Stroke(
+    width = lineWidth,
+    cap = StrokeCap.Round,
+    join = androidx.compose.ui.graphics.StrokeJoin.Round,
+)
+
 private fun DrawScope.drawPolylineArrow(
     route: List<Offset>,
     spacing: Float,
     lineWidth: Float,
     color: Color,
+) {
+    val shaft = Path()
+    val head = Path()
+    appendArrowPaths(route, spacing, shaft, head)
+    drawPath(path = shaft, color = color, style = arrowStroke(lineWidth))
+    drawPath(path = head, color = color)
+}
+
+/**
+ * Adds one arrow to [shaft] (stroked) and [head] (filled), so many arrows can
+ * share two paths. Points on a straight run are skipped: they add no shape, only
+ * work for the renderer.
+ */
+private fun appendArrowPaths(
+    route: List<Offset>,
+    spacing: Float,
+    shaft: Path,
+    head: Path,
 ) {
     if (route.size < 2) return
     val previous = route[route.lastIndex - 1]
@@ -884,30 +967,21 @@ private fun DrawScope.drawPolylineArrow(
         tip.x - unitX * headLength * 0.55f,
         tip.y - unitY * headLength * 0.55f,
     )
-    val path = Path().apply {
-        moveTo(route[0].x, route[0].y)
-        for (index in 1 until route.lastIndex) {
-            lineTo(route[index].x, route[index].y)
-        }
-        lineTo(shaftEnd.x, shaftEnd.y)
+    shaft.moveTo(route[0].x, route[0].y)
+    for (index in 1 until route.lastIndex) {
+        val before = route[index - 1]
+        val point = route[index]
+        val after = route[index + 1]
+        val cross = (point.x - before.x) * (after.y - point.y) -
+            (point.y - before.y) * (after.x - point.x)
+        if (abs(cross) > 0.001f) shaft.lineTo(point.x, point.y)
     }
-    drawPath(
-        path = path,
-        color = color,
-        style = Stroke(
-            width = lineWidth,
-            cap = StrokeCap.Round,
-            join = androidx.compose.ui.graphics.StrokeJoin.Round,
-        ),
-    )
+    shaft.lineTo(shaftEnd.x, shaftEnd.y)
 
-    val head = Path().apply {
-        moveTo(tip.x, tip.y)
-        lineTo(headBase.x + perpX * headHalfWidth, headBase.y + perpY * headHalfWidth)
-        lineTo(headBase.x - perpX * headHalfWidth, headBase.y - perpY * headHalfWidth)
-        close()
-    }
-    drawPath(path = head, color = color)
+    head.moveTo(tip.x, tip.y)
+    head.lineTo(headBase.x + perpX * headHalfWidth, headBase.y + perpY * headHalfWidth)
+    head.lineTo(headBase.x - perpX * headHalfWidth, headBase.y - perpY * headHalfWidth)
+    head.close()
 }
 
 @Composable

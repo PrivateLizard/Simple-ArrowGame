@@ -1,6 +1,5 @@
 package com.arrowpuzzle.game.ui.screens
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +22,17 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import java.util.concurrent.ConcurrentHashMap
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,8 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.intl.LocaleList
@@ -189,6 +197,39 @@ fun TestModeScreen(
 
 private const val SHAPE_COLUMNS = 4
 
+/**
+ * Finished preview pictures. A mask has thousands of cells, far too many to draw
+ * one by one for a hundred tiles on every frame, so each shape is painted once
+ * (white, tinted when drawn) and then reused.
+ */
+private object ShapePreviews {
+    private const val GRID = 48
+    private val images = ConcurrentHashMap<Pair<LevelShape, Int>, ImageBitmap>()
+
+    fun image(shape: LevelShape, sizePx: Int): ImageBitmap =
+        images.getOrPut(shape to sizePx) {
+            val mask = ShapeMask.mask(shape, GRID)
+            val image = ImageBitmap(sizePx, sizePx)
+            val canvas = androidx.compose.ui.graphics.Canvas(image)
+            val paint = Paint().apply { color = Color.White }
+            val cell = sizePx.toFloat() / GRID
+            val gap = cell * 0.12f
+            for (y in 0 until GRID) {
+                for (x in 0 until GRID) {
+                    if (!mask[y * GRID + x]) continue
+                    canvas.drawRect(
+                        left = x * cell + gap / 2,
+                        top = y * cell + gap / 2,
+                        right = (x + 1) * cell - gap / 2,
+                        bottom = (y + 1) * cell - gap / 2,
+                        paint = paint,
+                    )
+                }
+            }
+            image
+        }
+}
+
 /** Selectable tile with a small preview of the shape mask. */
 @Composable
 private fun ShapeTile(
@@ -199,8 +240,12 @@ private fun ShapeTile(
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalStrings.current
-    val previewSize = 48
-    val mask = remember(shape) { ShapeMask.mask(shape, previewSize) }
+    var previewPx by remember { mutableIntStateOf(0) }
+    val preview by produceState<ImageBitmap?>(null, shape, previewPx) {
+        if (previewPx > 0) {
+            value = withContext(Dispatchers.Default) { ShapePreviews.image(shape, previewPx) }
+        }
+    }
     val tileShape = RoundedCornerShape(16.dp)
     val fill = if (selected) AppPrimary else AppTextMuted.copy(alpha = 0.55f)
     Column(
@@ -212,24 +257,17 @@ private fun ShapeTile(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Canvas(
+        Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f),
-        ) {
-            val cell = size.width / previewSize
-            val gap = cell * 0.12f
-            for (y in 0 until previewSize) {
-                for (x in 0 until previewSize) {
-                    if (!mask[y * previewSize + x]) continue
-                    drawRect(
-                        color = fill,
-                        topLeft = Offset(x * cell + gap / 2, y * cell + gap / 2),
-                        size = Size(cell - gap, cell - gap),
-                    )
-                }
-            }
-        }
+                .aspectRatio(1f)
+                .onSizeChanged { previewPx = it.width }
+                .drawBehind {
+                    preview?.let { image ->
+                        drawImage(image, colorFilter = ColorFilter.tint(fill))
+                    }
+                },
+        )
         Spacer(Modifier.height(6.dp))
         // Long names (Schmetterling, Bonhomme de neige) break at syllables of
         // the app language instead of in the middle of a word.

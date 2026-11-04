@@ -118,7 +118,11 @@ fun LevelSelectScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    items(items = levels, key = { it.levelId }) { level ->
+                    items(
+                        items = levels,
+                        key = { it.levelId },
+                        contentType = { "level" },
+                    ) { level ->
                         LevelTile(
                             level = level,
                             onClick = { onLevelSelected(level.levelId) },

@@ -21,10 +21,28 @@ data class LevelItem(
     val isUnlocked: Boolean,
 )
 
-private fun maxScoreForLevel(levelId: Int): Int {
-    val arrows = LevelCatalog.expectedArrowCountForLevel(levelId)
-    return ScoreCalculator.calculate(arrows, 0.0, 0).total
+/** Maximum scores never change, so they are computed once per process. */
+private val maxScores: IntArray by lazy {
+    IntArray(LevelCatalog.MAX_LEVEL + 1) { levelId ->
+        if (levelId == 0) {
+            0
+        } else {
+            val arrows = LevelCatalog.expectedArrowCountForLevel(levelId)
+            ScoreCalculator.calculate(arrows, 0.0, 0).total
+        }
+    }
 }
+
+private fun buildLevels(bestScores: Map<Int, Int>, highestUnlocked: Int): List<LevelItem> =
+    (1..LevelCatalog.visibleLevelCount(highestUnlocked)).map { levelId ->
+        LevelItem(
+            levelId = levelId,
+            openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
+            bestScore = bestScores[levelId] ?: 0,
+            maxScore = maxScores[levelId],
+            isUnlocked = levelId <= highestUnlocked,
+        )
+    }
 
 class LevelSelectViewModel(
     scoreRepository: ScoreRepository,
@@ -34,39 +52,18 @@ class LevelSelectViewModel(
         scoreRepository.bestScores,
         scoreRepository.highestUnlocked,
     ) { bestScores, highestUnlocked ->
-        (1..LevelCatalog.visibleLevelCount(highestUnlocked)).map { levelId ->
-            LevelItem(
-                levelId = levelId,
-                openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
-                bestScore = bestScores[levelId] ?: 0,
-                maxScore = maxScoreForLevel(levelId),
-                isUnlocked = levelId <= highestUnlocked,
-            )
-        }
+        buildLevels(bestScores, highestUnlocked)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = buildInitialLevels(scoreRepository),
+        initialValue = buildLevels(
+            scoreRepository.bestScores.value,
+            scoreRepository.highestUnlocked.value,
+        ),
     )
 
     fun configFor(levelId: Int): LevelConfig = LevelCatalog.defaultConfig(
         levelId = levelId,
         maxFailures = settingsRepository.settings.value.maxFailures,
     )
-
-    private companion object {
-        fun buildInitialLevels(scoreRepository: ScoreRepository): List<LevelItem> {
-            val best = scoreRepository.bestScores.value
-            val unlocked = scoreRepository.highestUnlocked.value
-            return (1..LevelCatalog.visibleLevelCount(unlocked)).map { levelId ->
-                LevelItem(
-                    levelId = levelId,
-                    openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
-                    bestScore = best[levelId] ?: 0,
-                    maxScore = maxScoreForLevel(levelId),
-                    isUnlocked = levelId <= unlocked,
-                )
-            }
-        }
-    }
 }
