@@ -33,8 +33,14 @@ class LevelGenerator(
         val targetArrows = targetArrowCount(config)
         var lastError: String? = null
 
-        repeat(maxAttempts) {
-            val path = randomHamiltonianPath(layoutSize, random)
+        repeat(maxAttempts) { attempt ->
+            // Last attempt: a plain serpentine, which always offers enough
+            // forward-facing cut points under the full-ray blocking rule.
+            val path = if (attempt < maxAttempts - 1) {
+                randomHamiltonianPath(layoutSize, random)
+            } else {
+                serpentinePath(layoutSize)
+            }
             val cuts = chooseCuts(
                 path = path,
                 layoutSize = layoutSize,
@@ -275,6 +281,20 @@ class LevelGenerator(
         return path
     }
 
+    private fun serpentinePath(layoutSize: Int): IntArray {
+        val count = layoutSize * layoutSize
+        val path = IntArray(count)
+        var index = 0
+        for (y in 0 until layoutSize) {
+            if (y % 2 == 0) {
+                for (x in 0 until layoutSize) path[index++] = y * layoutSize + x
+            } else {
+                for (x in layoutSize - 1 downTo 0) path[index++] = y * layoutSize + x
+            }
+        }
+        return path
+    }
+
     private data class BlockEdge(
         val first: Int,
         val second: Int,
@@ -312,10 +332,9 @@ class LevelGenerator(
                 isOutward(head, previous, headDirection, layoutSize) ->
                     openCandidates += i
                 // Never point at an arrow that comes earlier in the path:
-                // those edges could close a dependency cycle. With the
-                // nearest-cell rule only the cell directly in front matters.
-                // All remaining edges point forward, so the graph stays acyclic.
-                hasBackwardCellInFront(head, headDirection, i, pathIndex, layoutSize) ->
+                // those edges could close a dependency cycle. All remaining
+                // edges point forward, so the blocking graph stays acyclic.
+                hasBackwardCellOnRay(head, headDirection, i, pathIndex, layoutSize) ->
                     relaxedCandidates += i
                 // Cutting at a corner means the arrow does not point straight
                 // into the next arrow. It creates cross-blocking (one arrow can
@@ -403,17 +422,21 @@ class LevelGenerator(
         return arrows
     }
 
-    private fun hasBackwardCellInFront(
+    private fun hasBackwardCellOnRay(
         origin: GridPoint,
         direction: ArrowDirection,
         originIndex: Int,
         pathIndex: IntArray,
         layoutSize: Int,
     ): Boolean {
-        val x = origin.x + direction.dx
-        val y = origin.y + direction.dy
-        if (x !in 0 until layoutSize || y !in 0 until layoutSize) return false
-        return pathIndex[y * layoutSize + x] < originIndex
+        var x = origin.x
+        var y = origin.y
+        while (true) {
+            x += direction.dx
+            y += direction.dy
+            if (x !in 0 until layoutSize || y !in 0 until layoutSize) return false
+            if (pathIndex[y * layoutSize + x] < originIndex) return true
+        }
     }
 
     private fun isOutward(

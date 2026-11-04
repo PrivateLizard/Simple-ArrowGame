@@ -11,10 +11,9 @@ import kotlin.math.min
  * Geometry and dependency rules shared by the generator, validator, game logic
  * and tests.
  *
- * An arrow blocks another arrow only when it occupies the cell directly in
- * front of the other arrow's tip. Only that nearest arrow is visible to the
- * player, so it is the one that blocks; arrows farther down the ray do not.
- * The tip still points along a horizontal / vertical ray.
+ * An arrow blocks another arrow when its visible stroke intersects the forward
+ * ray that starts at the other arrow's tip. Only horizontal / vertical rays are
+ * used by the generator.
  */
 object ArrowGeometry {
     fun routePoints(route: List<GridPoint>): LinkedHashSet<GridPoint> {
@@ -34,17 +33,8 @@ object ArrowGeometry {
         arrow: Arrow,
         candidates: List<Arrow>,
         boardSize: Int,
-    ): List<Arrow> {
-        val frontX = arrow.endPosition.x + arrow.direction.dx
-        val frontY = arrow.endPosition.y + arrow.direction.dy
-        if (frontX !in 0 until boardSize || frontY !in 0 until boardSize) {
-            return emptyList()
-        }
-        val front = GridPoint(frontX, frontY)
-        val blocker = candidates.firstOrNull { other ->
-            other.id != arrow.id && other.route.contains(front)
-        }
-        return if (blocker == null) emptyList() else listOf(blocker)
+    ): List<Arrow> = candidates.filter { other ->
+        other.id != arrow.id && rayHits(arrow, other, boardSize)
     }
 
     fun rayHits(shooter: Arrow, target: Arrow, boardSize: Int): Boolean {

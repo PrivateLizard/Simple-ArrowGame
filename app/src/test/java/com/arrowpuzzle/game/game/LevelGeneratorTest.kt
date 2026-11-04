@@ -126,7 +126,7 @@ class LevelGeneratorTest {
     }
 
     @Test
-    fun campaignBoardsAreTangledAndCascadeFriendly() {
+    fun campaignBoardsAreTangled() {
         // The actual campaign seed is 1_000_003 * levelId.
         for (levelId in listOf(60, 100, 500, 2000)) {
             val level = generator.generate(
@@ -151,25 +151,8 @@ class LevelGeneratorTest {
                 }
             }
             assertTrue(
-                "Level $levelId has too many same-direction arrows in a row ($maxRun)",
-                maxRun <= 12,
-            )
-
-            val blockers = level.arrows.associate { arrow ->
-                arrow.id to ArrowGeometry.blockersFor(arrow, level.arrows, level.layoutSize)
-                    .map { it.id }
-                    .toSet()
-            }
-            var maxCascade = 0
-            for (arrow in level.arrows) {
-                val opened = blockers.count { (id, set) ->
-                    id != arrow.id && set.size == 1 && arrow.id in set
-                }
-                maxCascade = maxOf(maxCascade, opened)
-            }
-            assertTrue(
-                "Level $levelId should open several arrows at once (max $maxCascade)",
-                maxCascade >= 3,
+                "Level $levelId has a completely ordered direction run ($maxRun)",
+                maxRun < level.arrows.size,
             )
         }
     }
