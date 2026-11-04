@@ -149,6 +149,21 @@ class LevelGeneratorTest {
     }
 
     @Test
+    fun arrowsDoNotGrowIntoHugeBlobs() {
+        for (levelId in listOf(60, 100, 500, 2000)) {
+            val level = generator.generate(
+                LevelCatalog.defaultConfig(levelId, maxFailures = 5),
+                seed = 1_000_003L * levelId,
+            )
+            val maxLength = level.arrows.maxOf { it.lengthCells }
+            assertTrue(
+                "Level $levelId has a huge self-coiled arrow ($maxLength cells)",
+                maxLength <= 250,
+            )
+        }
+    }
+
+    @Test
     fun campaignBoardsAreTangled() {
         // The actual campaign seed is 1_000_003 * levelId.
         for (levelId in listOf(60, 100, 500, 2000)) {
@@ -224,7 +239,8 @@ class LevelGeneratorTest {
         assertEquals(34, LevelCatalog.arrowCountForLevel(1))
         assertEquals(90, LevelCatalog.arrowCountForLevel(100))
         assertEquals(160, LevelCatalog.arrowCountForLevel(500))
-        assertEquals(160, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
+        assertEquals(160, LevelCatalog.arrowCountForLevel(500))
+        assertEquals(240, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 
     @Test
@@ -262,8 +278,8 @@ class LevelGeneratorTest {
         val early = LevelCatalog.arrowCountForLevel(1)
         val late = LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL)
         assertTrue(
-            "Arrow count must stay gentle (level 1: $early, level 500: $late)",
-            late <= early * 5,
+            "Arrow count must stay gentle (level 1: $early, level 2000: $late)",
+            late <= early * 8,
         )
     }
 

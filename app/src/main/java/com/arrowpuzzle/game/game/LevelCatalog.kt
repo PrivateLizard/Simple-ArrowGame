@@ -74,6 +74,9 @@ object LevelCatalog {
      */
     private const val FINAL_ARROWS = 160
 
+    /** Late-game density: more, shorter arrows for the huge boards. */
+    private const val LATE_FINAL_ARROWS = 240
+
     fun gridSizeForLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
         val growth = safe.coerceAtMost(LEGACY_MAX_LEVEL)
@@ -127,8 +130,11 @@ object LevelCatalog {
             (ARROWS_AT_LEGACY_MAX + (FINAL_ARROWS - ARROWS_AT_LEGACY_MAX) * t)
                 .roundToInt()
         } else {
-            // Levels 501..MAX_LEVEL stay at the finale density.
-            FINAL_ARROWS
+            // Levels 501..MAX_LEVEL get more, shorter arrows so the huge
+            // boards do not end up with a few enormous self-coiled arrows.
+            val t = (safe - CURVE_MAX_LEVEL).toDouble() /
+                (MAX_LEVEL - CURVE_MAX_LEVEL)
+            (FINAL_ARROWS + (LATE_FINAL_ARROWS - FINAL_ARROWS) * t).roundToInt()
         }
     }
 

@@ -22,7 +22,7 @@ class LevelGenerator(
     private val maxAttempts: Int = 40,
 ) {
     fun generate(config: LevelConfig, seed: Long = System.nanoTime()): GeneratedLevel {
-        require(config.arrowCount in 1..200) { "Arrow count must be between 1 and 200" }
+        require(config.arrowCount in 1..400) { "Arrow count must be between 1 and 400" }
         require(
             config.maxFailures in 0..99 || config.maxFailures == AppSettings.NO_FAILURE_LIMIT,
         ) { "Max failures must be between 0 and 99, or off" }
@@ -267,9 +267,27 @@ class LevelGenerator(
             adjacency[second][degree[second]++] = first
         }
 
-        val start = random.nextInt(count)
+        // Choose a start so the path's final edge points off the board. That
+        // keeps the last arrow open and avoids a backward edge / cycle there.
+        var forcedPrevious = -1
+        var start = -1
+        for (cell in 0 until count) {
+            for (neighbor in adjacency[cell]) {
+                val head = point(neighbor, layoutSize)
+                val previousPoint = point(cell, layoutSize)
+                val direction = ArrowDirection.between(previousPoint, head) ?: continue
+                if (!isOutward(head, previousPoint, direction, layoutSize)) continue
+                val other = adjacency[neighbor].firstOrNull { it != cell } ?: continue
+                start = other
+                forcedPrevious = neighbor
+                break
+            }
+            if (start >= 0) break
+        }
+        if (start < 0) start = random.nextInt(count)
+
         val path = IntArray(count)
-        var previous = -1
+        var previous = forcedPrevious
         var current = start
         for (i in 0 until count) {
             path[i] = current
@@ -294,6 +312,7 @@ class LevelGenerator(
         }
         return path
     }
+
 
     private data class BlockEdge(
         val first: Int,
@@ -362,25 +381,34 @@ class LevelGenerator(
         }
         if (openAdded < neededOpenCuts) return null
 
-        // Prefer corner cuts, then fall back to straight cuts only if the path
-        // does not offer enough corners.
-        for (candidate in turnCandidates.shuffled(random)) {
-            if (cuts.size >= targetArrows) break
-            if (cuts.all { abs(it - candidate) >= 2 }) {
-                cuts += candidate
-            }
-        }
-        if (cuts.size < targetArrows) {
-            for (candidate in straightCandidates.shuffled(random)) {
-                if (cuts.size >= targetArrows) break
-                if (cuts.all { abs(it - candidate) >= 2 }) {
-                    cuts += candidate
+        // Place the remaining cuts at roughly even intervals, choosing the
+        // closest forward (straight/turn) candidate. Even spacing prevents the
+        // worst long self-coiled arrows without unsafe after-the-fact splits,
+        // and forward candidates keep the blocking graph acyclic.
+        val needed = targetArrows - cuts.size
+        if (needed > 0) {
+            val pool = ArrayList<Int>(straightCandidates.size + turnCandidates.size)
+            pool += straightCandidates
+            pool += turnCandidates
+            pool.removeAll { candidate -> cuts.any { abs(it - candidate) < 2 } }
+            pool.sort()
+            for (k in 0 until needed) {
+                if (pool.isEmpty()) break
+                val desired = ((k + 1).toLong() * count / (needed + 1)).toInt()
+                var bestIndex = 0
+                var bestDistance = Int.MAX_VALUE
+                for (i in pool.indices) {
+                    val distance = abs(pool[i] - desired)
+                    if (distance < bestDistance) {
+                        bestDistance = distance
+                        bestIndex = i
+                    }
                 }
+                val best = pool[bestIndex]
+                cuts += best
+                pool.removeAll { abs(it - best) < 2 }
             }
         }
-        // Last resort: cuts whose front cell belongs to an earlier arrow. They
-        // may or may not form a cycle; the validator decides. This keeps the
-        // heavily tangled boards usable instead of falling back to a serpentine.
         if (cuts.size < targetArrows) {
             for (candidate in relaxedCandidates.shuffled(random)) {
                 if (cuts.size >= targetArrows) break
@@ -437,6 +465,14 @@ class LevelGenerator(
             if (x !in 0 until layoutSize || y !in 0 until layoutSize) return false
             if (pathIndex[y * layoutSize + x] < originIndex) return true
         }
+    }
+
+    private fun isOpenCut(path: IntArray, cut: Int, layoutSize: Int): Boolean {
+        if (cut <= 0) return false
+        val previous = point(path[cut - 1], layoutSize)
+        val head = point(path[cut], layoutSize)
+        val direction = ArrowDirection.between(previous, head) ?: return false
+        return isOutward(head, previous, direction, layoutSize)
     }
 
     private fun isOutward(
