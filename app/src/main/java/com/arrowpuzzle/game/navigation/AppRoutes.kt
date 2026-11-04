@@ -26,7 +26,7 @@ object AppRoutes {
         "game/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}"
     const val VICTORY =
         "victory/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}" +
-            "/{points}/{timeMillis}/{failures}/{newBest}"
+            "/{points}/{timeMillis}/{failures}/{newBest}/{arrowsUsed}"
     const val DEFEAT =
         "defeat/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}" +
             "/{reason}/{failures}/{timeMillis}/{arrowCount}"
@@ -75,6 +75,10 @@ object AppRoutes {
         append(result.record.failures)
         append('/')
         append(if (result.isNewHighScore) "true" else "false")
+        append('/')
+        // The real board size: the config value is only the generator target,
+        // and the score breakdown must be recomputed from the real count.
+        append(result.record.arrowsUsed)
     }
 
     fun defeat(state: GameState.Defeat, config: LevelConfig): String = buildString {
@@ -134,10 +138,11 @@ object AppRoutes {
         val timeMillis = arguments?.getLong("timeMillis", 0L) ?: 0L
         val failures = arguments?.getInt("failures", 0) ?: 0
         val newBest = arguments?.getBoolean("newBest", false) ?: false
+        val arrowsUsed = arguments?.getInt("arrowsUsed", config.arrowCount) ?: config.arrowCount
         val record = ScoreRecord(
             levelId = config.levelId,
             points = points,
-            arrowsUsed = config.arrowCount,
+            arrowsUsed = arrowsUsed,
             timeElapsed = timeMillis / 1000.0,
             failures = failures,
             timestamp = 0L,

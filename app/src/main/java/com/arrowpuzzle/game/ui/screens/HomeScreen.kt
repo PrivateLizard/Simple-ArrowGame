@@ -22,6 +22,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +67,8 @@ fun HomeScreen(
     onToggleUnlockAll: (Boolean) -> Unit = {},
     onUnlockLevelCount: (Int) -> Unit = {},
     devModeEnabled: Boolean = false,
+    devWinButtons: Boolean = false,
+    onDevWinButtonsChange: (Boolean) -> Unit = {},
     resumeLevel: Int? = null,
     resumeRemaining: Int? = null,
     onResume: () -> Unit = {},
@@ -231,6 +236,8 @@ fun HomeScreen(
                             highestUnlocked = highestUnlocked,
                             onToggleUnlockAll = onToggleUnlockAll,
                             onUnlockLevelCount = onUnlockLevelCount,
+                            winButtons = devWinButtons,
+                            onWinButtonsChange = onDevWinButtonsChange,
                         )
                     }
                 }
@@ -312,6 +319,8 @@ private fun DevOptionsCard(
     highestUnlocked: Int,
     onToggleUnlockAll: (Boolean) -> Unit,
     onUnlockLevelCount: (Int) -> Unit,
+    winButtons: Boolean,
+    onWinButtonsChange: (Boolean) -> Unit,
 ) {
     val s = LocalStrings.current
     val focusManager = LocalFocusManager.current
@@ -415,6 +424,35 @@ private fun DevOptionsCard(
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = s.t("dev_win_buttons"),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = AppText,
+                    )
+                    Text(
+                        text = s.t("dev_win_buttons_desc"),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextMuted.copy(alpha = 0.8f),
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Switch(
+                    checked = winButtons,
+                    onCheckedChange = onWinButtonsChange,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = AppSurfaceRaised,
+                        checkedTrackColor = AppPrimary,
+                        uncheckedThumbColor = AppTextMuted,
+                        uncheckedTrackColor = AppGridLine,
+                    ),
+                )
             }
         }
     }

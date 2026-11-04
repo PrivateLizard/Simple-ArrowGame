@@ -5,6 +5,17 @@ All notable changes to Simple Arrow Puzzle. Up to build 39 `versionName` was
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- Redesigned level-complete screen: animated check badge, counting-up score,
+  breakdown and stats revealed one after another, plus a short, subtle confetti
+  shower in theme colours (skipped when system animations are off).
+- **Fix:** the level-complete screen recomputed the score breakdown from the
+  planned arrow count instead of the real one, so the rows did not add up to
+  the total and the arrow count was off. It now uses the real count.
+- Dev options: switchable "win buttons" in levels - tap the next open arrow, or
+  win the level instantly with a perfect result (counts as a normal win).
+
 ## 1.0.1 (Build 40) - 2026-11-04
 
 - Release builds are shrunk with R8: the APK drops from about 6.2 MB to 1.1 MB.

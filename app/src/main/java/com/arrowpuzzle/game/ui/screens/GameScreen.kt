@@ -32,6 +32,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -102,6 +104,7 @@ fun GameScreen(
     viewModel: GameViewModel,
     soundEffects: SoundEffects,
     hintsEnabled: Boolean = true,
+    devWinButtons: Boolean = false,
     onExit: () -> Unit,
     onVictory: (GameResult) -> Unit,
     onDefeat: (GameState.Defeat, LevelConfig) -> Unit,
@@ -187,6 +190,9 @@ fun GameScreen(
                 onArrowTap = viewModel::onArrowClick,
                 onExit = exitLevel,
                 hintsEnabled = hintsEnabled,
+                devWinButtons = devWinButtons,
+                onDevNextArrow = viewModel::devTapNextArrow,
+                onDevPerfectWin = viewModel::devPerfectWin,
             )
 
             is GameState.Victory -> ResultTransition(s.t("all_clear"), AppPrimary)
@@ -201,6 +207,9 @@ private fun PlayingContent(
     onArrowTap: (Int) -> Unit,
     onExit: () -> Unit,
     hintsEnabled: Boolean,
+    devWinButtons: Boolean,
+    onDevNextArrow: () -> Unit,
+    onDevPerfectWin: () -> Unit,
 ) {
     val level = state.level
     val config = level.config
@@ -281,6 +290,50 @@ private fun PlayingContent(
             }
 
             Spacer(Modifier.weight(1f))
+
+            if (devWinButtons) {
+                DevWinBar(onNextArrow = onDevNextArrow, onPerfectWin = onDevPerfectWin)
+            }
+        }
+    }
+}
+
+/** Dev option: two test buttons at the bottom of the level. */
+@Composable
+private fun DevWinBar(onNextArrow: () -> Unit, onPerfectWin: () -> Unit) {
+    val s = LocalStrings.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        OutlinedButton(
+            onClick = onNextArrow,
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.7f)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = AppSurface.copy(alpha = 0.92f),
+                contentColor = AppPrimary,
+            ),
+        ) {
+            Text(s.t("dev_next_arrow"), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
+        Button(
+            onClick = onPerfectWin,
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppPrimary,
+                contentColor = AppSurface,
+            ),
+        ) {
+            Text(s.t("dev_perfect_win"), style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
     }
 }

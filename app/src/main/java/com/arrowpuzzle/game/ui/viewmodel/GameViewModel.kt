@@ -9,6 +9,7 @@ import com.arrowpuzzle.game.data.SettingsRepository
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.data.model.ScoreRecord
 import com.arrowpuzzle.game.game.arrowExitDurationMillis
+import com.arrowpuzzle.game.game.ArrowGeometry
 import com.arrowpuzzle.game.game.ArrowLogic
 import com.arrowpuzzle.game.game.DefeatReason
 import com.arrowpuzzle.game.game.GameFeedback
@@ -220,6 +221,52 @@ class GameViewModel(
         }
 
         feedback?.let(_feedback::tryEmit)
+    }
+
+    /**
+     * Dev option: taps the first open arrow, exactly as a player would (same
+     * animation, sound, progress saving and victory handling).
+     */
+    fun devTapNextArrow() {
+        val current = _state.value as? GameState.Playing ?: return
+        val next = ArrowGeometry.availableArrows(current.level, current.removedIds)
+            .firstOrNull()
+            ?: return
+        onArrowClick(next.id)
+    }
+
+    /**
+     * Dev option: ends the level at once with a perfect result (no failures,
+     * zero seconds), i.e. the maximum score shown in the level list. The score
+     * is recorded and the next level unlocked like a real win.
+     */
+    fun devPerfectWin() {
+        var won = false
+        synchronized(clickLock) {
+            val current = _state.value as? GameState.Playing ?: return@synchronized
+            timerJob?.cancel()
+            finishJob?.cancel()
+            val breakdown = ScoreCalculator.calculate(
+                arrowCount = current.level.arrowCount,
+                timeElapsedSeconds = 0.0,
+                failures = 0,
+            )
+            val record = ScoreRecord(
+                levelId = config.levelId,
+                points = breakdown.total,
+                arrowsUsed = current.level.arrowCount,
+                timeElapsed = 0.0,
+                failures = 0,
+                timestamp = System.currentTimeMillis(),
+            )
+            val isNewHighScore = scoreRepository.recordScore(record)
+            _state.value = GameState.Victory(current.level, record, isNewHighScore)
+            won = true
+        }
+        if (won) {
+            progressRepository.clear()
+            _feedback.tryEmit(victoryFeedback())
+        }
     }
 
     /**

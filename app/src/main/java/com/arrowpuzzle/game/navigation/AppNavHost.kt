@@ -81,6 +81,8 @@ fun AppNavHost(container: AppContainer) {
                     viewModel.setLevelsUnlocked(count)
                 },
                 devModeEnabled = homeSettings.devModeEnabled,
+                devWinButtons = homeSettings.devWinButtons,
+                onDevWinButtonsChange = container.settingsRepository::setDevWinButtons,
             )
         }
 
@@ -165,6 +167,7 @@ fun AppNavHost(container: AppContainer) {
                 viewModel = viewModel,
                 soundEffects = container.soundEffects,
                 hintsEnabled = gameSettings.hintsEnabled,
+                devWinButtons = gameSettings.devModeEnabled && gameSettings.devWinButtons,
                 onExit = { navController.popBackStack() },
                 onVictory = { result ->
                     navController.navigate(AppRoutes.victory(result)) {
@@ -261,6 +264,7 @@ private fun victoryArguments(): List<NamedNavArgument> = levelConfigArguments() 
     navArgument("timeMillis") { type = NavType.LongType },
     navArgument("failures") { type = NavType.IntType },
     navArgument("newBest") { type = NavType.BoolType },
+    navArgument("arrowsUsed") { type = NavType.IntType },
 )
 
 private fun defeatArguments(): List<NamedNavArgument> = levelConfigArguments() + listOf(

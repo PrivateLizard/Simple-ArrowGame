@@ -11,6 +11,8 @@ data class AppSettings(
     val language: String = "",
     /** Hidden developer tools; toggled from the build number in Settings. */
     val devModeEnabled: Boolean = false,
+    /** Dev option: show "next arrow" and "perfect win" buttons in levels. */
+    val devWinButtons: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_MAX_FAILURES = 3

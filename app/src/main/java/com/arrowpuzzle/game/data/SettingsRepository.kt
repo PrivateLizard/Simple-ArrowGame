@@ -42,6 +42,10 @@ class SettingsRepository(context: Context) {
         it.copy(devModeEnabled = enabled)
     }
 
+    fun setDevWinButtons(enabled: Boolean) = update {
+        it.copy(devWinButtons = enabled)
+    }
+
     private fun update(transform: (AppSettings) -> AppSettings) {
         synchronized(lock) {
             val updated = transform(_settings.value)
@@ -53,6 +57,7 @@ class SettingsRepository(context: Context) {
                 putBoolean(KEY_HINTS, updated.hintsEnabled)
                 putString(KEY_LANGUAGE, updated.language)
                 putBoolean(KEY_DEV_MODE, updated.devModeEnabled)
+                putBoolean(KEY_DEV_WIN_BUTTONS, updated.devWinButtons)
             }
             _settings.value = updated
         }
@@ -68,6 +73,7 @@ class SettingsRepository(context: Context) {
         hintsEnabled = preferences.getBoolean(KEY_HINTS, true),
         language = preferences.getString(KEY_LANGUAGE, "") ?: "",
         devModeEnabled = preferences.getBoolean(KEY_DEV_MODE, false),
+        devWinButtons = preferences.getBoolean(KEY_DEV_WIN_BUTTONS, false),
     )
 
     private fun normalizeMaxFailures(value: Int): Int =
@@ -86,5 +92,6 @@ class SettingsRepository(context: Context) {
         const val KEY_HINTS = "hints_enabled"
         const val KEY_LANGUAGE = "language"
         const val KEY_DEV_MODE = "dev_mode_enabled"
+        const val KEY_DEV_WIN_BUTTONS = "dev_win_buttons"
     }
 }
