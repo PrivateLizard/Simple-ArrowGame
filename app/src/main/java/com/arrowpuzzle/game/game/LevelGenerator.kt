@@ -21,6 +21,12 @@ import kotlin.random.Random
 class LevelGenerator(
     private val maxAttempts: Int = 40,
 ) {
+    private companion object {
+        const val SHORT_ARROW = 8
+        const val MAX_MERGED_ARROW = 80
+        const val MIN_MERGE_RUN = 3
+    }
+
     fun generate(config: LevelConfig, seed: Long = System.nanoTime()): GeneratedLevel {
         require(config.arrowCount in 1..400) { "Arrow count must be between 1 and 400" }
         require(
@@ -418,7 +424,147 @@ class LevelGenerator(
             }
         }
         if (cuts.size < targetArrows) return null
-        return cuts.sorted().toIntArray()
+        return mergeShortRuns(
+            path = path,
+            layoutSize = layoutSize,
+            cuts = cuts.sorted().toIntArray(),
+            targetArrows = targetArrows,
+            straightCandidates = straightCandidates,
+            turnCandidates = turnCandidates,
+        )
+    }
+
+    /**
+     * Merges runs of very short, same-direction arrows into one longer arrow.
+     * The arrow count is restored by splitting the longest remaining arrows at
+     * forward (straight/turn) candidates, so the score max and the open count
+     * stay unchanged. If the count cannot be restored, the original cuts are
+     * returned.
+     */
+    private fun mergeShortRuns(
+        path: IntArray,
+        layoutSize: Int,
+        cuts: IntArray,
+        targetArrows: Int,
+        straightCandidates: List<Int>,
+        turnCandidates: List<Int>,
+    ): IntArray {
+        if (cuts.size != targetArrows) return cuts
+        val original = cuts.copyOf()
+        val cutList = cuts.toMutableList()
+        val remove = HashSet<Int>()
+
+        var index = 0
+        while (index < cutList.size) {
+            val start = if (index == 0) 0 else cutList[index - 1] + 1
+            val end = cutList[index]
+            if (end - start + 1 > SHORT_ARROW) {
+                index += 1
+                continue
+            }
+            val direction = arrowDirection(path, end, layoutSize)
+            if (direction == null) {
+                index += 1
+                continue
+            }
+            var runEnd = index
+            var mergedLength = end - start + 1
+            while (runEnd + 1 < cutList.size) {
+                val nextStart = cutList[runEnd] + 1
+                val nextEnd = cutList[runEnd + 1]
+                val nextLength = nextEnd - nextStart + 1
+                if (nextLength > SHORT_ARROW) break
+                if (arrowDirection(path, nextEnd, layoutSize) != direction) break
+                if (mergedLength + nextLength > MAX_MERGED_ARROW) break
+                mergedLength += nextLength
+                runEnd += 1
+            }
+            val runSize = runEnd - index + 1
+            if (runSize >= MIN_MERGE_RUN) {
+                var containsOpen = false
+                for (i in index until runEnd) {
+                    if (isOpenCut(path, cutList[i], layoutSize)) {
+                        containsOpen = true
+                        break
+                    }
+                }
+                if (!containsOpen) {
+                    for (i in index until runEnd) remove.add(cutList[i])
+                    index = runEnd + 1
+                    continue
+                }
+            }
+            index += 1
+        }
+
+        if (remove.isEmpty()) return original
+        cutList.removeAll { it in remove }
+
+        var splitGuard = 0
+        while (cutList.size < targetArrows && splitGuard < 10_000) {
+            splitGuard += 1
+            var bestIndex = -1
+            var bestLength = 0
+            var bestSplit = -1
+            for (i in cutList.indices) {
+                val start = if (i == 0) 0 else cutList[i - 1] + 1
+                val end = cutList[i]
+                val length = end - start + 1
+                if (length <= bestLength) continue
+                val split = forwardSplit(start, end, cutList, straightCandidates, turnCandidates)
+                if (split != null) {
+                    bestLength = length
+                    bestIndex = i
+                    bestSplit = split
+                }
+            }
+            if (bestIndex < 0) break
+            cutList.add(bestSplit)
+            cutList.sort()
+        }
+        return if (cutList.size == targetArrows) cutList.toIntArray() else original
+    }
+
+    private fun forwardSplit(
+        start: Int,
+        end: Int,
+        cuts: List<Int>,
+        straightCandidates: List<Int>,
+        turnCandidates: List<Int>,
+    ): Int? {
+        val from = start + 1
+        val to = end - 2
+        if (from > to) return null
+        val desired = (start + end) / 2
+        var best = -1
+        var bestDistance = Int.MAX_VALUE
+        for (candidate in straightCandidates) {
+            if (candidate !in from..to) continue
+            if (cuts.any { abs(it - candidate) < 2 }) continue
+            val distance = abs(candidate - desired)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                best = candidate
+            }
+        }
+        for (candidate in turnCandidates) {
+            if (candidate !in from..to) continue
+            if (cuts.any { abs(it - candidate) < 2 }) continue
+            val distance = abs(candidate - desired)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                best = candidate
+            }
+        }
+        return if (best < 0) null else best
+    }
+
+    private fun arrowDirection(path: IntArray, cut: Int, layoutSize: Int): ArrowDirection? {
+        if (cut <= 0) return null
+        return ArrowDirection.between(
+            point(path[cut - 1], layoutSize),
+            point(path[cut], layoutSize),
+        )
     }
 
     private fun isLastArrowOpen(path: IntArray, layoutSize: Int): Boolean {
