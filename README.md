@@ -17,10 +17,12 @@ page for the signed APK.
 
 ## Features
 
-- **2000 campaign levels** plus a Custom Mode
+- **3000 campaign levels** plus a Custom Mode
+- Every fifth level is a picture level: the board is cut into one of 200 shapes
+  (small in the first 1000 levels, then medium, then large)
 - Board grows from 3x3 to 8x8 logical grid; the actual point lattice grows from
   20x20 up to 72x72
-- Late levels carry more, shorter arrows (160 at level 500, 240 at level 2000)
+- Late levels carry more, shorter arrows (160 at level 750, 240 at the end)
 - Dense, fully covered arrow fields with no crossing or overlapping strokes
 - Short and long, heavily bent arrows
 - Removed arrows unspool head-first along their path

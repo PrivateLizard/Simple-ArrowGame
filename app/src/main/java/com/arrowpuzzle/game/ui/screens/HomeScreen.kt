@@ -213,23 +213,25 @@ fun HomeScreen(
 
                     Spacer(Modifier.height(12.dp))
 
-                    OutlinedButton(
-                        onClick = onTest,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(58.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AppGridLine),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
-                    ) {
-                        Text(
-                            text = s.t("test_mode"),
-                            style = MaterialTheme.typography.titleMedium,
-                            letterSpacing = 1.sp,
-                        )
-                    }
+                    if (devModeEnabled) {
+                        OutlinedButton(
+                            onClick = onTest,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(58.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppGridLine),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
+                        ) {
+                            Text(
+                                text = s.t("test_mode"),
+                                style = MaterialTheme.typography.titleMedium,
+                                letterSpacing = 1.sp,
+                            )
+                        }
 
-                    Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
+                    }
 
                     OutlinedButton(
                         onClick = onSettings,

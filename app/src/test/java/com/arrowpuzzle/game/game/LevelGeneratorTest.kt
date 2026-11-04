@@ -11,12 +11,15 @@ import org.junit.Test
 class LevelGeneratorTest {
     private val generator = LevelGenerator(maxAttempts = 60)
 
-    /** Representative levels across the 2000-level curve (keeps tests fast). */
+    /** Representative levels across the campaign, square and picture (keeps tests fast). */
     private val sampleLevels = listOf(
         1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100,
         101, 120, 150, 200, 250, 300, 350, 400, 450, 499, 500,
-        600, 800, 1000, 1500, 2000,
+        600, 800, 1000, 1500, 2000, 2500, 2999, 3000,
     )
+
+    /** Last normal square level: as hard as the finale, with the full arrow count. */
+    private val lastSquareLevel = LevelCatalog.MAX_LEVEL - 1
 
     @Test
     fun campaignLevelsAreValidAndSolvable() {
@@ -34,7 +37,7 @@ class LevelGeneratorTest {
                 .size
             assertEquals(
                 "Level $levelId must have no free lattice points",
-                level.layoutSize * level.layoutSize,
+                level.cellMask?.count { it } ?: (level.layoutSize * level.layoutSize),
                 covered,
             )
         }
@@ -102,8 +105,8 @@ class LevelGeneratorTest {
     @Test
     fun distantArrowsOnTheRayStillBlock() {
         val level = generator.generate(
-            LevelCatalog.defaultConfig(100, maxFailures = 5),
-            seed = 1_000_003L * 100,
+            LevelCatalog.defaultConfig(151, maxFailures = 5),
+            seed = 1_000_003L * 151,
         )
         val blocked = level.arrows.first { arrow ->
             ArrowGeometry.blockersFor(arrow, level.arrows, level.layoutSize).size >= 2
@@ -164,14 +167,15 @@ class LevelGeneratorTest {
         assertEquals(200, LevelCatalog.visibleLevelCount(100))
         assertEquals(200, LevelCatalog.visibleLevelCount(150))
         assertEquals(300, LevelCatalog.visibleLevelCount(200))
-        assertEquals(2000, LevelCatalog.visibleLevelCount(2000))
+        assertEquals(2100, LevelCatalog.visibleLevelCount(2000))
+        assertEquals(3000, LevelCatalog.visibleLevelCount(3000))
     }
 
     @Test
     fun arrowsDoNotGrowIntoHugeBlobs() {
         // Soft cap of 80 cells; a few arrows may stay longer where no safe split
         // exists, but the 945-cell monsters from generator version 1 are gone.
-        for (levelId in listOf(60, 100, 500, 1250, 1750, 2000)) {
+        for (levelId in listOf(61, 151, 751, 1876, 2626, lastSquareLevel)) {
             val level = generator.generate(
                 LevelCatalog.defaultConfig(levelId, maxFailures = 5),
                 seed = 1_000_003L * levelId,
@@ -194,7 +198,7 @@ class LevelGeneratorTest {
     @Test
     fun campaignBoardsAreTangled() {
         // The actual campaign seed is 1_000_003 * levelId.
-        for (levelId in listOf(60, 100, 500, 2000)) {
+        for (levelId in listOf(61, 151, 751, lastSquareLevel)) {
             val level = generator.generate(
                 LevelCatalog.defaultConfig(levelId, maxFailures = 5),
                 seed = 1_000_003L * levelId,
@@ -224,14 +228,10 @@ class LevelGeneratorTest {
     }
 
     @Test
-    fun fieldGrowsEveryFiftyLevelsAfterOneHundred() {
-        assertEquals(34, LevelCatalog.layoutSizeForLevel(100))
-        assertEquals(34, LevelCatalog.layoutSizeForLevel(149))
-        assertEquals(36, LevelCatalog.layoutSizeForLevel(150))
-        assertEquals(36, LevelCatalog.layoutSizeForLevel(200))
-        assertEquals(38, LevelCatalog.layoutSizeForLevel(300))
-        assertEquals(50, LevelCatalog.layoutSizeForLevel(900))
-        assertEquals(72, LevelCatalog.layoutSizeForLevel(2000))
+    fun fieldGrowsOverTheStretchedCampaign() {
+        assertEquals(20, LevelCatalog.layoutSizeForLevel(1))
+        assertEquals(34, LevelCatalog.layoutSizeForLevel(150))
+        assertEquals(72, LevelCatalog.layoutSizeForLevel(LevelCatalog.MAX_LEVEL))
         for (level in 2..LevelCatalog.MAX_LEVEL) {
             assertTrue(
                 "Layout must never shrink at level $level",
@@ -242,8 +242,8 @@ class LevelGeneratorTest {
     }
 
     @Test
-    fun campaignHasTwoThousandLevelsOnADifficultyScale() {
-        assertEquals(2000, LevelCatalog.MAX_LEVEL)
+    fun campaignHasThreeThousandLevelsOnADifficultyScale() {
+        assertEquals(3000, LevelCatalog.MAX_LEVEL)
         for (levelId in 1..LevelCatalog.MAX_LEVEL) {
             assertEquals(
                 "Difficulty must map 1:1 to the level id",
@@ -265,9 +265,8 @@ class LevelGeneratorTest {
             previous = arrows
         }
         assertEquals(34, LevelCatalog.arrowCountForLevel(1))
-        assertEquals(90, LevelCatalog.arrowCountForLevel(100))
-        assertEquals(160, LevelCatalog.arrowCountForLevel(500))
-        assertEquals(160, LevelCatalog.arrowCountForLevel(500))
+        assertEquals(90, LevelCatalog.arrowCountForLevel(150))
+        assertEquals(160, LevelCatalog.arrowCountForLevel(750))
         assertEquals(240, LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 
@@ -333,7 +332,7 @@ class LevelGeneratorTest {
 
     @Test
     fun boardsAreCompletelyFilledAndContainLongBentArrows() {
-        for (levelId in listOf(1, 20, 40, 60, 100, 250, 500, 2000)) {
+        for (levelId in listOf(1, 31, 61, 91, 151, 376, 751, lastSquareLevel)) {
             val config = LevelCatalog.defaultConfig(levelId, maxFailures = 5)
             val level = generator.generate(config, seed = 1_000_003L * levelId)
             val usedPoints = level.arrows
@@ -371,8 +370,8 @@ class LevelGeneratorTest {
             seed = 1_000_003L,
         )
         val late = generator.generate(
-            LevelCatalog.defaultConfig(LevelCatalog.MAX_LEVEL, maxFailures = 5),
-            seed = 1_000_003L * LevelCatalog.MAX_LEVEL,
+            LevelCatalog.defaultConfig(lastSquareLevel, maxFailures = 5),
+            seed = 1_000_003L * lastSquareLevel,
         )
         assertTrue(
             "Late board needs many more arrows (${late.arrowCount} vs ${early.arrowCount})",
@@ -396,8 +395,8 @@ class LevelGeneratorTest {
     @Test
     fun lateArrowsHaveManyBendsAndWideLengthRange() {
         val level = generator.generate(
-            LevelCatalog.defaultConfig(LevelCatalog.MAX_LEVEL, maxFailures = 5),
-            seed = 1_000_003L * LevelCatalog.MAX_LEVEL,
+            LevelCatalog.defaultConfig(lastSquareLevel, maxFailures = 5),
+            seed = 1_000_003L * lastSquareLevel,
         )
         val lengths = level.arrows.map { it.lengthCells }
         assertTrue("Expected short arrows for variation", lengths.count { it <= 4 } > 0)

@@ -74,6 +74,8 @@ class ProgressRepository(context: Context) {
                 putInt(KEY_TIME_LIMIT, game.config.timeLimitSeconds ?: -1)
                 putString(KEY_COMPLEXITY, game.config.complexity.name)
                 putInt(KEY_OBSTACLES, game.config.obstacleCount)
+                putString(KEY_SHAPE, game.config.shapeId)
+                putInt(KEY_SHAPE_CELLS, game.config.shapeCells)
                 putString(KEY_REMOVED_IDS, game.removedIds.joinToString(SEPARATOR))
                 putInt(KEY_FAILURES, game.failures)
                 putLong(KEY_ELAPSED_MILLIS, (game.elapsedSeconds * 1000.0).toLong())
@@ -96,6 +98,8 @@ class ProgressRepository(context: Context) {
                 remove(KEY_TIME_LIMIT)
                 remove(KEY_COMPLEXITY)
                 remove(KEY_OBSTACLES)
+                remove(KEY_SHAPE)
+                remove(KEY_SHAPE_CELLS)
                 remove(KEY_REMOVED_IDS)
                 remove(KEY_FAILURES)
                 remove(KEY_ELAPSED_MILLIS)
@@ -130,6 +134,8 @@ class ProgressRepository(context: Context) {
             timeLimitSeconds = preferences.getInt(KEY_TIME_LIMIT, -1).takeIf { it > 0 },
             complexity = complexity,
             obstacleCount = preferences.getInt(KEY_OBSTACLES, 0),
+            shapeId = preferences.getString(KEY_SHAPE, null),
+            shapeCells = preferences.getInt(KEY_SHAPE_CELLS, 0),
         )
         return SavedGame(
             config = config,
@@ -155,6 +161,8 @@ class ProgressRepository(context: Context) {
         const val KEY_TIME_LIMIT = "time_limit"
         const val KEY_COMPLEXITY = "complexity"
         const val KEY_OBSTACLES = "obstacles"
+        const val KEY_SHAPE = "shape"
+        const val KEY_SHAPE_CELLS = "shape_cells"
         const val KEY_REMOVED_IDS = "removed_ids"
         const val KEY_FAILURES = "failures"
         const val KEY_ELAPSED_MILLIS = "elapsed_millis"

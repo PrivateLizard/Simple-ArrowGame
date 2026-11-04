@@ -57,13 +57,50 @@ class ShapeLevelsTest {
         }
     }
 
+    @Test
+    fun everyFifthLevelIsAPictureAndEachBlockShowsEveryShapeOnce() {
+        for (block in 0 until 3) {
+            val levels = (block * 1000 + 1..(block + 1) * 1000)
+            val shapes = levels.mapNotNull(LevelCatalog::pictureShapeForLevel)
+            assertEquals("block $block picture levels", 200, shapes.size)
+            assertEquals("block $block uses every shape", LevelShape.entries.toSet(), shapes.toSet())
+        }
+        assertEquals(ShapeSize.SMALL, LevelCatalog.pictureSizeForLevel(1000))
+        assertEquals(ShapeSize.MEDIUM, LevelCatalog.pictureSizeForLevel(1005))
+        assertEquals(ShapeSize.MEDIUM, LevelCatalog.pictureSizeForLevel(2000))
+        assertEquals(ShapeSize.LARGE, LevelCatalog.pictureSizeForLevel(2005))
+        assertNull(LevelCatalog.pictureShapeForLevel(4))
+    }
+
+    @Test
+    fun allPictureLevelsAreValidWithTheExpectedCounts() {
+        for (levelId in LevelCatalog.PICTURE_LEVEL_INTERVAL..LevelCatalog.MAX_LEVEL step LevelCatalog.PICTURE_LEVEL_INTERVAL) {
+            val level = generator.generate(LevelCatalog.defaultConfig(levelId, 3), 1_000_003L * levelId)
+            assertNull("level $levelId", PathValidator.validationError(level))
+            assertEquals("level $levelId arrows", LevelCatalog.expectedArrowCountForLevel(levelId), level.arrowCount)
+            assertEquals(
+                "level $levelId open",
+                LevelCatalog.openArrowCountForLevel(levelId),
+                ArrowGeometry.availableArrows(level, emptySet()).size,
+            )
+        }
+    }
+
     /**
-     * Guards the standard mode: shapes must not change a single campaign or
-     * custom board. The values are fingerprints taken before shapes existed.
+     * Guards generated boards against accidental changes. If a change is meant
+     * to alter boards, raise [LevelGenerator.VERSION] and update these values.
      */
     @Test
-    fun standardBoardsAreUnchangedByShapeSupport() {
-        val expected = mapOf(1 to "210c31e4", 100 to "e89183f5", 500 to "f5a598cc", 2000 to "bc9ebb9b")
+    fun knownBoardsStayTheSame() {
+        val expected = mapOf(
+            1 to "210c31e4",
+            5 to "ae60e304",
+            151 to "521b8fd3",
+            751 to "61ab6931",
+            2005 to "33143fec",
+            2999 to "232d3355",
+            3000 to "2cfe1bf5",
+        )
         for ((levelId, fingerprint) in expected) {
             val level = generator.generate(LevelCatalog.defaultConfig(levelId, 3), 1_000_003L * levelId)
             assertEquals("campaign level $levelId", fingerprint, fingerprint(level))

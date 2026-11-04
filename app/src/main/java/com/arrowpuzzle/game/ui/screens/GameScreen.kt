@@ -357,7 +357,7 @@ private fun GameTopBar(
 ) {
     val s = LocalStrings.current
     val level = state.level
-    val title = if (level.config.isShaped) {
+    val title = if (level.config.isCustom && level.config.isShaped) {
         s.t("shape_${level.config.shapeId}").uppercase(s.locale)
     } else if (level.config.isCustom) {
         s.t("custom_puzzle")

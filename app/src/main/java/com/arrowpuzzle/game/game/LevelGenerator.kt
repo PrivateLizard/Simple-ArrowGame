@@ -34,9 +34,10 @@ class LevelGenerator(
          * from another version are discarded instead of resumed on a board
          * whose arrow ids no longer match.
          *
-         * 1 = up to build 38, 2 = soft arrow length cap.
+         * 1 = up to build 38, 2 = soft arrow length cap, 3 = 3000 levels with
+         * picture levels.
          */
-        const val VERSION = 2
+        const val VERSION = 3
 
         private const val SHORT_ARROW = 8
         private const val MAX_MERGED_ARROW = 80
@@ -209,7 +210,7 @@ class LevelGenerator(
     }
 
     private fun targetArrowCount(config: LevelConfig): Int {
-        if (config.isCustom) return config.arrowCount
+        if (config.isCustom || config.isShaped) return config.arrowCount
         return (config.arrowCount + 6).coerceAtMost(LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 

@@ -3,7 +3,10 @@ package com.arrowpuzzle.game.game
 import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.data.model.ComplexityLevel
 import com.arrowpuzzle.game.data.model.LevelConfig
+import com.arrowpuzzle.game.game.shapes.LevelShape
+import com.arrowpuzzle.game.game.shapes.ShapeSize
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 /**
  * Default campaign progression.
@@ -16,9 +19,26 @@ import kotlin.math.roundToInt
  * late ones become dense. Complexity controls how many arrows are open at the
  * start. Late HARD levels keep exactly two open arrows: a single open arrow on
  * a board with up to 240 arrows would turn the finale into guessing.
+ *
+ * Every [PICTURE_LEVEL_INTERVAL]th level is a picture level. With 200 shapes each
+ * block of 1000 levels shows every shape exactly once, in small, medium and
+ * large from block to block.
  */
 object LevelCatalog {
-    const val MAX_LEVEL = 2000
+    const val MAX_LEVEL = 3000
+
+    /** Every n-th campaign level is a picture level (a board cut into a shape). */
+    const val PICTURE_LEVEL_INTERVAL = 5
+
+    /** Picture size steps up after this many levels: small, medium, then large. */
+    private const val PICTURE_TIER_LEVELS = 1000
+
+    /**
+     * The difficulty curve was designed for this many levels. The campaign
+     * stretches it: level [MAX_LEVEL] is as hard as design level
+     * [CURVE_DESIGN_LEVELS].
+     */
+    private const val CURVE_DESIGN_LEVELS = 2000
 
     /**
      * Unlock rule for the campaign.
@@ -74,8 +94,37 @@ object LevelCatalog {
     /** Late-game density: more, shorter arrows for the huge boards. */
     private const val LATE_FINAL_ARROWS = 240
 
-    fun gridSizeForLevel(levelId: Int): Int {
+    /** Position of a campaign level on the design curve (1..[CURVE_DESIGN_LEVELS]). */
+    private fun curveLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
+        val t = (safe - 1).toDouble() / (MAX_LEVEL - 1)
+        return 1 + (t * (CURVE_DESIGN_LEVELS - 1)).roundToInt()
+    }
+
+    /**
+     * Fixed mixed order of the shapes, so neighbouring picture levels differ.
+     * Adding a shape reorders it: raise [LevelGenerator.VERSION] when that happens.
+     */
+    private val pictureOrder: List<LevelShape> by lazy {
+        LevelShape.entries.shuffled(Random(PICTURE_ORDER_SEED))
+    }
+
+    private const val PICTURE_ORDER_SEED = 20_261_104
+
+    /** Shape of a picture level, or null for a normal square level. */
+    fun pictureShapeForLevel(levelId: Int): LevelShape? {
+        if (levelId < 1 || levelId > MAX_LEVEL || levelId % PICTURE_LEVEL_INTERVAL != 0) return null
+        return pictureOrder[(levelId / PICTURE_LEVEL_INTERVAL - 1) % pictureOrder.size]
+    }
+
+    fun pictureSizeForLevel(levelId: Int): ShapeSize = when {
+        levelId <= PICTURE_TIER_LEVELS -> ShapeSize.SMALL
+        levelId <= PICTURE_TIER_LEVELS * 2 -> ShapeSize.MEDIUM
+        else -> ShapeSize.LARGE
+    }
+
+    fun gridSizeForLevel(levelId: Int): Int {
+        val safe = curveLevel(levelId)
         val growth = safe.coerceAtMost(LEGACY_MAX_LEVEL)
         // 3x3 at level 1 up to 8x8 at level 100. Levels above that widen the
         // point lattice (see [layoutSizeForLevel]) instead of this label.
@@ -86,13 +135,13 @@ object LevelCatalog {
      * Side length of the point lattice the arrows are routed on.
      *
      * The size is rounded up to an even number because the generator builds the
-     * Hamiltonian cycle from 2x2 blocks. Levels 1..100 stay at 20..34; above
-     * level 100 the field grows by one row/column every 50 levels, so the late
-     * campaign keeps opening up. Level 2000 ends at 72x72.
+     * Hamiltonian cycle from 2x2 blocks. Design levels 1..100 stay at 20..34;
+     * above that the field grows by one row/column every 50 design levels, so
+     * the late campaign keeps opening up. The last level ends at 72x72.
      */
     fun layoutSizeForLevel(levelId: Int): Int {
-        val safe = levelId.coerceIn(1, MAX_LEVEL)
-        val legacy = 10 + gridSizeForLevel(safe) * 3
+        val safe = curveLevel(levelId)
+        val legacy = 10 + gridSizeForLevel(levelId) * 3
         val raw = if (safe <= LEGACY_MAX_LEVEL) {
             legacy
         } else {
@@ -113,7 +162,7 @@ object LevelCatalog {
      * stays roughly flat and is not used as the difficulty knob.
      */
     fun arrowCountForLevel(levelId: Int): Int {
-        val safe = levelId.coerceIn(1, MAX_LEVEL)
+        val safe = curveLevel(levelId)
         if (safe == 1) return BASE_ARROWS
         // Gentle, almost linear growth. A steep ramp would silently *reduce*
         // difficulty, which is the opposite of what a level curve should do.
@@ -130,7 +179,7 @@ object LevelCatalog {
             // Levels 501..MAX_LEVEL get more, shorter arrows so the huge
             // boards do not end up with a few enormous self-coiled arrows.
             val t = (safe - CURVE_MAX_LEVEL).toDouble() /
-                (MAX_LEVEL - CURVE_MAX_LEVEL)
+                (CURVE_DESIGN_LEVELS - CURVE_MAX_LEVEL)
             (FINAL_ARROWS + (LATE_FINAL_ARROWS - FINAL_ARROWS) * t).roundToInt()
         }
     }
@@ -142,6 +191,9 @@ object LevelCatalog {
      */
     fun expectedArrowCountForLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
+        // A fixed count per size: the level list needs this for all levels at
+        // once and must not build a shape mask for each of them.
+        if (pictureShapeForLevel(safe) != null) return pictureSizeForLevel(safe).arrowCount
         return (arrowCountForLevel(safe) + 6)
             .coerceAtMost(arrowCountForLevel(MAX_LEVEL))
     }
@@ -160,7 +212,7 @@ object LevelCatalog {
      * guessing.
      */
     fun complexityForLevel(levelId: Int): ComplexityLevel {
-        val safe = levelId.coerceIn(1, MAX_LEVEL)
+        val safe = curveLevel(levelId)
         return when {
             safe <= 30 -> ComplexityLevel.EASY
             safe <= 70 -> ComplexityLevel.MEDIUM
@@ -180,10 +232,12 @@ object LevelCatalog {
     ): LevelConfig {
         val safeLevel = levelId.coerceIn(1, MAX_LEVEL)
         val size = gridSizeForLevel(safeLevel)
+        val shape = pictureShapeForLevel(safeLevel)
+        val pictureSize = pictureSizeForLevel(safeLevel)
         return LevelConfig(
             levelId = safeLevel,
             gridSize = size to size,
-            arrowCount = arrowCountForLevel(safeLevel),
+            arrowCount = if (shape != null) pictureSize.arrowCount else arrowCountForLevel(safeLevel),
             maxFailures = if (maxFailures == AppSettings.NO_FAILURE_LIMIT) {
                 AppSettings.NO_FAILURE_LIMIT
             } else {
@@ -191,6 +245,8 @@ object LevelCatalog {
             },
             timeLimitSeconds = null,
             complexity = complexityForLevel(safeLevel),
+            shapeId = shape?.id,
+            shapeCells = if (shape != null) pictureSize.targetCells else 0,
         )
     }
 }

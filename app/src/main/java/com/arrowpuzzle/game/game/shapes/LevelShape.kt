@@ -1024,6 +1024,10 @@ enum class ShapeSize(val targetCells: Int) {
     SMALL(420),
     MEDIUM(1100),
     LARGE(2200),
+    ;
+
+    /** Arrow count of a campaign picture level of this size. */
+    val arrowCount: Int get() = ShapeMask.arrowCountFor(targetCells)
 }
 
 /**

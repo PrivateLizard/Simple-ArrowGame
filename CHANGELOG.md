@@ -7,6 +7,13 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
 ## Unreleased
 
+- **3000 levels:** the difficulty curve is stretched, so level 3000 is as hard
+  as level 2000 was. Nearly all campaign boards look different; progress and
+  scores are kept, an unfinished level from an older build is discarded.
+- **Picture levels:** every fifth level is cut into a shape. Each block of 1000
+  levels shows all 200 shapes once: small, then medium, then large.
+- The Test mode is now called Picture Test and only shows with the developer
+  options on.
 - Smoother play, with no visible change: the board no longer redraws for the
   clock or for animations, resting arrows are drawn from cached paths, and the
   Test mode previews are painted once and reused.
