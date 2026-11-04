@@ -1,6 +1,7 @@
 package com.arrowpuzzle.game.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.arrowpuzzle.game.data.model.ComplexityLevel
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.game.LevelGenerator
@@ -62,44 +63,44 @@ class ProgressRepository(context: Context) {
     fun save(game: SavedGame) {
         if (game.config.isCustom) return
         synchronized(lock) {
-            preferences.edit()
-                .putInt(KEY_LEVEL_ID, game.config.levelId)
-                .putInt(KEY_GENERATOR_VERSION, LevelGenerator.VERSION)
-                .putInt(KEY_GRID_WIDTH, game.config.gridWidth)
-                .putInt(KEY_GRID_HEIGHT, game.config.gridHeight)
-                .putInt(KEY_ARROWS, game.config.arrowCount)
-                .putInt(KEY_LEVEL_ARROW_COUNT, game.levelArrowCount)
-                .putInt(KEY_MAX_FAILURES, game.config.maxFailures)
-                .putInt(KEY_TIME_LIMIT, game.config.timeLimitSeconds ?: -1)
-                .putString(KEY_COMPLEXITY, game.config.complexity.name)
-                .putInt(KEY_OBSTACLES, game.config.obstacleCount)
-                .putString(KEY_REMOVED_IDS, game.removedIds.joinToString(SEPARATOR))
-                .putInt(KEY_FAILURES, game.failures)
-                .putLong(KEY_ELAPSED_MILLIS, (game.elapsedSeconds * 1000.0).toLong())
-                .putLong(KEY_SAVED_AT, game.savedAtMillis)
-                .apply()
+            preferences.edit {
+                putInt(KEY_LEVEL_ID, game.config.levelId)
+                putInt(KEY_GENERATOR_VERSION, LevelGenerator.VERSION)
+                putInt(KEY_GRID_WIDTH, game.config.gridWidth)
+                putInt(KEY_GRID_HEIGHT, game.config.gridHeight)
+                putInt(KEY_ARROWS, game.config.arrowCount)
+                putInt(KEY_LEVEL_ARROW_COUNT, game.levelArrowCount)
+                putInt(KEY_MAX_FAILURES, game.config.maxFailures)
+                putInt(KEY_TIME_LIMIT, game.config.timeLimitSeconds ?: -1)
+                putString(KEY_COMPLEXITY, game.config.complexity.name)
+                putInt(KEY_OBSTACLES, game.config.obstacleCount)
+                putString(KEY_REMOVED_IDS, game.removedIds.joinToString(SEPARATOR))
+                putInt(KEY_FAILURES, game.failures)
+                putLong(KEY_ELAPSED_MILLIS, (game.elapsedSeconds * 1000.0).toLong())
+                putLong(KEY_SAVED_AT, game.savedAtMillis)
+            }
             _savedGame.value = game
         }
     }
 
     fun clear() {
         synchronized(lock) {
-            preferences.edit()
-                .remove(KEY_LEVEL_ID)
-                .remove(KEY_GENERATOR_VERSION)
-                .remove(KEY_GRID_WIDTH)
-                .remove(KEY_GRID_HEIGHT)
-                .remove(KEY_ARROWS)
-                .remove(KEY_LEVEL_ARROW_COUNT)
-                .remove(KEY_MAX_FAILURES)
-                .remove(KEY_TIME_LIMIT)
-                .remove(KEY_COMPLEXITY)
-                .remove(KEY_OBSTACLES)
-                .remove(KEY_REMOVED_IDS)
-                .remove(KEY_FAILURES)
-                .remove(KEY_ELAPSED_MILLIS)
-                .remove(KEY_SAVED_AT)
-                .apply()
+            preferences.edit {
+                remove(KEY_LEVEL_ID)
+                remove(KEY_GENERATOR_VERSION)
+                remove(KEY_GRID_WIDTH)
+                remove(KEY_GRID_HEIGHT)
+                remove(KEY_ARROWS)
+                remove(KEY_LEVEL_ARROW_COUNT)
+                remove(KEY_MAX_FAILURES)
+                remove(KEY_TIME_LIMIT)
+                remove(KEY_COMPLEXITY)
+                remove(KEY_OBSTACLES)
+                remove(KEY_REMOVED_IDS)
+                remove(KEY_FAILURES)
+                remove(KEY_ELAPSED_MILLIS)
+                remove(KEY_SAVED_AT)
+            }
             _savedGame.value = null
         }
     }
@@ -110,7 +111,7 @@ class ProgressRepository(context: Context) {
         // A board from another generator version has different arrow ids; the
         // removed ids would point at the wrong arrows. Drop it instead.
         if (preferences.getInt(KEY_GENERATOR_VERSION, 1) != LevelGenerator.VERSION) {
-            preferences.edit().clear().apply()
+            preferences.edit { clear() }
             return null
         }
         val complexity = runCatching {

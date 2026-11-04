@@ -72,7 +72,7 @@ serpentine path for that level. The fallback is correct, just less irregular.
 - Kotlin 1.9.24, Jetpack Compose (Material 3), Compose Navigation
 - MVVM with StateFlow, manual DI (`AppContainer`)
 - SharedPreferences persistence
-- AGP 8.4.2 / Gradle 8.6, compileSdk 34, minSdk 24
+- AGP 8.13.2 / Gradle 8.14.6, compileSdk / targetSdk 36, minSdk 24
 
 ## Build
 
@@ -80,15 +80,20 @@ Use JDK 17+ (the Android Studio JBR works) and the Android SDK.
 
 ```bash
 # Windows
-gradlew.bat assembleRelease
+gradlew.bat assembleRelease bundleRelease
 
 # macOS / Linux
-./gradlew assembleRelease
+./gradlew assembleRelease bundleRelease
 ```
 
-The unsigned APK is written to
-`app/build/outputs/apk/release/app-release-unsigned.apk`. Sign it with your own
-keystore before installing on a device. The repository does **not** contain a
+Release builds are shrunk with R8 (code and resources), so the APK is about
+1 MB. Outputs, both unsigned:
+
+- APK: `app/build/outputs/apk/release/app-release-unsigned.apk`
+- App Bundle (AAB, for app stores): `app/build/outputs/bundle/release/app-release.aab`
+
+Sign them with your own keystore (`apksigner` for the APK, `jarsigner` for the
+AAB) before installing or uploading. The repository does **not** contain a
 release keystore or signing password.
 
 Tests and lint:
@@ -103,9 +108,10 @@ itself is fully offline.
 
 ### Versioning
 
-`versionCode` is the number of commits on the current branch (auto-incremented
-by each commit). `versionName` is `1.0`. A source copy without `.git` can pass
-`-PappVersionCode=<n>`.
+`versionCode` is set in `app/build.gradle.kts` and shown as the build number
+on the Settings screen. Increase it by one for every release; app stores reject
+an update whose `versionCode` is not higher than the installed one. (Up to
+build 39 it was derived from the git commit count.) `versionName` is `1.0`.
 
 ## Privacy
 

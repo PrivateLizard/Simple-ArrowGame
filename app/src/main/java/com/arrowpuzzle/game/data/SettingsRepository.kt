@@ -1,6 +1,7 @@
 package com.arrowpuzzle.game.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.arrowpuzzle.game.data.model.AppSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,15 +45,15 @@ class SettingsRepository(context: Context) {
     private fun update(transform: (AppSettings) -> AppSettings) {
         synchronized(lock) {
             val updated = transform(_settings.value)
-            preferences.edit()
-                .putInt(KEY_MAX_FAILURES, updated.maxFailures)
-                .putBoolean(KEY_NIGHT_MODE, updated.nightMode)
-                .putBoolean(KEY_SOUND, updated.soundEnabled)
-                .putBoolean(KEY_HAPTICS, updated.hapticEnabled)
-                .putBoolean(KEY_HINTS, updated.hintsEnabled)
-                .putString(KEY_LANGUAGE, updated.language)
-                .putBoolean(KEY_DEV_MODE, updated.devModeEnabled)
-                .apply()
+            preferences.edit {
+                putInt(KEY_MAX_FAILURES, updated.maxFailures)
+                putBoolean(KEY_NIGHT_MODE, updated.nightMode)
+                putBoolean(KEY_SOUND, updated.soundEnabled)
+                putBoolean(KEY_HAPTICS, updated.hapticEnabled)
+                putBoolean(KEY_HINTS, updated.hintsEnabled)
+                putString(KEY_LANGUAGE, updated.language)
+                putBoolean(KEY_DEV_MODE, updated.devModeEnabled)
+            }
             _settings.value = updated
         }
     }

@@ -1,7 +1,21 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` is `1.0`; the build
-number is the git commit count and is shown on the Settings screen.
+number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
+git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
+
+## Build 40 - 2026-11-04
+
+- Release builds are shrunk with R8: the APK drops from about 6.2 MB to 1.1 MB.
+- An Android App Bundle (AAB) for app stores is built alongside the APK.
+- `versionCode` is now a fixed number in `app/build.gradle.kts` instead of the
+  git commit count, so it can never decrease.
+- Level select: locked levels show only their dimmed number (no "locked" text).
+- Custom Mode uses the same Max Failures chips as Settings (0-20 and OFF).
+- **Target SDK 36 (Android 16)**, compile SDK 36; Android Gradle Plugin 8.13.2,
+  Gradle 8.14.6. Minimum stays Android 7.0 (API 24).
+- Edge-to-edge: the background runs behind the transparent status and
+  navigation bars, the content keeps clear of them and of display cutouts.
 
 ## Build 39 - 2026-11-04
 

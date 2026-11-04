@@ -46,6 +46,7 @@ import com.arrowpuzzle.game.i18n.AppLanguage
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ScreenBackground
+import com.arrowpuzzle.game.ui.components.MaxFailuresPicker
 import com.arrowpuzzle.game.ui.components.SectionCard
 import com.arrowpuzzle.game.ui.theme.AppDanger
 import com.arrowpuzzle.game.ui.theme.AppGridLine
@@ -89,43 +90,11 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(vertical = 8.dp),
             ) {
-                val failuresOff = settings.maxFailures == AppSettings.NO_FAILURE_LIMIT
                 SectionCard {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = s.t("max_failures"),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = AppText,
-                                )
-                                Text(
-                                    text = if (failuresOff) {
-                                        s.t("max_failures_off_desc")
-                                    } else {
-                                        s.t("max_failures_desc")
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = AppTextMuted,
-                                )
-                            }
-                            Text(
-                                text = if (failuresOff) s.t("off") else settings.maxFailures.toString(),
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = AppPrimary,
-                                fontWeight = FontWeight.Black,
-                            )
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        FailureOptions(
-                            selected = settings.maxFailures,
-                            onSelect = onMaxFailuresChange,
-                        )
-                    }
+                    MaxFailuresPicker(
+                        selected = settings.maxFailures,
+                        onSelect = onMaxFailuresChange,
+                    )
                 }
 
                 Spacer(Modifier.height(14.dp))
@@ -287,43 +256,6 @@ fun SettingsScreen(
             textContentColor = AppTextMuted,
             shape = RoundedCornerShape(20.dp),
         )
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FailureOptions(
-    selected: Int,
-    onSelect: (Int) -> Unit,
-) {
-    val s = LocalStrings.current
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AppSettings.FAILURE_OPTIONS.forEach { option ->
-            val isSelected = selected == option
-            val shape = RoundedCornerShape(12.dp)
-            Box(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(if (isSelected) AppPrimary else AppSurfaceRaised)
-                    .border(1.dp, if (isSelected) AppPrimary else AppGridLine, shape)
-                    .clickable { onSelect(option) }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    text = if (option == AppSettings.NO_FAILURE_LIMIT) {
-                        s.t("off")
-                    } else {
-                        option.toString()
-                    },
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else AppText,
-                )
-            }
-        }
     }
 }
 

@@ -33,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.data.model.ComplexityLevel
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.AppTopBar
+import com.arrowpuzzle.game.ui.components.MaxFailuresPicker
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
 import com.arrowpuzzle.game.ui.theme.AppGridLine
@@ -54,7 +56,7 @@ fun CustomModeScreen(
 ) {
     var gridSize by rememberSaveable { mutableIntStateOf(5) }
     var arrowCount by rememberSaveable { mutableIntStateOf(12) }
-    var maxFailures by rememberSaveable { mutableIntStateOf(3) }
+    var maxFailures by rememberSaveable { mutableIntStateOf(AppSettings.DEFAULT_MAX_FAILURES) }
     var timeLimitEnabled by rememberSaveable { mutableStateOf(false) }
     var timeLimitSeconds by rememberSaveable { mutableIntStateOf(60) }
     var complexityName by rememberSaveable { mutableStateOf(ComplexityLevel.MEDIUM.name) }
@@ -144,19 +146,10 @@ fun CustomModeScreen(
                 Spacer(Modifier.height(14.dp))
 
                 SectionCard {
-                    Column {
-                        SliderHeader(
-                            label = s.t("max_failures"),
-                            value = maxFailures.toString(),
-                        )
-                        Slider(
-                            value = maxFailures.toFloat(),
-                            onValueChange = { maxFailures = it.roundToInt() },
-                            valueRange = 1f..99f,
-                            steps = 97,
-                            colors = customSliderColors(),
-                        )
-                    }
+                    MaxFailuresPicker(
+                        selected = maxFailures,
+                        onSelect = { maxFailures = it },
+                    )
                 }
 
                 Spacer(Modifier.height(14.dp))

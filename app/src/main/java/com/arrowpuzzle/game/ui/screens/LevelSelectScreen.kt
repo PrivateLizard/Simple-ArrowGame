@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -208,7 +206,6 @@ private suspend fun LazyGridState.animateCenterItem(index: Int) {
 
 @Composable
 private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
-    val s = LocalStrings.current
     val unlocked = level.isUnlocked
     val completed = level.bestScore > 0
     val shape = RoundedCornerShape(22.dp)
@@ -274,33 +271,22 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
-            when {
-                completed -> {
-                    Text(
-                        text = String.format(Locale.US, "%,d", level.bestScore),
-                        style = numberStyle,
-                        color = AppPrimary,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
-                    Text(
-                        text = "/ " + String.format(Locale.US, "%,d", level.maxScore),
-                        fontSize = 9.sp,
-                        color = AppTextMuted.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
-                }
-                !unlocked -> {
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = s.t("locked"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = AppTextMuted.copy(alpha = 0.5f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
-                }
+            // Locked tiles show only the dimmed number; no "locked" label.
+            if (completed) {
+                Text(
+                    text = String.format(Locale.US, "%,d", level.bestScore),
+                    style = numberStyle,
+                    color = AppPrimary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+                Text(
+                    text = "/ " + String.format(Locale.US, "%,d", level.maxScore),
+                    fontSize = 9.sp,
+                    color = AppTextMuted.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
             }
         }
     }

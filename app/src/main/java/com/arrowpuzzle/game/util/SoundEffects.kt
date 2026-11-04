@@ -107,8 +107,8 @@ class SoundEffects(private val context: Context) {
 
                 // Play anything that was requested while this sample was
                 // still decoding, so the first tap of a level is not silent.
-                val deferred = synchronized(lock) {
-                    val kind = pendingKind ?: return@synchronized null
+                val deferred = synchronized(lock) pending@{
+                    val kind = pendingKind ?: return@pending null
                     val deferredId = sampleIds[kind]
                     if (deferredId == sampleId) {
                         pendingKind = null

@@ -11,7 +11,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -254,9 +253,9 @@ fun ArrowPuzzleTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
+            // The app draws edge-to-edge (MainActivity.enableEdgeToEdge); the
+            // system bars are transparent, so only the icon colour is set here.
             val window = (view.context as? Activity)?.window ?: return@SideEffect
-            window.statusBarColor = palette.background.toArgb()
-            window.navigationBarColor = palette.background.toArgb()
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !nightMode
                 isAppearanceLightNavigationBars = !nightMode

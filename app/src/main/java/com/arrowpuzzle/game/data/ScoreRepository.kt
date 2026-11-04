@@ -1,6 +1,7 @@
 package com.arrowpuzzle.game.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.arrowpuzzle.game.data.model.ScoreRecord
 import com.arrowpuzzle.game.game.LevelCatalog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,19 +45,19 @@ class ScoreRepository(context: Context) {
                 updated[record.levelId] = record.points
                 _bestScores.value = updated
                 _campaignScoreTotal.value = campaignTotal(updated)
-                preferences.edit().putInt(levelKey(record.levelId), record.points).apply()
+                preferences.edit { putInt(levelKey(record.levelId), record.points) }
             }
 
             if (record.points > _globalHighScore.value) {
                 _globalHighScore.value = record.points
-                preferences.edit().putInt(KEY_GLOBAL_BEST, record.points).apply()
+                preferences.edit { putInt(KEY_GLOBAL_BEST, record.points) }
             }
 
             if (record.levelId > 0) {
                 val nextLevel = record.levelId + LevelCatalog.LEVELS_UNLOCKED_PER_CLEAR
                 if (nextLevel > _highestUnlocked.value) {
                     _highestUnlocked.value = nextLevel
-                    preferences.edit().putInt(KEY_UNLOCKED, nextLevel).apply()
+                    preferences.edit { putInt(KEY_UNLOCKED, nextLevel) }
                 }
             }
             return isNewBest
@@ -73,7 +74,7 @@ class ScoreRepository(context: Context) {
         synchronized(lock) {
             val value = if (unlocked) maxLevel.coerceAtLeast(1) else 1
             _highestUnlocked.value = value
-            preferences.edit().putInt(KEY_UNLOCKED, value).apply()
+            preferences.edit { putInt(KEY_UNLOCKED, value) }
         }
     }
 
@@ -85,20 +86,18 @@ class ScoreRepository(context: Context) {
                 LevelCatalog.MAX_LEVEL,
             )
             _highestUnlocked.value = value
-            preferences.edit().putInt(KEY_UNLOCKED, value).apply()
+            preferences.edit { putInt(KEY_UNLOCKED, value) }
         }
     }
 
     fun clearProgress() {
         synchronized(lock) {
-            val editor = preferences.edit()
-            preferences.all.keys
-                .filter { it.startsWith(LEVEL_KEY_PREFIX) }
-                .forEach(editor::remove)
-            editor
-                .remove(KEY_GLOBAL_BEST)
-                .remove(KEY_UNLOCKED)
-                .apply()
+            val levelKeys = preferences.all.keys.filter { it.startsWith(LEVEL_KEY_PREFIX) }
+            preferences.edit {
+                levelKeys.forEach { remove(it) }
+                remove(KEY_GLOBAL_BEST)
+                remove(KEY_UNLOCKED)
+            }
             _bestScores.value = emptyMap()
             _campaignScoreTotal.value = 0
             _globalHighScore.value = 0

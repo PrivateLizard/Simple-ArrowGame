@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -49,8 +50,16 @@ fun ScreenBackground(content: @Composable BoxScope.() -> Unit) {
                     ),
                 ),
             ),
-        content = content,
-    )
+    ) {
+        // The gradient runs behind the transparent system bars (edge-to-edge);
+        // the content stays clear of status bar, navigation bar and cutouts.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
+            content = content,
+        )
+    }
 }
 
 @Composable
