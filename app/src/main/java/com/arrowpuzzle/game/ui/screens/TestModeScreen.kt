@@ -5,16 +5,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
@@ -28,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.drawBehind
@@ -88,89 +92,81 @@ fun TestModeScreen(
                 subtitle = s.t("test_subtitle"),
                 onBack = onBack,
             )
-            Column(
+            // Lazy on purpose: with hundreds of shapes only the visible tiles exist.
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(SHAPE_COLUMNS),
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 18.dp, vertical = 8.dp),
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SectionCard {
-                    Column {
-                        Text(
-                            text = s.t("board_size"),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = AppText,
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            ShapeSize.entries.forEach { option ->
-                                val selected = option == size
-                                FilterChip(
-                                    selected = selected,
-                                    onClick = { sizeName = option.name },
-                                    label = {
-                                        Text(
-                                            text = s.t("size_${option.name.lowercase()}"),
-                                            fontSize = 12.sp,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            textAlign = TextAlign.Center,
-                                        )
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = AppPrimary,
-                                        selectedLabelColor = AppSurface,
-                                        containerColor = AppSurfaceRaised,
-                                        labelColor = AppTextMuted,
-                                    ),
-                                    border = FilterChipDefaults.filterChipBorder(
-                                        enabled = true,
-                                        selected = selected,
-                                        borderColor = AppGridLine,
-                                        selectedBorderColor = AppPrimary,
-                                    ),
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(14.dp))
-
-                SectionCard {
-                    Column {
-                        Text(
-                            text = s.t("shape"),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = AppText,
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        LevelShape.entries.chunked(SHAPE_COLUMNS).forEachIndexed { rowIndex, row ->
-                            if (rowIndex > 0) Spacer(Modifier.height(8.dp))
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    SectionCard {
+                        Column {
+                            Text(
+                                text = s.t("board_size"),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = AppText,
+                            )
+                            Spacer(Modifier.height(12.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                row.forEach { option ->
-                                    ShapeTile(
-                                        shape = option,
-                                        selected = option == shape,
-                                        label = s.t("shape_${option.id}"),
-                                        onClick = { shapeId = option.id },
+                                ShapeSize.entries.forEach { option ->
+                                    val selected = option == size
+                                    FilterChip(
+                                        selected = selected,
+                                        onClick = { sizeName = option.name },
+                                        label = {
+                                            Text(
+                                                text = s.t("size_${option.name.lowercase()}"),
+                                                fontSize = 12.sp,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                textAlign = TextAlign.Center,
+                                            )
+                                        },
                                         modifier = Modifier.weight(1f),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = AppPrimary,
+                                            selectedLabelColor = AppSurface,
+                                            containerColor = AppSurfaceRaised,
+                                            labelColor = AppTextMuted,
+                                        ),
+                                        border = FilterChipDefaults.filterChipBorder(
+                                            enabled = true,
+                                            selected = selected,
+                                            borderColor = AppGridLine,
+                                            selectedBorderColor = AppPrimary,
+                                        ),
                                     )
                                 }
-                                repeat(SHAPE_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }
                 }
-
-                Spacer(Modifier.height(12.dp))
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = s.t("shape"),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AppText,
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp),
+                    )
+                }
+                items(
+                    items = LevelShape.entries,
+                    key = { it.id },
+                    contentType = { "shape" },
+                ) { option ->
+                    ShapeTile(
+                        shape = option,
+                        selected = option == shape,
+                        label = s.t("shape_${option.id}"),
+                        onClick = { shapeId = option.id },
+                    )
+                }
             }
             Button(
                 onClick = { onStart(ShapeMask.levelConfig(shape, size, maxFailures)) },
@@ -199,7 +195,7 @@ private const val SHAPE_COLUMNS = 4
 
 /**
  * Finished preview pictures. A mask has thousands of cells, far too many to draw
- * one by one for a hundred tiles on every frame, so each shape is painted once
+ * one by one for hundreds of tiles on every frame, so each shape is painted once
  * (white, tinted when drawn) and then reused.
  */
 private object ShapePreviews {
@@ -209,7 +205,7 @@ private object ShapePreviews {
     fun image(shape: LevelShape, sizePx: Int): ImageBitmap =
         images.getOrPut(shape to sizePx) {
             val mask = ShapeMask.mask(shape, GRID)
-            val image = ImageBitmap(sizePx, sizePx)
+            val image = ImageBitmap(sizePx, sizePx, ImageBitmapConfig.Alpha8)
             val canvas = androidx.compose.ui.graphics.Canvas(image)
             val paint = Paint().apply { color = Color.White }
             val cell = sizePx.toFloat() / GRID

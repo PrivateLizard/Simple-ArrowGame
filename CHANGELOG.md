@@ -10,7 +10,7 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 - Smoother play, with no visible change: the board no longer redraws for the
   clock or for animations, resting arrows are drawn from cached paths, and the
   Test mode previews are painted once and reused.
-- **New Test mode** (Home): boards cut into one of 100 shapes - geometric
+- **New Test mode** (Home): boards cut into one of 200 shapes - geometric
   forms, nature, animals and everyday things (heart, star, teddy bear, cat,
   rocket, guitar, ...) - in three sizes. The board is enlarged to make up for the empty
   space around the shape. Levels stay fully solvable (checked by tests).
