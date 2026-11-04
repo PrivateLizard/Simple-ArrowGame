@@ -6,6 +6,9 @@ import com.arrowpuzzle.game.data.model.ArrowDirection
 import com.arrowpuzzle.game.data.model.ComplexityLevel
 import com.arrowpuzzle.game.data.model.GridPoint
 import com.arrowpuzzle.game.data.model.LevelConfig
+import com.arrowpuzzle.game.game.shapes.LevelShape
+import com.arrowpuzzle.game.game.shapes.ShapeMask
+import com.arrowpuzzle.game.game.shapes.ShapeSize
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.random.Random
@@ -55,16 +58,20 @@ class LevelGenerator(
         ) { "Max failures must be between 0 and 99, or off" }
 
         val random = Random(seed)
-        val layoutSize = layoutSizeFor(config)
+        val shape = LevelShape.fromId(config.shapeId)
+        val layoutSize = layoutSizeFor(config, shape)
+        // Test mode: only the cells inside the shape are part of the board.
+        val mask = shape?.let { ShapeMask.mask(it, layoutSize) }
         val openCount = freeArrowCount(config).coerceAtMost(config.arrowCount)
         val targetArrows = targetArrowCount(config)
         var lastError: String? = null
 
         repeat(maxAttempts) { attempt ->
             // Last attempt: a plain serpentine, which always offers enough
-            // forward-facing cut points under the full-ray blocking rule.
-            val path = if (attempt < maxAttempts - 1) {
-                randomHamiltonianPath(layoutSize, random)
+            // forward-facing cut points under the full-ray blocking rule. A
+            // shaped board has no serpentine, so it keeps trying random paths.
+            val path = if (mask != null || attempt < maxAttempts - 1) {
+                randomHamiltonianPath(layoutSize, random, mask)
             } else {
                 serpentinePath(layoutSize)
             }
@@ -74,6 +81,7 @@ class LevelGenerator(
                 openCount = openCount,
                 targetArrows = targetArrows,
                 random = random,
+                mask = mask,
             )
             if (cuts == null) {
                 lastError = "Could not place enough cut points"
@@ -84,7 +92,7 @@ class LevelGenerator(
             // all point the same way. If the flipped set breaks the rules, fall
             // back to unflipped arrows for this path. The length cap runs after
             // the flip choice, because flips change which splits are safe.
-            val flips = chooseFlips(path, cuts, layoutSize, random)
+            val flips = chooseFlips(path, cuts, layoutSize, random, mask)
             for (flags in listOf(flips, BooleanArray(cuts.size))) {
                 val capped = capLongArrows(path, layoutSize, cuts, flags)
                 val arrows = buildArrows(path, capped.cuts, capped.flipped, layoutSize)
@@ -92,7 +100,7 @@ class LevelGenerator(
                     lastError = "Could not build arrows from path"
                     continue
                 }
-                val result = validate(config, arrows, layoutSize, openCount)
+                val result = validate(config, arrows, layoutSize, openCount, mask)
                 result.first?.let { return it }
                 lastError = result.second
             }
@@ -106,8 +114,9 @@ class LevelGenerator(
         arrows: List<Arrow>,
         layoutSize: Int,
         openCount: Int,
+        mask: BooleanArray?,
     ): Pair<GeneratedLevel?, String?> {
-        val level = GeneratedLevel(config, arrows, layoutSize)
+        val level = GeneratedLevel(config, arrows, layoutSize, mask)
         val validationError = PathValidator.validationError(level)
         if (validationError != null) return null to validationError
         val available = ArrowGeometry.availableArrows(level, emptySet()).size
@@ -118,7 +127,7 @@ class LevelGenerator(
             .flatMap { ArrowGeometry.routePoints(it.route) }
             .toSet()
             .size
-        val totalPoints = layoutSize * layoutSize
+        val totalPoints = mask?.count { it } ?: (layoutSize * layoutSize)
         if (covered != totalPoints) {
             return null to "Coverage is ${covered * 100 / totalPoints}%"
         }
@@ -135,6 +144,7 @@ class LevelGenerator(
         cuts: IntArray,
         layoutSize: Int,
         random: Random,
+        mask: BooleanArray?,
     ): BooleanArray {
         val unflipped = BooleanArray(cuts.size)
         val open = openArrows(path, layoutSize, cuts, unflipped)
@@ -145,7 +155,8 @@ class LevelGenerator(
             val previous = path[start + 1]
             val frontX = 2 * (head % layoutSize) - previous % layoutSize
             val frontY = 2 * (head / layoutSize) - previous / layoutSize
-            frontX in 0 until layoutSize && frontY in 0 until layoutSize
+            frontX in 0 until layoutSize && frontY in 0 until layoutSize &&
+                (mask == null || mask[frontY * layoutSize + frontX])
         }
     }
 
@@ -156,11 +167,11 @@ class LevelGenerator(
         cuts: IntArray,
         flipped: BooleanArray,
     ): BooleanArray {
-        val owner = ownerOf(path, cuts)
+        val owner = ownerOf(path, cuts, layoutSize)
         return BooleanArray(cuts.size) { a ->
             var free = true
             forEachRayCell(path, layoutSize, cuts, flipped, a) { cell ->
-                if (owner[cell] != a) {
+                if (owner[cell] >= 0 && owner[cell] != a) {
                     free = false
                     false
                 } else {
@@ -171,8 +182,13 @@ class LevelGenerator(
         }
     }
 
-    private fun layoutSizeFor(config: LevelConfig): Int =
-        if (config.isCustom) {
+    private fun layoutSizeFor(config: LevelConfig, shape: LevelShape?): Int =
+        if (shape != null) {
+            ShapeMask.layoutFor(
+                shape,
+                config.shapeCells.takeIf { it > 0 } ?: ShapeSize.MEDIUM.targetCells,
+            )
+        } else if (config.isCustom) {
             val raw = 10 + max(config.gridWidth, config.gridHeight) * 3
             val even = if (raw % 2 == 0) raw else raw + 1
             even.coerceIn(20, 38)
@@ -208,9 +224,18 @@ class LevelGenerator(
      *
      * Layout sizes are even, so the tiling is exact.
      */
-    private fun randomHamiltonianPath(layoutSize: Int, random: Random): IntArray {
+    private fun randomHamiltonianPath(
+        layoutSize: Int,
+        random: Random,
+        mask: BooleanArray? = null,
+    ): IntArray {
         val count = layoutSize * layoutSize
         val blocks = layoutSize / 2
+        // With a mask only the blocks inside the shape take part. The mask is
+        // block-aligned and connected (see ShapeMask), so the spanning tree
+        // still reaches every active block.
+        fun blockActive(bx: Int, by: Int): Boolean =
+            mask == null || mask[(by * 2) * layoutSize + bx * 2]
         val edges = HashSet<Long>(count)
 
         fun cell(x: Int, y: Int): Int = y * layoutSize + x
@@ -229,6 +254,7 @@ class LevelGenerator(
 
         for (by in 0 until blocks) {
             for (bx in 0 until blocks) {
+                if (!blockActive(bx, by)) continue
                 val x = bx * 2
                 val y = by * 2
                 val a = cell(x, y)
@@ -263,10 +289,11 @@ class LevelGenerator(
         for (by in 0 until blocks) {
             for (bx in 0 until blocks) {
                 val id = by * blocks + bx
-                if (bx + 1 < blocks) {
+                if (!blockActive(bx, by)) continue
+                if (bx + 1 < blocks && blockActive(bx + 1, by)) {
                     blockEdges += BlockEdge(id, id + 1, true, bx, by)
                 }
-                if (by + 1 < blocks) {
+                if (by + 1 < blocks && blockActive(bx, by + 1)) {
                     blockEdges += BlockEdge(id, id + blocks, false, bx, by)
                 }
             }
@@ -312,11 +339,12 @@ class LevelGenerator(
         var forcedPrevious = -1
         var start = -1
         for (cell in 0 until count) {
+            if (degree[cell] < 2) continue
             for (neighbor in adjacency[cell]) {
                 val head = point(neighbor, layoutSize)
                 val previousPoint = point(cell, layoutSize)
                 val direction = ArrowDirection.between(previousPoint, head) ?: continue
-                if (!isOutward(head, previousPoint, direction, layoutSize)) continue
+                if (!isOutward(head, previousPoint, direction, layoutSize, mask)) continue
                 val other = adjacency[neighbor].firstOrNull { it != cell } ?: continue
                 start = other
                 forcedPrevious = neighbor
@@ -324,12 +352,19 @@ class LevelGenerator(
             }
             if (start >= 0) break
         }
-        if (start < 0) start = random.nextInt(count)
+        val pathLength = if (mask == null) count else mask.count { it }
+        if (start < 0) {
+            start = if (mask == null) {
+                random.nextInt(count)
+            } else {
+                (0 until count).filter { mask[it] }.random(random)
+            }
+        }
 
-        val path = IntArray(count)
+        val path = IntArray(pathLength)
         var previous = forcedPrevious
         var current = start
-        for (i in 0 until count) {
+        for (i in 0 until pathLength) {
             path[i] = current
             val neighbors = adjacency[current]
             val next = if (neighbors[0] != previous) neighbors[0] else neighbors[1]
@@ -368,11 +403,14 @@ class LevelGenerator(
         openCount: Int,
         targetArrows: Int,
         random: Random,
+        mask: BooleanArray? = null,
     ): IntArray? {
         val count = path.size
         if (targetArrows < openCount || targetArrows > count - 1) return null
 
-        val pathIndex = IntArray(count)
+        // Cells outside a mask have no path index; they never count as an
+        // earlier part of the path.
+        val pathIndex = IntArray(layoutSize * layoutSize) { Int.MAX_VALUE }
         for (i in path.indices) pathIndex[path[i]] = i
 
         val openCandidates = mutableListOf<Int>()
@@ -388,7 +426,7 @@ class LevelGenerator(
             when {
                 // A head pointing off the board is an open arrow. Leave those
                 // for the open-arrow selection below.
-                isOutward(head, previous, headDirection, layoutSize) ->
+                isOutward(head, previous, headDirection, layoutSize, mask) ->
                     openCandidates += i
                 // Never point at an arrow that comes earlier in the path:
                 // those edges could close a dependency cycle. All remaining
@@ -406,7 +444,7 @@ class LevelGenerator(
         val cuts = mutableListOf(count - 1)
         // The last path segment may or may not point off the board; account for
         // it instead of always assuming it is one of the open arrows.
-        val neededOpenCuts = if (isLastArrowOpen(path, layoutSize)) {
+        val neededOpenCuts = if (isLastArrowOpen(path, layoutSize, mask)) {
             openCount - 1
         } else {
             openCount
@@ -465,6 +503,7 @@ class LevelGenerator(
             targetArrows = targetArrows,
             straightCandidates = straightCandidates,
             turnCandidates = turnCandidates,
+            mask = mask,
         )
     }
 
@@ -648,8 +687,9 @@ class LevelGenerator(
     }
 
     /** Arrow index per cell. Assumes a valid cut set. */
-    private fun ownerOf(path: IntArray, cuts: IntArray): IntArray {
-        val owner = IntArray(path.size)
+    /** Arrow index per cell, -1 for cells outside the board mask. */
+    private fun ownerOf(path: IntArray, cuts: IntArray, layoutSize: Int): IntArray {
+        val owner = IntArray(layoutSize * layoutSize) { -1 }
         var start = 0
         for (a in cuts.indices) {
             for (i in start..cuts[a]) owner[path[i]] = a
@@ -705,7 +745,7 @@ class LevelGenerator(
             start = cuts[a] + 1
         }
         if (start != path.size) return null
-        val owner = ownerOf(path, cuts)
+        val owner = ownerOf(path, cuts, layoutSize)
 
         // Edge list "blocked -> blocker", stored as linked lists per blocker.
         val pending = IntArray(arrowCount)
@@ -717,7 +757,7 @@ class LevelGenerator(
         for (a in 0 until arrowCount) {
             forEachRayCell(path, layoutSize, cuts, flipped, a) { cell ->
                 val blocker = owner[cell]
-                if (blocker != a && seen[blocker] != a) {
+                if (blocker >= 0 && blocker != a && seen[blocker] != a) {
                     seen[blocker] = a
                     pending[a] += 1
                     edgeTarget[edges] = a
@@ -760,6 +800,7 @@ class LevelGenerator(
         targetArrows: Int,
         straightCandidates: List<Int>,
         turnCandidates: List<Int>,
+        mask: BooleanArray? = null,
     ): IntArray {
         if (cuts.size != targetArrows) return cuts
         val original = cuts.copyOf()
@@ -795,7 +836,7 @@ class LevelGenerator(
             if (runSize >= MIN_MERGE_RUN) {
                 var containsOpen = false
                 for (i in index until runEnd) {
-                    if (isOpenCut(path, cutList[i], layoutSize)) {
+                    if (isOpenCut(path, cutList[i], layoutSize, mask)) {
                         containsOpen = true
                         break
                     }
@@ -879,13 +920,13 @@ class LevelGenerator(
         )
     }
 
-    private fun isLastArrowOpen(path: IntArray, layoutSize: Int): Boolean {
+    private fun isLastArrowOpen(path: IntArray, layoutSize: Int, mask: BooleanArray?): Boolean {
         val count = path.size
         if (count < 3) return false
         val previous = point(path[count - 2], layoutSize)
         val head = point(path[count - 1], layoutSize)
         val direction = ArrowDirection.between(previous, head) ?: return false
-        return isOutward(head, previous, direction, layoutSize)
+        return isOutward(head, previous, direction, layoutSize, mask)
     }
 
     private fun buildArrows(
@@ -931,15 +972,40 @@ class LevelGenerator(
         }
     }
 
-    private fun isOpenCut(path: IntArray, cut: Int, layoutSize: Int): Boolean {
+    private fun isOpenCut(path: IntArray, cut: Int, layoutSize: Int, mask: BooleanArray?): Boolean {
         if (cut <= 0) return false
         val previous = point(path[cut - 1], layoutSize)
         val head = point(path[cut], layoutSize)
         val direction = ArrowDirection.between(previous, head) ?: return false
-        return isOutward(head, previous, direction, layoutSize)
+        return isOutward(head, previous, direction, layoutSize, mask)
     }
 
+    /**
+     * True when a head at [current] has an empty forward ray from the start,
+     * i.e. the arrow would be open. On the full square that means the head is
+     * on the border and points off the board. With a [mask] it means the ray
+     * crosses no cell of the shape before it leaves the board.
+     */
     private fun isOutward(
+        current: GridPoint,
+        previous: GridPoint,
+        direction: ArrowDirection,
+        layoutSize: Int,
+        mask: BooleanArray?,
+    ): Boolean {
+        if (mask == null) return isOutwardOnSquare(current, previous, direction, layoutSize)
+        if (direction.dx != 0 && direction.dy != 0) return false
+        var x = current.x + direction.dx
+        var y = current.y + direction.dy
+        while (x in 0 until layoutSize && y in 0 until layoutSize) {
+            if (mask[y * layoutSize + x]) return false
+            x += direction.dx
+            y += direction.dy
+        }
+        return true
+    }
+
+    private fun isOutwardOnSquare(
         current: GridPoint,
         previous: GridPoint,
         direction: ArrowDirection,

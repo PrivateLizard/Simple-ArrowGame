@@ -342,7 +342,9 @@ private fun GameTopBar(
 ) {
     val s = LocalStrings.current
     val level = state.level
-    val title = if (level.config.isCustom) {
+    val title = if (level.config.isShaped) {
+        s.t("shape_${level.config.shapeId}").uppercase(s.locale)
+    } else if (level.config.isCustom) {
         s.t("custom_puzzle")
     } else {
         s.f("level_title", level.config.levelId.toString().padStart(2, '0'))
@@ -434,6 +436,8 @@ private fun GameBoard(
         buildList {
             for (gx in 0 until level.layoutSize) {
                 for (gy in 0 until level.layoutSize) {
+                    // Shaped boards: no dots outside the shape.
+                    if (!level.isCellActive(gx, gy)) continue
                     val point = GridPoint(gx, gy)
                     if (point !in covered) add(point)
                 }

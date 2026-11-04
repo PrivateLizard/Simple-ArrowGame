@@ -106,7 +106,9 @@ fun VictoryScreen(
                 Reveal(delayMillis = 250) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = if (config.isCustom) {
+                            text = if (config.isShaped) {
+                                s.t("shape_${config.shapeId}").uppercase(s.locale)
+                            } else if (config.isCustom) {
                                 s.t("custom_puzzle")
                             } else {
                                 s.f("level_title", config.levelId.toString())

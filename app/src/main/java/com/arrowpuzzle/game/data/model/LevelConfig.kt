@@ -25,10 +25,15 @@ data class LevelConfig(
     val timeLimitSeconds: Int?,
     val complexity: ComplexityLevel,
     val obstacleCount: Int = 0,
+    /** Test mode: id of a [com.arrowpuzzle.game.game.shapes.LevelShape], null = full square. */
+    val shapeId: String? = null,
+    /** Test mode: number of cells the shape should hold (board size follows from it). */
+    val shapeCells: Int = 0,
 ) {
     val gridWidth: Int get() = gridSize.first
     val gridHeight: Int get() = gridSize.second
     val isCustom: Boolean get() = levelId == CUSTOM_LEVEL_ID
+    val isShaped: Boolean get() = shapeId != null
 
     companion object {
         const val CUSTOM_LEVEL_ID = 0

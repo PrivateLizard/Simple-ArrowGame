@@ -7,6 +7,12 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
 ## Unreleased
 
+- **New Test mode** (Home): boards cut into one of 100 shapes - geometric
+  forms, nature, animals and everyday things (heart, star, teddy bear, cat,
+  rocket, guitar, ...) - in three sizes. The board is enlarged to make up for the empty
+  space around the shape. Levels stay fully solvable (checked by tests).
+  Campaign and Custom Mode boards are unchanged (all 2000 campaign boards are
+  bit-identical; a unit test guards this).
 - Redesigned level-complete screen: animated check badge, counting-up score,
   breakdown and stats revealed one after another, plus a short, subtle confetti
   shower in theme colours (skipped when system animations are off).

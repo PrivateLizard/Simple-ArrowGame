@@ -23,6 +23,7 @@ import com.arrowpuzzle.game.ui.screens.GameScreen
 import com.arrowpuzzle.game.ui.screens.HomeScreen
 import com.arrowpuzzle.game.ui.screens.LevelSelectScreen
 import com.arrowpuzzle.game.ui.screens.SettingsScreen
+import com.arrowpuzzle.game.ui.screens.TestModeScreen
 import com.arrowpuzzle.game.ui.screens.VictoryScreen
 import com.arrowpuzzle.game.ui.viewmodel.GameViewModel
 import com.arrowpuzzle.game.ui.viewmodel.HomeViewModel
@@ -72,6 +73,9 @@ fun AppNavHost(container: AppContainer) {
                 },
                 onSettings = {
                     navController.navigate(AppRoutes.SETTINGS) { launchSingleTop = true }
+                },
+                onTest = {
+                    navController.navigate(AppRoutes.TEST) { launchSingleTop = true }
                 },
                 isAllUnlocked = highestUnlocked >= LevelCatalog.MAX_LEVEL,
                 onToggleUnlockAll = { unlocked ->
@@ -126,6 +130,17 @@ fun AppNavHost(container: AppContainer) {
                 onDevModeChange = viewModel::setDevModeEnabled,
                 onResetProgress = viewModel::resetProgress,
                 onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(AppRoutes.TEST) {
+            val testSettings by container.settingsRepository.settings.collectAsState()
+            TestModeScreen(
+                maxFailures = testSettings.maxFailures,
+                onBack = { navController.popBackStack() },
+                onStart = { config ->
+                    navController.navigate(AppRoutes.game(config))
+                },
             )
         }
 
@@ -282,4 +297,6 @@ private fun levelConfigArguments(): List<NamedNavArgument> = listOf(
     navArgument("timeLimit") { type = NavType.IntType },
     navArgument("complexity") { type = NavType.StringType },
     navArgument("obstacles") { type = NavType.IntType },
+    navArgument("shape") { type = NavType.StringType },
+    navArgument("shapeCells") { type = NavType.IntType },
 )

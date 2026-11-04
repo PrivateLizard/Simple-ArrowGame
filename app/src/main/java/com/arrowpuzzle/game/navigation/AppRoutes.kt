@@ -21,14 +21,18 @@ object AppRoutes {
     const val LEVELS = "levels"
     const val SETTINGS = "settings"
     const val CUSTOM = "custom"
+    const val TEST = "test"
+
+    /** Route placeholder for "no shape" (route segments must not be empty). */
+    private const val NO_SHAPE = "-"
 
     const val GAME =
-        "game/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}"
+        "game/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}"
     const val VICTORY =
-        "victory/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}" +
+        "victory/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}" +
             "/{points}/{timeMillis}/{failures}/{newBest}/{arrowsUsed}"
     const val DEFEAT =
-        "defeat/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}" +
+        "defeat/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}" +
             "/{reason}/{failures}/{timeMillis}/{arrowCount}"
 
     fun game(config: LevelConfig): String = buildString {
@@ -48,6 +52,10 @@ object AppRoutes {
         append(config.complexity.name)
         append('/')
         append(config.obstacleCount)
+        append('/')
+        append(config.shapeId ?: NO_SHAPE)
+        append('/')
+        append(config.shapeCells)
     }
 
     fun victory(result: GameResult): String = buildString {
@@ -67,6 +75,10 @@ object AppRoutes {
         append(result.config.complexity.name)
         append('/')
         append(result.config.obstacleCount)
+        append('/')
+        append(result.config.shapeId ?: NO_SHAPE)
+        append('/')
+        append(result.config.shapeCells)
         append('/')
         append(result.record.points)
         append('/')
@@ -99,6 +111,10 @@ object AppRoutes {
         append('/')
         append(config.obstacleCount)
         append('/')
+        append(config.shapeId ?: NO_SHAPE)
+        append('/')
+        append(config.shapeCells)
+        append('/')
         append(state.reason.name)
         append('/')
         append(state.failures)
@@ -121,6 +137,8 @@ object AppRoutes {
             ComplexityLevel.valueOf(arguments.getString("complexity") ?: "")
         }.getOrDefault(ComplexityLevel.MEDIUM)
         val obstacles = arguments.getInt("obstacles", 0)
+        val shape = arguments.getString("shape")?.takeIf { it.isNotBlank() && it != NO_SHAPE }
+        val shapeCells = arguments.getInt("shapeCells", 0)
         return LevelConfig(
             levelId = levelId,
             gridSize = width to height,
@@ -129,6 +147,8 @@ object AppRoutes {
             timeLimitSeconds = timeLimit,
             complexity = complexity,
             obstacleCount = obstacles,
+            shapeId = shape,
+            shapeCells = shapeCells,
         )
     }
 
