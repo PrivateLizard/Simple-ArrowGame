@@ -1,10 +1,11 @@
 # Changelog
 
-All notable changes to Simple Arrow Puzzle. `versionName` is `1.0`; the build
+All notable changes to Simple Arrow Puzzle. Up to build 39 `versionName` was
+`1.0`; from build 40 it is `1.0.1`. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Build 40 - 2026-11-04
+## 1.0.1 (Build 40) - 2026-11-04
 
 - Release builds are shrunk with R8: the APK drops from about 6.2 MB to 1.1 MB.
 - An Android App Bundle (AAB) for app stores is built alongside the APK.

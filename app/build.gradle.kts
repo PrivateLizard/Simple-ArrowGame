@@ -16,7 +16,7 @@ android {
         // installed one. (Up to build 39 it was the git commit count, which can
         // drop after a history rewrite; it is fixed here from build 40 on.)
         versionCode = 40
-        versionName = "1.0"
+        versionName = "1.0.1"
         vectorDrawables.useSupportLibrary = true
     }
 
