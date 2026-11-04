@@ -1,8 +1,11 @@
-# Arrow Puzzle
+# Simple Arrow Puzzle
 
 A fully offline line-art arrow puzzle for Android 7.0+ (API 24). Clear every
 arrow. An arrow can only be tapped when no other arrow lies on the ray in front
 of its arrowhead. Every board is generated and validated on-device.
+
+**Download:** see the [GitHub Releases](https://github.com/PrivateLizard/Simple-ArrowGame/releases)
+page for the signed APK.
 
 ## Rules
 
@@ -10,21 +13,48 @@ of its arrowhead. Every board is generated and validated on-device.
 - Every arrow must be removed to complete a level.
 - Several arrows can be open at once, so a level never locks up.
 - Optional failure limits and time limits end a run.
-- Pinch to zoom, drag to pan.
+- Pinch to zoom (0.45x - 5x), drag to pan.
 
 ## Features
 
-- 2000 campaign levels (3x3 → 8x8 boards) plus a Custom Mode
-- Dense, fully covered arrow fields with no crossing strokes
-- Short and very long, heavily bent arrows
+- **2000 campaign levels** plus a Custom Mode
+- Board grows from 3x3 to 8x8 logical grid; the actual point lattice grows from
+  20x20 up to 72x72
+- Late levels carry more, shorter arrows (160 at level 500, 240 at level 2000)
+- Dense, fully covered arrow fields with no crossing or overlapping strokes
+- Short and long, heavily bent arrows
 - Removed arrows unspool head-first along their path
-- Deterministic campaign boards, validated before display
+- Deterministic campaign boards, generated and validated on-device
 - Resume an unfinished level from the main menu
 - Optional periodic hint (an open arrow briefly wiggles)
 - Light and dark themes; sound and haptics
 - Language selector with automatic device-language detection
   (English/German complete, more languages with English fallback)
 - No internet permission, no ads, no tracking, no third-party runtime libraries
+
+## How levels are generated
+
+Campaign levels use a fixed seed (`1_000_003 * levelId`), so a level always
+looks the same on every device.
+
+1. The board is filled with a **Hamiltonian path**: every lattice point is
+   visited exactly once. The path is built from 2x2 block cycles that are merged
+   along a random spanning tree, then broken at an outward-facing edge.
+2. The path is cut into arrows. Cuts that point off the board produce the
+   initially open arrows; the remaining cuts are chosen so their forward rays
+   only hit later parts of the path.
+3. Runs of very short, same-direction arrows are merged into one longer arrow.
+   The arrow count is kept stable by splitting the longest remaining arrows at
+   safe (forward-facing) cut points.
+4. Before a level is shown, the generator validates:
+   - no overlapping or self-intersecting arrow strokes
+   - every arrow has a valid cardinal direction
+   - no dependency cycle
+   - the requested number of open arrows
+   - the board is fully clearable
+
+If a random layout cannot be cut safely, the generator falls back to a plain
+serpentine path for that level. The fallback is correct, just less irregular.
 
 ## Tech stack
 
@@ -47,7 +77,8 @@ gradlew.bat assembleRelease
 
 The unsigned APK is written to
 `app/build/outputs/apk/release/app-release-unsigned.apk`. Sign it with your own
-keystore before installing on a device.
+keystore before installing on a device. The repository does **not** contain a
+release keystore or signing password.
 
 Tests and lint:
 
@@ -58,6 +89,16 @@ gradlew.bat lint
 
 The first Gradle run needs network access for Gradle/AndroidX; the installed app
 itself is fully offline.
+
+### Versioning
+
+`versionCode` is the number of commits on the current branch (auto-incremented
+by each commit). `versionName` is `1.0`. A source copy without `.git` can pass
+`-PappVersionCode=<n>`.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## AI assistance & disclaimer
 
