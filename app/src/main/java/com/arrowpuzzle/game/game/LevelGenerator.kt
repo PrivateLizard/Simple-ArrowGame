@@ -33,12 +33,8 @@ class LevelGenerator(
         val targetArrows = targetArrowCount(config)
         var lastError: String? = null
 
-        repeat(maxAttempts) { attempt ->
-            // Keep one attempt as a plain serpentine fallback so generation
-            // never fails just because the heavy tangling left too few valid
-            // cut points.
-            val tangle = attempt < maxAttempts - 1
-            val path = randomizedHamiltonianPath(layoutSize, random, tangle)
+        repeat(maxAttempts) {
+            val path = randomHamiltonianPath(layoutSize, random)
             val cuts = chooseCuts(
                 path = path,
                 layoutSize = layoutSize,
@@ -131,7 +127,9 @@ class LevelGenerator(
 
     private fun layoutSizeFor(config: LevelConfig): Int =
         if (config.isCustom) {
-            (10 + max(config.gridWidth, config.gridHeight) * 3).coerceIn(19, 38)
+            val raw = 10 + max(config.gridWidth, config.gridHeight) * 3
+            val even = if (raw % 2 == 0) raw else raw + 1
+            even.coerceIn(20, 38)
         } else {
             LevelCatalog.layoutSizeForLevel(config.levelId)
         }
@@ -153,96 +151,137 @@ class LevelGenerator(
         return (config.arrowCount + 6).coerceAtMost(LevelCatalog.arrowCountForLevel(LevelCatalog.MAX_LEVEL))
     }
 
-    private fun randomizedHamiltonianPath(
-        layoutSize: Int,
-        random: Random,
-        tangle: Boolean,
-    ): IntArray {
+    /**
+     * Builds a Hamiltonian path as a random Hamiltonian cycle minus one edge.
+     *
+     * The grid is tiled with 2x2 blocks, each carrying its own 4-cycle. A random
+     * spanning tree over the block grid merges the cycles with two cross edges
+     * per tree edge. The result is one cycle through every cell. Traversing it
+     * from a random start and stopping one step before the end yields a
+     * Hamiltonian path with no long parallel serpentine rows.
+     *
+     * Layout sizes are even, so the tiling is exact.
+     */
+    private fun randomHamiltonianPath(layoutSize: Int, random: Random): IntArray {
         val count = layoutSize * layoutSize
-        val path = IntArray(count)
-        var index = 0
-        for (y in 0 until layoutSize) {
-            if (y % 2 == 0) {
-                for (x in 0 until layoutSize) {
-                    path[index++] = y * layoutSize + x
-                }
+        val blocks = layoutSize / 2
+        val edges = HashSet<Long>(count)
+
+        fun cell(x: Int, y: Int): Int = y * layoutSize + x
+        fun key(first: Int, second: Int): Long =
+            if (first < second) {
+                first.toLong() * count + second
             } else {
-                for (x in layoutSize - 1 downTo 0) {
-                    path[index++] = y * layoutSize + x
-                }
+                second.toLong() * count + first
+            }
+        fun addEdge(first: Int, second: Int) {
+            edges.add(key(first, second))
+        }
+        fun removeEdge(first: Int, second: Int) {
+            edges.remove(key(first, second))
+        }
+
+        for (by in 0 until blocks) {
+            for (bx in 0 until blocks) {
+                val x = bx * 2
+                val y = by * 2
+                val a = cell(x, y)
+                val b = cell(x + 1, y)
+                val c = cell(x, y + 1)
+                val d = cell(x + 1, y + 1)
+                addEdge(a, b)
+                addEdge(b, d)
+                addEdge(d, c)
+                addEdge(c, a)
             }
         }
 
-        val positions = IntArray(count)
-        for (i in path.indices) positions[path[i]] = i
-
-        // Prefix moves only randomize the head of the path; a plain serpentine
-        // tail would stay untouched. Periodically reversing the whole path
-        // swaps head and tail, so the same move set reaches every region. This
-        // is a valid Hamiltonian-path operation (just the reverse traversal)
-        // and keeps all consecutive pairs adjacent.
-        val targetMoves = if (tangle) (count * 3).coerceIn(1_500, 16_000) else 0
-        val batchSize = 120
-        val neighbors = IntArray(4)
-        var moves = 0
-        repeat(targetMoves) {
-            val start = path[0]
-            val next = path[1]
-            val startX = start % layoutSize
-            val startY = start / layoutSize
-            var neighborCount = 0
-            if (startX > 0) neighbors[neighborCount++] = start - 1
-            if (startX < layoutSize - 1) neighbors[neighborCount++] = start + 1
-            if (startY > 0) neighbors[neighborCount++] = start - layoutSize
-            if (startY < layoutSize - 1) neighbors[neighborCount++] = start + layoutSize
-            if (neighborCount == 0) return@repeat
-            val target = neighbors[random.nextInt(neighborCount)]
-            if (target == next) return@repeat
-            val targetIndex = positions[target]
-            // Never touch the current last edge: the final arrow has to keep
-            // pointing off the board, otherwise it could close a cycle.
-            if (targetIndex !in 2..count - 2) return@repeat
-            reverseSegment(path, positions, 0, targetIndex - 1)
-            moves += 1
-            if (moves % batchSize == 0) reverseAll(path, positions)
+        val parent = IntArray(blocks * blocks) { it }
+        fun find(node: Int): Int {
+            var root = node
+            while (parent[root] != root) {
+                parent[root] = parent[parent[root]]
+                root = parent[root]
+            }
+            return root
         }
-        if (!isLastArrowOpen(path, layoutSize)) {
-            reverseAll(path, positions)
-            if (!isLastArrowOpen(path, layoutSize)) return path
+        fun union(first: Int, second: Int): Boolean {
+            val a = find(first)
+            val b = find(second)
+            if (a == b) return false
+            parent[a] = b
+            return true
+        }
+
+        val blockEdges = ArrayList<BlockEdge>(2 * blocks * (blocks - 1))
+        for (by in 0 until blocks) {
+            for (bx in 0 until blocks) {
+                val id = by * blocks + bx
+                if (bx + 1 < blocks) {
+                    blockEdges += BlockEdge(id, id + 1, true, bx, by)
+                }
+                if (by + 1 < blocks) {
+                    blockEdges += BlockEdge(id, id + blocks, false, bx, by)
+                }
+            }
+        }
+        blockEdges.shuffle(random)
+
+        for (edge in blockEdges) {
+            if (!union(edge.first, edge.second)) continue
+            val x = edge.bx * 2
+            val y = edge.by * 2
+            if (edge.horizontal) {
+                val rightTop = cell(x + 1, y)
+                val rightBottom = cell(x + 1, y + 1)
+                val leftTop = cell(x + 2, y)
+                val leftBottom = cell(x + 2, y + 1)
+                removeEdge(rightTop, rightBottom)
+                removeEdge(leftTop, leftBottom)
+                addEdge(rightTop, leftTop)
+                addEdge(rightBottom, leftBottom)
+            } else {
+                val bottomLeft = cell(x, y + 1)
+                val bottomRight = cell(x + 1, y + 1)
+                val topLeft = cell(x, y + 2)
+                val topRight = cell(x + 1, y + 2)
+                removeEdge(bottomLeft, bottomRight)
+                removeEdge(topLeft, topRight)
+                addEdge(bottomLeft, topLeft)
+                addEdge(bottomRight, topRight)
+            }
+        }
+
+        val adjacency = Array(count) { IntArray(2) { -1 } }
+        val degree = IntArray(count)
+        for (edge in edges) {
+            val first = (edge / count).toInt()
+            val second = (edge % count).toInt()
+            adjacency[first][degree[first]++] = second
+            adjacency[second][degree[second]++] = first
+        }
+
+        val start = random.nextInt(count)
+        val path = IntArray(count)
+        var previous = -1
+        var current = start
+        for (i in 0 until count) {
+            path[i] = current
+            val neighbors = adjacency[current]
+            val next = if (neighbors[0] != previous) neighbors[0] else neighbors[1]
+            previous = current
+            current = next
         }
         return path
     }
 
-    private fun reverseAll(path: IntArray, positions: IntArray) {
-        val count = path.size
-        var left = 0
-        var right = count - 1
-        while (left < right) {
-            val leftValue = path[left]
-            val rightValue = path[right]
-            path[left] = rightValue
-            path[right] = leftValue
-            positions[rightValue] = left
-            positions[leftValue] = right
-            left += 1
-            right -= 1
-        }
-    }
-
-    private fun reverseSegment(path: IntArray, positions: IntArray, start: Int, end: Int) {
-        var left = start
-        var right = end
-        while (left < right) {
-            val leftValue = path[left]
-            val rightValue = path[right]
-            path[left] = rightValue
-            path[right] = leftValue
-            positions[rightValue] = left
-            positions[leftValue] = right
-            left += 1
-            right -= 1
-        }
-    }
+    private data class BlockEdge(
+        val first: Int,
+        val second: Int,
+        val horizontal: Boolean,
+        val bx: Int,
+        val by: Int,
+    )
 
     private fun chooseCuts(
         path: IntArray,

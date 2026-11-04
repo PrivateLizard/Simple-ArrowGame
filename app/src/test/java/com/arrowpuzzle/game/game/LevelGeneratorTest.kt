@@ -178,7 +178,7 @@ class LevelGeneratorTest {
     fun fieldGrowsEveryFiftyLevelsAfterOneHundred() {
         assertEquals(34, LevelCatalog.layoutSizeForLevel(100))
         assertEquals(34, LevelCatalog.layoutSizeForLevel(149))
-        assertEquals(35, LevelCatalog.layoutSizeForLevel(150))
+        assertEquals(36, LevelCatalog.layoutSizeForLevel(150))
         assertEquals(36, LevelCatalog.layoutSizeForLevel(200))
         assertEquals(38, LevelCatalog.layoutSizeForLevel(300))
         assertEquals(50, LevelCatalog.layoutSizeForLevel(900))

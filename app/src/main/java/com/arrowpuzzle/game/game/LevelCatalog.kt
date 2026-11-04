@@ -85,15 +85,20 @@ object LevelCatalog {
     /**
      * Side length of the point lattice the arrows are routed on.
      *
-     * Levels 1..100 keep the original 19..34 range. Above level 100 the field
-     * grows by one row/column every 50 levels, so the late campaign keeps
-     * opening up instead of staying at 34x34 forever. Level 2000 ends at 72x72.
+     * The size is rounded up to an even number because the generator builds the
+     * Hamiltonian cycle from 2x2 blocks. Levels 1..100 stay at 20..34; above
+     * level 100 the field grows by one row/column every 50 levels, so the late
+     * campaign keeps opening up. Level 2000 ends at 72x72.
      */
     fun layoutSizeForLevel(levelId: Int): Int {
         val safe = levelId.coerceIn(1, MAX_LEVEL)
         val legacy = 10 + gridSizeForLevel(safe) * 3
-        if (safe <= LEGACY_MAX_LEVEL) return legacy
-        return legacy + (safe - LEGACY_MAX_LEVEL) / 50
+        val raw = if (safe <= LEGACY_MAX_LEVEL) {
+            legacy
+        } else {
+            legacy + (safe - LEGACY_MAX_LEVEL) / 50
+        }
+        return if (raw % 2 == 0) raw else raw + 1
     }
 
     /**
