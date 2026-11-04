@@ -55,7 +55,6 @@ import com.arrowpuzzle.game.ui.theme.AppTextMuted
 import com.arrowpuzzle.game.ui.viewmodel.LevelItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Locale
 import kotlin.math.abs
 
 @Composable
@@ -206,6 +205,7 @@ private suspend fun LazyGridState.animateCenterItem(index: Int) {
 
 @Composable
 private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
+    val s = LocalStrings.current
     val unlocked = level.isUnlocked
     val completed = level.bestScore > 0
     val shape = RoundedCornerShape(22.dp)
@@ -274,14 +274,14 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
             // Locked tiles show only the dimmed number; no "locked" label.
             if (completed) {
                 Text(
-                    text = String.format(Locale.US, "%,d", level.bestScore),
+                    text = s.number(level.bestScore),
                     style = numberStyle,
                     color = AppPrimary,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                 )
                 Text(
-                    text = "/ " + String.format(Locale.US, "%,d", level.maxScore),
+                    text = "/ " + s.number(level.maxScore),
                     fontSize = 9.sp,
                     color = AppTextMuted.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,

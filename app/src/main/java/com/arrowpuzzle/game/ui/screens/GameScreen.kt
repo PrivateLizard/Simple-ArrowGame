@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.DisposableEffect
@@ -219,9 +220,6 @@ private fun PlayingContent(
     }
     val unlimitedFailures = config.maxFailures == AppSettings.NO_FAILURE_LIMIT
     val s = LocalStrings.current
-    val available = remember(level, state.removedIds) {
-        ArrowGeometry.availableArrows(level, state.removedIds)
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // The board is the background: it fills the whole screen and fades out
@@ -237,7 +235,6 @@ private fun PlayingContent(
         Column(modifier = Modifier.fillMaxSize()) {
             GameTopBar(
                 state = state,
-                availableCount = available.size,
                 onExit = onExit,
             )
 
@@ -312,7 +309,7 @@ private fun DevWinBar(onNextArrow: () -> Unit, onPerfectWin: () -> Unit) {
             onClick = onNextArrow,
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp),
+                .heightIn(min = 48.dp),
             shape = RoundedCornerShape(14.dp),
             border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.7f)),
             colors = ButtonDefaults.outlinedButtonColors(
@@ -320,20 +317,20 @@ private fun DevWinBar(onNextArrow: () -> Unit, onPerfectWin: () -> Unit) {
                 contentColor = AppPrimary,
             ),
         ) {
-            Text(s.t("dev_next_arrow"), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            Text(s.t("dev_next_arrow"), style = MaterialTheme.typography.labelLarge, maxLines = 2, textAlign = TextAlign.Center)
         }
         Button(
             onClick = onPerfectWin,
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp),
+                .heightIn(min = 48.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = AppPrimary,
                 contentColor = AppSurface,
             ),
         ) {
-            Text(s.t("dev_perfect_win"), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            Text(s.t("dev_perfect_win"), style = MaterialTheme.typography.labelLarge, maxLines = 2, textAlign = TextAlign.Center)
         }
     }
 }
@@ -341,7 +338,6 @@ private fun DevWinBar(onNextArrow: () -> Unit, onPerfectWin: () -> Unit) {
 @Composable
 private fun GameTopBar(
     state: GameState.Playing,
-    availableCount: Int,
     onExit: () -> Unit,
 ) {
     val s = LocalStrings.current
@@ -371,11 +367,6 @@ private fun GameTopBar(
                 style = MaterialTheme.typography.titleMedium,
                 color = AppText,
                 letterSpacing = 1.sp,
-            )
-            Text(
-                text = s.f("arrows_open", level.arrowCount, availableCount),
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted,
             )
         }
     }

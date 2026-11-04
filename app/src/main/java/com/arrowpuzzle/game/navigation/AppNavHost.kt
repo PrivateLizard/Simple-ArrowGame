@@ -236,7 +236,6 @@ fun AppNavHost(container: AppContainer) {
                 reason = data.reason,
                 failures = data.failures,
                 elapsedSeconds = data.elapsedSeconds,
-                arrowCount = data.arrowCount,
                 config = data.config,
                 onRetry = {
                     navController.navigate(AppRoutes.game(data.config)) {

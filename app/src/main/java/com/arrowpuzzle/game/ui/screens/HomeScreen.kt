@@ -54,7 +54,6 @@ import com.arrowpuzzle.game.ui.theme.AppSecondary
 import com.arrowpuzzle.game.ui.theme.AppSurface
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
-import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -110,12 +109,12 @@ fun HomeScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = s.t("personal_best"),
+                                    text = s.t("total_points"),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = AppTextMuted,
                                 )
                                 Text(
-                                    text = String.format(Locale.US, "%,d", highScore),
+                                    text = s.number(highScore),
                                     style = MaterialTheme.typography.headlineLarge,
                                     color = AppPrimary,
                                 )

@@ -39,6 +39,18 @@ class StringsTest {
     }
 
     @Test
+    fun numbersUseTheGroupingSeparatorOfTheAppLanguage() {
+        assertEquals("3,195", AppStrings(AppLanguage.ENGLISH).number(3195))
+        assertEquals("3.195", AppStrings(AppLanguage.GERMAN).number(3195))
+        assertEquals("1.234.567", AppStrings(AppLanguage.GERMAN).number(1_234_567))
+        assertEquals("480", AppStrings(AppLanguage.GERMAN).number(480))
+        for (language in AppLanguage.translated) {
+            val digits = AppStrings(language).number(1_234_567).filter { it.isDigit() }
+            assertEquals("$language keeps all digits", "1234567", digits)
+        }
+    }
+
+    @Test
     fun formattedStringsDoNotThrow() {
         for (language in AppLanguage.translated) {
             val strings = AppStrings(language)

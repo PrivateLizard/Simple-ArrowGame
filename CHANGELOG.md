@@ -13,6 +13,17 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 - **Fix:** the level-complete screen recomputed the score breakdown from the
   planned arrow count instead of the real one, so the rows did not add up to
   the total and the arrow count was off. It now uses the real count.
+- Redesigned level-failed screen in the same style: animated cross badge with
+  a soft shake, the reason with one tip, failures and time (the value that hit
+  its limit is tinted), "try again" as the main action.
+- **Fix:** the failed screen showed `1/1` instead of `1/0` with zero failures
+  allowed; a time-limit loss now shows elapsed / limit.
+- Arrow counts removed from the game header and from both result screens.
+- Home: "Personal Best" is now "Total Points" (it always was the sum of all
+  campaign best scores).
+- Thousands separators follow the app language (3,195 in English, 3.195 in
+  German, narrow space in French/Russian) on Home, level select and the
+  level-complete screen.
 - Dev options: switchable "win buttons" in levels - tap the next open arrow, or
   win the level instantly with a perfect result (counts as a normal win).
 
