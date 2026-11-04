@@ -16,5 +16,8 @@ data class GeneratedLevel(
 ) {
     val arrowCount: Int get() = arrows.size
 
+    /** Blocking relation, built once per level on first use. */
+    val blocking: BlockingGraph by lazy { BlockingGraph(arrows, layoutSize) }
+
     fun arrowById(id: Int): Arrow? = arrows.firstOrNull { it.id == id }
 }

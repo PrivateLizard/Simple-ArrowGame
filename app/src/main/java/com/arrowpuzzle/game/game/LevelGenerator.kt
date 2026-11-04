@@ -18,14 +18,34 @@ import kotlin.random.Random
  * It is cut into arrows: outward-facing cuts create the open arrows, and the
  * remaining cuts are chosen from forward-facing candidates so the blocking
  * graph stays acyclic. Very short same-direction runs are merged afterwards.
+ * Then a share of the arrows is reversed, and arrows above a soft length cap
+ * are split wherever the real blocking graph stays acyclic (see
+ * [capLongArrows]).
  */
 class LevelGenerator(
     private val maxAttempts: Int = 40,
 ) {
-    private companion object {
-        const val SHORT_ARROW = 8
-        const val MAX_MERGED_ARROW = 80
-        const val MIN_MERGE_RUN = 3
+    companion object {
+        /**
+         * Bump whenever the same seed produces a different board. Saved games
+         * from another version are discarded instead of resumed on a board
+         * whose arrow ids no longer match.
+         *
+         * 1 = up to build 38, 2 = soft arrow length cap.
+         */
+        const val VERSION = 2
+
+        private const val SHORT_ARROW = 8
+        private const val MAX_MERGED_ARROW = 80
+        private const val MIN_MERGE_RUN = 3
+
+        /** Soft length cap (path cells) for a single arrow. */
+        private const val MAX_ARROW_LENGTH = 80
+        /** Two neighbours are only merged to compensate a split if this short. */
+        private const val MAX_MERGE_FOR_CAP = 24
+        private const val MAX_CAP_ROUNDS = 200
+        private const val MAX_MERGE_TRIES = 8
+        private val BOOLEANS = booleanArrayOf(false, true)
     }
 
     fun generate(config: LevelConfig, seed: Long = System.nanoTime()): GeneratedLevel {
@@ -59,24 +79,23 @@ class LevelGenerator(
                 lastError = "Could not place enough cut points"
                 return@repeat
             }
-            val arrows = buildArrows(path, cuts, layoutSize)
-            if (arrows == null) {
-                lastError = "Could not build arrows from path"
-                return@repeat
-            }
 
             // Flip a share of the non-open arrows so long parallel rows do not
             // all point the same way. If the flipped set breaks the rules, fall
-            // back to the original arrows for this path.
-            val flipped = flipSomeArrows(arrows, layoutSize, random)
-            val flippedResult = validate(config, flipped, layoutSize, openCount)
-            val flippedLevel = flippedResult.first
-            if (flippedLevel != null) return flippedLevel
-            val originalResult = validate(config, arrows, layoutSize, openCount)
-            val originalLevel = originalResult.first
-            if (originalLevel != null) return originalLevel
-            lastError = originalResult.second ?: flippedResult.second
-            return@repeat
+            // back to unflipped arrows for this path. The length cap runs after
+            // the flip choice, because flips change which splits are safe.
+            val flips = chooseFlips(path, cuts, layoutSize, random)
+            for (flags in listOf(flips, BooleanArray(cuts.size))) {
+                val capped = capLongArrows(path, layoutSize, cuts, flags)
+                val arrows = buildArrows(path, capped.cuts, capped.flipped, layoutSize)
+                if (arrows == null) {
+                    lastError = "Could not build arrows from path"
+                    continue
+                }
+                val result = validate(config, arrows, layoutSize, openCount)
+                result.first?.let { return it }
+                lastError = result.second
+            }
         }
 
         throw IllegalStateException(lastError ?: "Unable to generate a full board")
@@ -107,34 +126,48 @@ class LevelGenerator(
     }
 
     /**
-     * Reverses roughly 40% of the arrows that are not open. The direction is
-     * taken from the new first segment, and the new head must stay inside the
-     * board so the number of open arrows does not change.
+     * Chooses roughly 40% of the arrows that are not open to be reversed, so
+     * the head sits at the first path cell of the arrow. The new head must
+     * point into the board so the number of open arrows does not change.
      */
-    private fun flipSomeArrows(
-        arrows: List<Arrow>,
+    private fun chooseFlips(
+        path: IntArray,
+        cuts: IntArray,
         layoutSize: Int,
         random: Random,
-    ): List<Arrow> {
-        val openIds = arrows
-            .filter { ArrowGeometry.blockersFor(it, arrows, layoutSize).isEmpty() }
-            .map { it.id }
-            .toSet()
-        return arrows.map { arrow ->
-            if (arrow.id in openIds || random.nextFloat() > 0.4f) {
-                return@map arrow
+    ): BooleanArray {
+        val unflipped = BooleanArray(cuts.size)
+        val open = openArrows(path, layoutSize, cuts, unflipped)
+        return BooleanArray(cuts.size) { a ->
+            if (open[a] || random.nextFloat() > 0.4f) return@BooleanArray false
+            val start = if (a == 0) 0 else cuts[a - 1] + 1
+            val head = path[start]
+            val previous = path[start + 1]
+            val frontX = 2 * (head % layoutSize) - previous % layoutSize
+            val frontY = 2 * (head / layoutSize) - previous / layoutSize
+            frontX in 0 until layoutSize && frontY in 0 until layoutSize
+        }
+    }
+
+    /** Arrows whose forward ray is empty (open), by the same rule as [BlockingGraph]. */
+    private fun openArrows(
+        path: IntArray,
+        layoutSize: Int,
+        cuts: IntArray,
+        flipped: BooleanArray,
+    ): BooleanArray {
+        val owner = ownerOf(path, cuts)
+        return BooleanArray(cuts.size) { a ->
+            var free = true
+            forEachRayCell(path, layoutSize, cuts, flipped, a) { cell ->
+                if (owner[cell] != a) {
+                    free = false
+                    false
+                } else {
+                    true
+                }
             }
-            val reversed = arrow.route.reversed()
-            val direction = ArrowDirection.between(
-                reversed[reversed.lastIndex - 1],
-                reversed.last(),
-            ) ?: return@map arrow
-            val frontX = reversed.last().x + direction.dx
-            val frontY = reversed.last().y + direction.dy
-            if (frontX !in 0 until layoutSize || frontY !in 0 until layoutSize) {
-                return@map arrow
-            }
-            Arrow(arrow.id, reversed, direction)
+            free
         }
     }
 
@@ -435,6 +468,284 @@ class LevelGenerator(
         )
     }
 
+    /** A cut set plus, per arrow, whether its head sits at its first path cell. */
+    private class CutSet(val cuts: IntArray, val flipped: BooleanArray)
+
+    /**
+     * Splits arrows longer than [MAX_ARROW_LENGTH] cells.
+     *
+     * Inside a very long arrow there is usually no cut whose ray only hits
+     * later path cells, so a split may close a dependency cycle. Each split is
+     * therefore checked against the real blocking graph ([evaluateCuts]). To
+     * keep the arrow count (and with it the score maximum) unchanged, every
+     * accepted split is paired with a merge of two short neighbouring arrows
+     * elsewhere. A pair is only kept when the board stays acyclic and the
+     * number of open arrows does not change. Arrows without a safe pair stay
+     * as they are, so the cap is soft.
+     */
+    private fun capLongArrows(
+        path: IntArray,
+        layoutSize: Int,
+        cuts: IntArray,
+        flipped: BooleanArray,
+    ): CutSet {
+        val original = CutSet(cuts, flipped)
+        val openCount = evaluateCuts(path, layoutSize, cuts, flipped) ?: return original
+        var current = original
+        // End cuts of arrows that had no safe split. Other splits can make
+        // them splittable later, so they get another chance after progress.
+        val unsplittable = HashSet<Int>()
+        var progressSinceReset = false
+
+        repeat(MAX_CAP_ROUNDS) {
+            var longest = -1
+            var longestLength = MAX_ARROW_LENGTH
+            val c = current.cuts
+            for (i in c.indices) {
+                val start = if (i == 0) 0 else c[i - 1] + 1
+                val length = c[i] - start + 1
+                if (length > longestLength && c[i] !in unsplittable) {
+                    longest = i
+                    longestLength = length
+                }
+            }
+            if (longest < 0) {
+                if (!progressSinceReset || unsplittable.isEmpty()) return current
+                unsplittable.clear()
+                progressSinceReset = false
+                return@repeat
+            }
+            val accepted = trySplitAndMerge(path, layoutSize, current, longest, openCount)
+            if (accepted == null) {
+                unsplittable += c[longest]
+            } else {
+                current = accepted
+                progressSinceReset = true
+            }
+        }
+        return current
+    }
+
+    private fun trySplitAndMerge(
+        path: IntArray,
+        layoutSize: Int,
+        set: CutSet,
+        index: Int,
+        openCount: Int,
+    ): CutSet? {
+        val cuts = set.cuts
+        val start = if (index == 0) 0 else cuts[index - 1] + 1
+        val end = cuts[index]
+        val headAtStart = set.flipped[index]
+        // Long arrows coil around themselves, so after a split the two halves
+        // often block each other. Safe points are rare and clustered; try every
+        // position, most balanced first. [evaluateCuts] is cheap enough for it.
+        val middle = (start + end) / 2
+        val from = start + 1
+        val to = end - 2
+        if (from > to) return null
+        val splits = (from..to).sortedBy { abs(it - middle) }
+        for (split in splits) {
+            // The half that keeps the original head keeps its orientation; the
+            // new half may point either way.
+            for (newHalfFlipped in BOOLEANS) {
+                val firstFlipped = if (headAtStart) true else newHalfFlipped
+                val secondFlipped = if (headAtStart) newHalfFlipped else false
+                val withSplit = splitAt(set, index, split, firstFlipped, secondFlipped)
+                if (evaluateCuts(path, layoutSize, withSplit.cuts, withSplit.flipped) != openCount) {
+                    continue
+                }
+                mergeSomewhere(path, layoutSize, withSplit, index, openCount)?.let { return it }
+            }
+        }
+        return null
+    }
+
+    /** Merges the shortest neighbouring pair that keeps the board valid. */
+    private fun mergeSomewhere(
+        path: IntArray,
+        layoutSize: Int,
+        set: CutSet,
+        splitIndex: Int,
+        openCount: Int,
+    ): CutSet? {
+        val cuts = set.cuts
+        // Removing cut k joins arrows k and k + 1. Never undo the split itself.
+        val merges = (0 until cuts.lastIndex)
+            .filter { it != splitIndex }
+            .map { k ->
+                val pairStart = if (k == 0) 0 else cuts[k - 1] + 1
+                k to (cuts[k + 1] - pairStart + 1)
+            }
+            .filter { (_, length) -> length <= MAX_MERGE_FOR_CAP }
+            .sortedBy { (_, length) -> length }
+            .take(MAX_MERGE_TRIES)
+        for ((k, _) in merges) {
+            for (mergedFlipped in BOOLEANS) {
+                val candidate = mergeAt(set, k, mergedFlipped)
+                if (evaluateCuts(path, layoutSize, candidate.cuts, candidate.flipped) == openCount) {
+                    return candidate
+                }
+            }
+        }
+        return null
+    }
+
+    private fun splitAt(
+        set: CutSet,
+        index: Int,
+        split: Int,
+        firstFlipped: Boolean,
+        secondFlipped: Boolean,
+    ): CutSet {
+        val size = set.cuts.size + 1
+        val cuts = IntArray(size)
+        val flipped = BooleanArray(size)
+        for (i in 0 until size) {
+            when {
+                i < index -> {
+                    cuts[i] = set.cuts[i]
+                    flipped[i] = set.flipped[i]
+                }
+                i == index -> {
+                    cuts[i] = split
+                    flipped[i] = firstFlipped
+                }
+                i == index + 1 -> {
+                    cuts[i] = set.cuts[index]
+                    flipped[i] = secondFlipped
+                }
+                else -> {
+                    cuts[i] = set.cuts[i - 1]
+                    flipped[i] = set.flipped[i - 1]
+                }
+            }
+        }
+        return CutSet(cuts, flipped)
+    }
+
+    private fun mergeAt(set: CutSet, k: Int, mergedFlipped: Boolean): CutSet {
+        val size = set.cuts.size - 1
+        val cuts = IntArray(size)
+        val flipped = BooleanArray(size)
+        for (i in 0 until size) {
+            when {
+                i < k -> {
+                    cuts[i] = set.cuts[i]
+                    flipped[i] = set.flipped[i]
+                }
+                i == k -> {
+                    cuts[i] = set.cuts[k + 1]
+                    flipped[i] = mergedFlipped
+                }
+                else -> {
+                    cuts[i] = set.cuts[i + 1]
+                    flipped[i] = set.flipped[i + 1]
+                }
+            }
+        }
+        return CutSet(cuts, flipped)
+    }
+
+    /** Arrow index per cell. Assumes a valid cut set. */
+    private fun ownerOf(path: IntArray, cuts: IntArray): IntArray {
+        val owner = IntArray(path.size)
+        var start = 0
+        for (a in cuts.indices) {
+            for (i in start..cuts[a]) owner[path[i]] = a
+            start = cuts[a] + 1
+        }
+        return owner
+    }
+
+    /**
+     * Walks the cells on the forward ray of arrow [a], nearest first, until
+     * [visit] returns false or the ray leaves the board.
+     */
+    private inline fun forEachRayCell(
+        path: IntArray,
+        layoutSize: Int,
+        cuts: IntArray,
+        flipped: BooleanArray,
+        a: Int,
+        visit: (Int) -> Boolean,
+    ) {
+        val start = if (a == 0) 0 else cuts[a - 1] + 1
+        val head = if (flipped[a]) path[start] else path[cuts[a]]
+        val previous = if (flipped[a]) path[start + 1] else path[cuts[a] - 1]
+        val dx = head % layoutSize - previous % layoutSize
+        val dy = head / layoutSize - previous / layoutSize
+        var x = head % layoutSize + dx
+        var y = head / layoutSize + dy
+        while (x in 0 until layoutSize && y in 0 until layoutSize) {
+            if (!visit(y * layoutSize + x)) return
+            x += dx
+            y += dy
+        }
+    }
+
+    /**
+     * Open-arrow count of an acyclic cut set, or null if it is invalid or has a
+     * dependency cycle.
+     *
+     * Same rule as [BlockingGraph], but computed directly on the path with
+     * primitive arrays: no [Arrow] objects are built, so thousands of
+     * candidate cut sets can be checked per level.
+     */
+    private fun evaluateCuts(
+        path: IntArray,
+        layoutSize: Int,
+        cuts: IntArray,
+        flipped: BooleanArray,
+    ): Int? {
+        val arrowCount = cuts.size
+        var start = 0
+        for (a in 0 until arrowCount) {
+            if (cuts[a] - start + 1 < 2) return null
+            start = cuts[a] + 1
+        }
+        if (start != path.size) return null
+        val owner = ownerOf(path, cuts)
+
+        // Edge list "blocked -> blocker", stored as linked lists per blocker.
+        val pending = IntArray(arrowCount)
+        val firstEdge = IntArray(arrowCount) { -1 }
+        val edgeTarget = IntArray(arrowCount * layoutSize)
+        val edgeNext = IntArray(arrowCount * layoutSize)
+        val seen = IntArray(arrowCount) { -1 }
+        var edges = 0
+        for (a in 0 until arrowCount) {
+            forEachRayCell(path, layoutSize, cuts, flipped, a) { cell ->
+                val blocker = owner[cell]
+                if (blocker != a && seen[blocker] != a) {
+                    seen[blocker] = a
+                    pending[a] += 1
+                    edgeTarget[edges] = a
+                    edgeNext[edges] = firstEdge[blocker]
+                    firstEdge[blocker] = edges
+                    edges += 1
+                }
+                true
+            }
+        }
+
+        val queue = IntArray(arrowCount)
+        var tail = 0
+        for (a in 0 until arrowCount) if (pending[a] == 0) queue[tail++] = a
+        val open = tail
+        var headIndex = 0
+        while (headIndex < tail) {
+            var edge = firstEdge[queue[headIndex++]]
+            while (edge >= 0) {
+                val blocked = edgeTarget[edge]
+                pending[blocked] -= 1
+                if (pending[blocked] == 0) queue[tail++] = blocked
+                edge = edgeNext[edge]
+            }
+        }
+        return if (tail == arrowCount) open else null
+    }
+
     /**
      * Merges runs of very short, same-direction arrows into one longer arrow.
      * The arrow count is restored by splitting the longest remaining arrows at
@@ -577,13 +888,19 @@ class LevelGenerator(
         return isOutward(head, previous, direction, layoutSize)
     }
 
-    private fun buildArrows(path: IntArray, cuts: IntArray, layoutSize: Int): List<Arrow>? {
+    private fun buildArrows(
+        path: IntArray,
+        cuts: IntArray,
+        flipped: BooleanArray,
+        layoutSize: Int,
+    ): List<Arrow>? {
         val arrows = ArrayList<Arrow>(cuts.size)
         var start = 0
-        for (cut in cuts) {
+        for ((a, cut) in cuts.withIndex()) {
             if (cut < start || cut - start + 1 < 2) return null
             val route = ArrayList<GridPoint>(cut - start + 1)
-            for (index in start..cut) {
+            val indices = if (flipped[a]) cut downTo start else start..cut
+            for (index in indices) {
                 route += point(path[index], layoutSize)
             }
             val direction = ArrowDirection.between(

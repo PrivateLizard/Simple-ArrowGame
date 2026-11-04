@@ -83,9 +83,9 @@ object ArrowGeometry {
         level: GeneratedLevel,
         removedIds: Set<Int>,
     ): List<Arrow> {
-        val remaining = level.arrows.filter { it.id !in removedIds }
-        return remaining.filter { arrow ->
-            blockersFor(arrow, remaining, level.layoutSize).isEmpty()
+        val graph = level.blocking
+        return level.arrows.filterIndexed { index, arrow ->
+            arrow.id !in removedIds && graph.isFree(index, level.arrows, removedIds)
         }
     }
 
@@ -95,45 +95,20 @@ object ArrowGeometry {
         arrowId: Int,
     ): Boolean {
         if (arrowId in removedIds) return false
-        val arrow = level.arrowById(arrowId) ?: return false
-        val remaining = level.arrows.filter { it.id !in removedIds }
-        return blockersFor(arrow, remaining, level.layoutSize).isEmpty()
+        val index = level.arrows.indexOfFirst { it.id == arrowId }
+        if (index < 0) return false
+        return level.blocking.isFree(index, level.arrows, removedIds)
     }
 
-    fun hasCycle(arrows: List<Arrow>, boardSize: Int): Boolean {
-        val colors = IntArray(arrows.size)
-        val byId = arrows.associateBy { it.id }
+    fun hasCycle(arrows: List<Arrow>, boardSize: Int): Boolean =
+        !BlockingGraph(arrows, boardSize).isAcyclic()
 
-        fun visit(arrow: Arrow): Boolean {
-            val index = arrows.indexOfFirst { it.id == arrow.id }
-            if (index < 0) return false
-            if (colors[index] == 1) return true
-            if (colors[index] == 2) return false
-            colors[index] = 1
-            val blockers = blockersFor(arrow, arrows, boardSize)
-            for (blocker in blockers) {
-                val blockerArrow = byId[blocker.id] ?: continue
-                if (visit(blockerArrow)) return true
-            }
-            colors[index] = 2
-            return false
-        }
-
-        for (arrow in arrows) {
-            if (visit(arrow)) return true
-        }
-        return false
-    }
-
-    fun canClearAll(level: GeneratedLevel): Boolean {
-        val removed = mutableSetOf<Int>()
-        while (removed.size < level.arrowCount) {
-            val available = availableArrows(level, removed)
-            if (available.isEmpty()) return false
-            removed += available.first().id
-        }
-        return true
-    }
+    /**
+     * Removing an arrow never blocks another one, so the board can be cleared
+     * in some order exactly when the blocking graph has no cycle. The check is
+     * therefore a proof, not a heuristic: any order of open taps finishes.
+     */
+    fun canClearAll(level: GeneratedLevel): Boolean = level.blocking.isAcyclic()
 
     fun isCardinal(direction: ArrowDirection): Boolean =
         direction.dx == 0 || direction.dy == 0

@@ -29,7 +29,8 @@ page for the signed APK.
 - Optional periodic hint (an open arrow briefly wiggles)
 - Light and dark themes; sound and haptics
 - Language selector with automatic device-language detection
-  (English/German complete, more languages with English fallback)
+  (English, German, French, Spanish, Italian, Portuguese, Russian, Chinese,
+  Japanese)
 - No internet permission, no ads, no tracking, no third-party runtime libraries
 
 ## How levels are generated
@@ -46,12 +47,22 @@ looks the same on every device.
 3. Runs of very short, same-direction arrows are merged into one longer arrow.
    The arrow count is kept stable by splitting the longest remaining arrows at
    safe (forward-facing) cut points.
-4. Before a level is shown, the generator validates:
+4. About 40% of the blocked arrows are reversed, so parallel rows do not all
+   point the same way.
+5. Arrows longer than 80 cells are split where the real blocking graph stays
+   acyclic and the open count is unchanged (a soft cap: where no safe split
+   exists, an arrow stays longer). A merge elsewhere keeps the arrow count.
+6. Before a level is shown, the generator validates:
    - no overlapping or self-intersecting arrow strokes
    - every arrow has a valid cardinal direction
    - no dependency cycle
    - the requested number of open arrows
-   - the board is fully clearable
+   - the board is fully clearable (removing an arrow never blocks another, so
+     an acyclic board can always be cleared, in any order of open taps)
+
+The blocking relation is computed once per board with a per-cell index, so a
+level of 240 arrows on a 72x72 lattice generates in a few tens of milliseconds
+on a desktop JVM.
 
 If a random layout cannot be cut safely, the generator falls back to a plain
 serpentine path for that level. The fallback is correct, just less irregular.

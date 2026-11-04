@@ -41,7 +41,7 @@ object PathValidator {
             }
         }
 
-        if (ArrowGeometry.hasCycle(arrows, level.layoutSize)) return "dependency cycle"
+        if (!level.blocking.isAcyclic()) return "dependency cycle"
         if (ArrowGeometry.availableArrows(level, emptySet()).isEmpty()) return "no open arrow"
         if (!ArrowGeometry.canClearAll(level)) return "board cannot be cleared"
         return null

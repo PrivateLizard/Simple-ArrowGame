@@ -123,6 +123,25 @@ class LevelGeneratorTest {
     }
 
     @Test
+    fun blockingGraphMatchesTheReferenceRayCheck() {
+        for (levelId in listOf(1, 70, 100, 500, 2000)) {
+            val level = generator.generate(
+                LevelCatalog.defaultConfig(levelId, maxFailures = 5),
+                seed = 1_000_003L * levelId,
+            )
+            level.arrows.forEachIndexed { index, arrow ->
+                val reference = ArrowGeometry.blockersFor(arrow, level.arrows, level.layoutSize)
+                    .map { blocker -> level.arrows.indexOf(blocker) }
+                assertEquals(
+                    "Level $levelId arrow ${arrow.id} blockers",
+                    reference,
+                    level.blocking.blockers[index].toList(),
+                )
+            }
+        }
+    }
+
+    @Test
     fun clearingArrowsRevealsNewOpenArrows() {
         val config = LevelConfig(0, 5 to 5, 20, 5, null, ComplexityLevel.MEDIUM)
         val level = generator.generate(config, seed = 88L)
@@ -150,7 +169,9 @@ class LevelGeneratorTest {
 
     @Test
     fun arrowsDoNotGrowIntoHugeBlobs() {
-        for (levelId in listOf(60, 100, 500, 2000)) {
+        // Soft cap of 80 cells; a few arrows may stay longer where no safe split
+        // exists, but the 945-cell monsters from generator version 1 are gone.
+        for (levelId in listOf(60, 100, 500, 1250, 1750, 2000)) {
             val level = generator.generate(
                 LevelCatalog.defaultConfig(levelId, maxFailures = 5),
                 seed = 1_000_003L * levelId,
@@ -158,7 +179,14 @@ class LevelGeneratorTest {
             val maxLength = level.arrows.maxOf { it.lengthCells }
             assertTrue(
                 "Level $levelId has a huge self-coiled arrow ($maxLength cells)",
-                maxLength <= 250,
+                maxLength <= 200,
+            )
+            val overCap = level.arrows.count { it.lengthCells > 80 }
+            assertTrue("Level $levelId has $overCap arrows over the soft cap", overCap <= 3)
+            assertEquals(
+                "Level $levelId must keep the expected arrow count",
+                LevelCatalog.expectedArrowCountForLevel(levelId),
+                level.arrowCount,
             )
         }
     }

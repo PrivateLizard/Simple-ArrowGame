@@ -3,6 +3,26 @@
 All notable changes to Simple Arrow Puzzle. `versionName` is `1.0`; the build
 number is the git commit count and is shown on the Settings screen.
 
+## Build 39 - 2026-11-04
+
+- **Much faster level generation:** the blocking check uses a per-cell index
+  instead of testing every arrow against every other one. Level 2000 now
+  generates in ~25 ms on a desktop JVM (was ~1.2 s) and opens in about a
+  second on the emulator (was 5-15 s). The speed-up alone produced
+  bit-identical boards; only the length cap below changes them.
+- **Soft arrow length cap (80 cells):** very long, self-coiled arrows are split
+  wherever the board stays acyclic and the open-arrow count is unchanged; a
+  merge of two short neighbours keeps the arrow count (and the score maximum)
+  the same. Across all 2000 levels, arrows over 300 cells dropped from 584 to
+  42 and the longest arrow from 2067 to 839 cells.
+- Campaign boards therefore look different from earlier builds. Scores and
+  progress are kept; an unfinished level saved by an older build is discarded
+  instead of being resumed on a board whose arrows no longer match.
+- French, Spanish, Italian, Portuguese, Russian, Chinese and Japanese are now
+  complete. A unit test checks every table for missing keys and placeholders.
+- Cleanup: unused resources and translation keys removed; backup / device
+  transfer explicitly disabled. Lint: 0 warnings (was 70).
+
 ## Build 35 - 2026-11-04
 
 - Merge runs of at least 3 very short (<= 8 cells) same-direction arrows into

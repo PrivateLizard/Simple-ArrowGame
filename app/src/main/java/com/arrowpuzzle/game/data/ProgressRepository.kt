@@ -3,6 +3,7 @@ package com.arrowpuzzle.game.data
 import android.content.Context
 import com.arrowpuzzle.game.data.model.ComplexityLevel
 import com.arrowpuzzle.game.data.model.LevelConfig
+import com.arrowpuzzle.game.game.LevelGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,6 +64,7 @@ class ProgressRepository(context: Context) {
         synchronized(lock) {
             preferences.edit()
                 .putInt(KEY_LEVEL_ID, game.config.levelId)
+                .putInt(KEY_GENERATOR_VERSION, LevelGenerator.VERSION)
                 .putInt(KEY_GRID_WIDTH, game.config.gridWidth)
                 .putInt(KEY_GRID_HEIGHT, game.config.gridHeight)
                 .putInt(KEY_ARROWS, game.config.arrowCount)
@@ -84,6 +86,7 @@ class ProgressRepository(context: Context) {
         synchronized(lock) {
             preferences.edit()
                 .remove(KEY_LEVEL_ID)
+                .remove(KEY_GENERATOR_VERSION)
                 .remove(KEY_GRID_WIDTH)
                 .remove(KEY_GRID_HEIGHT)
                 .remove(KEY_ARROWS)
@@ -104,6 +107,12 @@ class ProgressRepository(context: Context) {
     private fun load(): SavedGame? {
         val levelId = preferences.getInt(KEY_LEVEL_ID, Int.MIN_VALUE)
         if (levelId == Int.MIN_VALUE || levelId <= 0) return null
+        // A board from another generator version has different arrow ids; the
+        // removed ids would point at the wrong arrows. Drop it instead.
+        if (preferences.getInt(KEY_GENERATOR_VERSION, 1) != LevelGenerator.VERSION) {
+            preferences.edit().clear().apply()
+            return null
+        }
         val complexity = runCatching {
             ComplexityLevel.valueOf(preferences.getString(KEY_COMPLEXITY, "") ?: "")
         }.getOrDefault(ComplexityLevel.MEDIUM)
@@ -136,6 +145,7 @@ class ProgressRepository(context: Context) {
         const val SEPARATOR = ","
 
         const val KEY_LEVEL_ID = "level_id"
+        const val KEY_GENERATOR_VERSION = "generator_version"
         const val KEY_GRID_WIDTH = "grid_width"
         const val KEY_GRID_HEIGHT = "grid_height"
         const val KEY_ARROWS = "arrows"
