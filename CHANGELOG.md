@@ -1,12 +1,14 @@
 # Changelog
 
-All notable changes to Simple Arrow Puzzle. Up to build 39 `versionName` was
-`1.0`; from build 40 it is `1.0.1`. The build
+All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
+`1.0.1` for build 40 and is `1.1.0` from build 41. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.1.0 (Build 41) - 2026-11-05
 
+- The resume button on the main menu always stays on one line.
+- Clearer pencil, feather and envelope shapes.
 - **3000 levels:** the difficulty curve is stretched, so level 3000 is as hard
   as level 2000 was. Nearly all campaign boards look different; progress and
   scores are kept, an unfinished level from an older build is discarded. Best

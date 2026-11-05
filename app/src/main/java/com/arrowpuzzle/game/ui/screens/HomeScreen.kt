@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.TextStyle
 import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Switch
@@ -154,7 +155,7 @@ fun HomeScreen(
                                 contentColor = AppSecondary,
                             ),
                         ) {
-                            Text(
+                            OneLineFitText(
                                 text = if (resumeRemaining != null) {
                                     s.f(
                                         "resume",
@@ -167,8 +168,9 @@ fun HomeScreen(
                                         resumeLevel.toString().padStart(2, '0'),
                                     )
                                 },
-                                style = MaterialTheme.typography.titleMedium,
-                                letterSpacing = 0.8.sp,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    letterSpacing = 0.8.sp,
+                                ),
                             )
                         }
                         Spacer(Modifier.height(12.dp))
@@ -316,6 +318,35 @@ private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
             maxLines = 1,
             softWrap = false,
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** One centred line; the font only shrinks when the text would not fit. */
+@Composable
+private fun OneLineFitText(text: String, style: TextStyle) {
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        val available = constraints.maxWidth
+        val needed = remember(text, style) {
+            measurer.measure(text = text, style = style, maxLines = 1, softWrap = false).size.width
+        }
+        val scale = if (needed > available && available > 0) {
+            available * 0.98f / needed
+        } else {
+            1f
+        }
+        Text(
+            text = text,
+            style = style.copy(
+                fontSize = style.fontSize * scale,
+                letterSpacing = style.letterSpacing * scale,
+            ),
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }

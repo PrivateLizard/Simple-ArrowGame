@@ -412,7 +412,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
         "leaf",
         Regions.union(
             Regions.intersect(Regions.circle(0.32, 0.68, 0.56), Regions.circle(0.68, 0.32, 0.56)),
-            Regions.bar(0.17, 0.83, 0.22, 0.07, -45.0),
+            Regions.bar(0.84, 0.84, 0.3, 0.12, 45.0),
         ),
     ),
     CACTUS(

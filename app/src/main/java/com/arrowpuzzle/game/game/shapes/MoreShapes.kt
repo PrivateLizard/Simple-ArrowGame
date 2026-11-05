@@ -69,7 +69,7 @@ internal object MoreShapes {
 
     fun sunflower(): ShapeRegion = Regions.minus(Regions.union(Regions.star(0.5, 0.38, 0.38, 0.24, tips = 12), Regions.rect(0.46, 0.7, 0.54, 0.97), Regions.ellipse(0.66, 0.84, 0.13, 0.06)), Regions.circle(0.5, 0.38, 0.1))
 
-    fun feather(): ShapeRegion = Regions.minus(Regions.union(Regions.intersect(Regions.circle(0.18, 0.72, 0.62), Regions.circle(0.72, 0.18, 0.62)), Regions.bar(0.14, 0.86, 0.4, 0.09, -45.0)), Regions.polygon(0.96, 0.36, 0.72, 0.44, 0.98, 0.5))
+    fun feather(): ShapeRegion = Regions.minus(Regions.union(Regions.intersect(Regions.circle(0.18, 0.72, 0.62), Regions.circle(0.72, 0.18, 0.62)), Regions.bar(0.84, 0.84, 0.36, 0.12, 45.0)), Regions.union(Regions.polygon(0.48, 0.42, 0.66, 0.16, 0.84, 0.34), Regions.polygon(0.56, 0.62, 0.2, 0.6, 0.36, 0.8)))
 
     fun seashell(): ShapeRegion = Regions.minus(Regions.union(Regions.intersect(Regions.circle(0.5, 0.9, 0.8), Regions.polygon(0.5, 0.9, -0.1, 0.35, 0.1, 0.0, 0.9, 0.0, 1.1, 0.35)), Regions.rect(0.36, 0.82, 0.64, 0.95)), Regions.union(Regions.polygon(0.3, 0.02, 0.38, 0.02, 0.35, 0.22), Regions.polygon(0.62, 0.02, 0.7, 0.02, 0.65, 0.22)))
 
@@ -163,11 +163,11 @@ internal object MoreShapes {
 
     fun sword(): ShapeRegion = Regions.union(Regions.polygon(0.5, 0.02, 0.58, 0.14, 0.58, 0.7, 0.42, 0.7, 0.42, 0.14), Regions.rect(0.26, 0.68, 0.74, 0.76), Regions.rect(0.44, 0.76, 0.56, 0.92), Regions.circle(0.5, 0.93, 0.06))
 
-    fun pencil(): ShapeRegion = Regions.union(Regions.bar(0.42, 0.58, 0.74, 0.26, -45.0), Regions.polygon(0.78, 0.4, 0.6, 0.22, 0.92, 0.08))
+    fun pencil(): ShapeRegion = Regions.union(Regions.rect(0.32, 0.04, 0.68, 0.17), Regions.rect(0.39, 0.17, 0.61, 0.23), Regions.rect(0.32, 0.23, 0.68, 0.72), Regions.polygon(0.32, 0.72, 0.68, 0.72, 0.5, 0.98))
 
     fun book(): ShapeRegion = Regions.minus(Regions.rect(0.14, 0.06, 0.88, 0.94), Regions.union(Regions.rect(0.36, 0.2, 0.74, 0.36), Regions.rect(0.22, 0.12, 0.27, 0.88)))
 
-    fun envelope(): ShapeRegion = Regions.minus(Regions.rect(0.04, 0.18, 0.96, 0.82), Regions.polygon(0.1, 0.16, 0.9, 0.16, 0.5, 0.48))
+    fun envelope(): ShapeRegion = Regions.minus(Regions.rect(0.04, 0.18, 0.96, 0.82), Regions.union(Regions.bar(0.31, 0.39, 0.5, 0.07, 38.0), Regions.bar(0.69, 0.39, 0.5, 0.07, -38.0)))
 
     fun clock(): ShapeRegion = Regions.minus(Regions.circle(0.5, 0.5, 0.46), Regions.union(Regions.rect(0.46, 0.2, 0.54, 0.54), Regions.rect(0.46, 0.46, 0.74, 0.54)))
 
