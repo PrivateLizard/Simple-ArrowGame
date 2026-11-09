@@ -28,6 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.arrowpuzzle.game.ui.theme.AppBoardLine
+import com.arrowpuzzle.game.ui.components.drawPolylineArrow
+import com.arrowpuzzle.game.ui.components.arrowHeadLength
+import com.arrowpuzzle.game.ui.components.arrowHeadHalfWidth
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -234,45 +241,57 @@ fun HomeScreen(
     }
 }
 
+/** Title arrow, in units of the font size (Roboto capitals are 0.711 high). */
+private const val CAP_HEIGHT = 0.711f
+private const val TITLE_LINE = 0.06f
+private const val TITLE_GAP = 0.2f
+
 /**
- * Measures the title once and scales the font so it runs edge to edge across
- * the available width. Compose has no auto-size text, so the size is derived
- * from the measured width at a fixed base size.
+ * Two-line title wrapped by one game arrow: it starts above "SIMPLE" on the
+ * left, runs right over it, turns down behind it, runs left between the two
+ * lines, turns down in front of "ARROW", underlines "ARROW PUZZLE" and ends
+ * with its head behind "PUZZLE". 90° bends like the arrows on the board.
+ *
+ * Compose has no auto-size text, so the font size comes from the second line
+ * measured at a fixed size, scaled to fill the width left beside the arrow.
  */
 @Composable
 private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
     val s = LocalStrings.current
     val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
     val baseStyle = MaterialTheme.typography.headlineLarge.copy(
         fontWeight = FontWeight.Black,
         letterSpacing = 0.sp,
     )
-    // Two lines: "SIMPLE" on its own, "ARROW PUZZLE" right below. The second,
-    // longer line sets the size so it runs edge to edge.
     val firstLine = s.t("title_simple").trim()
     val secondLine = s.t("title_arrow").trim()
-    val baseSize = 40f
+    val baseSize = 40.sp
     val measured = measurer.measure(
         text = secondLine,
-        style = baseStyle.copy(fontSize = baseSize.sp),
+        style = baseStyle.copy(fontSize = baseSize),
         maxLines = 1,
         softWrap = false,
     )
+    val arrowColor = AppBoardLine
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+
     BoxWithConstraints(modifier = modifier) {
-        val targetWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
-        val measuredWidth = measured.size.width.toFloat()
-        val scale = if (measuredWidth > 0f && targetWidthPx > 0f) {
-            targetWidthPx / measuredWidth
-        } else {
-            1f
-        }
-        val fontSize = (baseSize * scale).sp
-        // One text with two lines: only then does the line height set the
-        // distance between them. A bit below the font size, so they sit close
-        // together like one word mark (capitals only, no descenders).
-        val lineStyle = baseStyle.copy(
+        val widthPx = with(density) { maxWidth.toPx() }
+        val basePx = with(density) { baseSize.toPx() }
+        val textPerFont = measured.size.width / basePx
+        // Room for the arrow, in units of the font size: left of the text the
+        // vertical line, right of it the gap and the head.
+        val headLength = arrowHeadLength(TITLE_LINE)
+        val leftRoom = TITLE_GAP + TITLE_LINE
+        val rightRoom = TITLE_GAP + headLength + TITLE_LINE
+        val fontPx = (widthPx / (textPerFont + leftRoom + rightRoom)).coerceAtLeast(1f)
+        val fontSize = with(density) { fontPx.toSp() }
+        val style = baseStyle.copy(
             fontSize = fontSize,
-            lineHeight = fontSize * 0.84f,
+            // Enough space between the lines for the arrow to run through.
+            // Caps (0.711) plus the gap above and below the arrow line.
+            lineHeight = fontSize * (CAP_HEIGHT + 2 * TITLE_GAP + TITLE_LINE + 0.01f),
             lineHeightStyle = LineHeightStyle(
                 alignment = LineHeightStyle.Alignment.Center,
                 trim = LineHeightStyle.Trim.Both,
@@ -283,12 +302,52 @@ private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
             append('\n')
             withStyle(SpanStyle(color = AppPrimary)) { append(secondLine) }
         }
-        Column(modifier = Modifier.fillMaxWidth()) {
+        val padStart = with(density) { (fontPx * leftRoom).toDp() }
+        val padTop = with(density) { (fontPx * (TITLE_GAP + TITLE_LINE)).toDp() }
+        val padBottom = with(density) {
+            (fontPx * (TITLE_GAP + arrowHeadHalfWidth(TITLE_LINE))).toDp()
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    val text = layout ?: return@drawBehind
+                    if (text.lineCount < 2) return@drawBehind
+                    val x0 = padStart.toPx()
+                    val y0 = padTop.toPx()
+                    val line = fontPx * TITLE_LINE
+                    val gap = fontPx * TITLE_GAP
+                    val cap = fontPx * CAP_HEIGHT
+                    val base0 = y0 + text.firstBaseline
+                    val base1 = y0 + text.lastBaseline
+                    val left = x0 + text.getLineLeft(0)
+                    val right0 = x0 + text.getLineRight(0)
+                    val left1 = x0 + text.getLineLeft(1)
+                    val right1 = x0 + text.getLineRight(1)
+                    val over = base0 - cap - gap
+                    val between = (base0 + base1 - cap) / 2f
+                    val under = base1 + gap
+                    drawPolylineArrow(
+                        points = listOf(
+                            Offset(left, over),
+                            Offset(right0 + gap, over),
+                            Offset(right0 + gap, between),
+                            Offset(left1 - gap, between),
+                            Offset(left1 - gap, under),
+                            Offset(right1 + gap + arrowHeadLength(line), under),
+                        ),
+                        line = line,
+                        color = arrowColor,
+                    )
+                },
+        ) {
             Text(
                 text = title,
-                style = lineStyle,
+                style = style,
                 maxLines = 2,
                 softWrap = false,
+                onTextLayout = { layout = it },
+                modifier = Modifier.padding(start = padStart, top = padTop, bottom = padBottom),
             )
         }
     }

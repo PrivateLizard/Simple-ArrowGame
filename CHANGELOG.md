@@ -13,7 +13,10 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 - Switches are arrows: short and grey when off, longer and in the accent
   colour when on. Sliders and the in-game progress bar are game arrows over a
   row of dots.
-- Home: two-line title, labels centred above the numbers, progress shows only
+- Home: the two-line title is wrapped by one game arrow (over "SIMPLE",
+  between the lines, under "ARROW PUZZLE", head behind it).
+- A released arrow turns green while it flies off the board.
+- Home: labels centred above the numbers, progress shows only
   the current level, "Continue" looks like "Play" and shows no level info.
 - Custom Mode: the time limit is now seconds per arrow (off, 3, 5, 10, 20 s),
   worked out from the real arrow count of the board. Explanation texts removed.

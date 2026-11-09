@@ -19,7 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
@@ -51,6 +53,50 @@ internal fun DrawScope.drawStraightArrow(tail: Offset, tip: Offset, line: Float,
     if ((shaftEnd - tail).getDistance() > 0f && length > headLength * 0.55f) {
         drawLine(color, tail, shaftEnd, strokeWidth = line, cap = StrokeCap.Round)
     }
+    val head = Path().apply {
+        moveTo(tip.x, tip.y)
+        val a = headBase + perpendicular * headHalfWidth
+        val b = headBase - perpendicular * headHalfWidth
+        lineTo(a.x, a.y)
+        lineTo(b.x, b.y)
+        close()
+    }
+    drawPath(head, color)
+}
+
+/** Head length of a game arrow drawn with a line of width [line]. */
+fun arrowHeadLength(line: Float): Float = line * HEAD_LENGTH_PER_LINE
+
+/** Half the width of a game arrow's head for a line of width [line]. */
+fun arrowHeadHalfWidth(line: Float): Float = line * HEAD_HALF_WIDTH_PER_LINE
+
+/**
+ * A game arrow along [points] (90° bends like on the board): round-capped,
+ * round-joined shaft and a solid head at the last point.
+ */
+fun DrawScope.drawPolylineArrow(points: List<Offset>, line: Float, color: Color) {
+    if (points.size < 2) return
+    val tip = points.last()
+    val before = points[points.lastIndex - 1]
+    val delta = tip - before
+    val length = delta.getDistance()
+    if (length <= 0.001f) return
+    val direction = delta / length
+    val perpendicular = Offset(-direction.y, direction.x)
+    val headLength = arrowHeadLength(line)
+    val headHalfWidth = arrowHeadHalfWidth(line)
+    val headBase = tip - direction * headLength
+    val shaftEnd = tip - direction * (headLength * 0.55f)
+    val shaft = Path().apply {
+        moveTo(points[0].x, points[0].y)
+        for (index in 1 until points.lastIndex) lineTo(points[index].x, points[index].y)
+        lineTo(shaftEnd.x, shaftEnd.y)
+    }
+    drawPath(
+        path = shaft,
+        color = color,
+        style = Stroke(width = line, cap = StrokeCap.Round, join = StrokeJoin.Round),
+    )
     val head = Path().apply {
         moveTo(tip.x, tip.y)
         val a = headBase + perpendicular * headHalfWidth

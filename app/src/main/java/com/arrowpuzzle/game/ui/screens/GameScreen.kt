@@ -688,14 +688,14 @@ private fun GameBoard(
                         spacing = geometry.spacing,
                     )
                     if (exitRoute != null && exitRoute.size >= 2) {
-                        // No highlight colour: the movement itself is the feedback.
-                        // Only a gentle fade at the very end so the arrow does not
-                        // pop out of existence.
+                        // A released arrow turns green (the theme's "selected"
+                        // colour) as soon as it starts moving, with a gentle fade
+                        // at the very end so it does not pop out of existence.
                         drawPolylineArrow(
                             route = exitRoute,
                             spacing = geometry.spacing,
                             lineWidth = lineWidth,
-                            color = palette.boardLine.copy(
+                            color = palette.boardLineSelected.copy(
                                 alpha = exitFadeAlpha(exitValue),
                             ),
                         )
