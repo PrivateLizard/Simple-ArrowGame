@@ -1,11 +1,11 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42 and is `1.2.1` from build 43. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43 and is `1.2.2` from build 44. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.2.2 (Build 44) - 2026-11-09
 
 - Level select: levels not yet cleared show a greyed-out 0 and their maximum
   underneath, like cleared levels.

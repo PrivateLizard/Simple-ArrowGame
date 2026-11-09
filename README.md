@@ -122,7 +122,7 @@ itself is fully offline.
 `versionCode` is set in `app/build.gradle.kts` and shown as the build number
 on the Settings screen. Increase it by one for every release; app stores reject
 an update whose `versionCode` is not higher than the installed one. (Up to
-build 39 it was derived from the git commit count.) `versionName` is `1.2.1`.
+build 39 it was derived from the git commit count.) `versionName` is `1.2.2`.
 
 ## Privacy
 
