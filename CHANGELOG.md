@@ -5,6 +5,11 @@ All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- In-level clock counts the time-bonus window (7 s per arrow) down; once the
+  bonus is lost it keeps counting below zero (-00:01, -00:02, ...).
+
 ## 1.2.4 (Build 46) - 2026-11-09
 
 - **New bonus rules:** clearing a level within 7 seconds per arrow adds 10 %

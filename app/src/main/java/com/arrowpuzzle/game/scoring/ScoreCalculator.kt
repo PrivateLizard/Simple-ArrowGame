@@ -26,6 +26,9 @@ object ScoreCalculator {
     const val TIME_BONUS_RATIO = 0.10
     const val COMBO_BONUS_RATIO = 0.20
 
+    /** Seconds within which a level must be cleared to earn the time bonus. */
+    fun timeWindowSeconds(arrowCount: Int): Int = max(0, arrowCount) * TIME_WINDOW_SECONDS_PER_ARROW
+
     fun calculate(
         arrowCount: Int,
         timeElapsedSeconds: Double,
@@ -33,7 +36,7 @@ object ScoreCalculator {
     ): ScoreBreakdown {
         val base = arrowCount * POINTS_PER_ARROW
         val elapsedWhole = floor(max(0.0, timeElapsedSeconds)).toInt()
-        val timeWindow = max(0, arrowCount) * TIME_WINDOW_SECONDS_PER_ARROW
+        val timeWindow = timeWindowSeconds(arrowCount)
         val timeBonus = if (elapsedWhole < timeWindow) (base * TIME_BONUS_RATIO).roundToInt() else 0
         val combo = if (failures == 0) (base * COMBO_BONUS_RATIO).roundToInt() else 0
         return ScoreBreakdown(

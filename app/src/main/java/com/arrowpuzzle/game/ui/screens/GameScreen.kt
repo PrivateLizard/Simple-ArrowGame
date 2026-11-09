@@ -78,6 +78,7 @@ import com.arrowpuzzle.game.game.GameResult
 import com.arrowpuzzle.game.game.GameState
 import com.arrowpuzzle.game.game.GeneratedLevel
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.scoring.ScoreCalculator
 import com.arrowpuzzle.game.ui.components.ArrowButton
 import com.arrowpuzzle.game.ui.components.ArrowProgress
 import com.arrowpuzzle.game.ui.components.ScreenBackground
@@ -260,7 +261,11 @@ private fun PlayingContent(
                     tint = AppText,
                     modifier = Modifier.weight(1f),
                 )
-                TimePill(elapsed = elapsed, modifier = Modifier.weight(1f))
+                TimePill(
+                    elapsed = elapsed,
+                    windowSeconds = ScoreCalculator.timeWindowSeconds(level.arrowCount),
+                    modifier = Modifier.weight(1f),
+                )
             }
 
             Spacer(Modifier.height(12.dp))
@@ -285,10 +290,17 @@ private fun PlayingContent(
  * actually changes.
  */
 @Composable
-private fun TimePill(elapsed: StateFlow<Double>, modifier: Modifier = Modifier) {
+private fun TimePill(
+    elapsed: StateFlow<Double>,
+    windowSeconds: Int,
+    modifier: Modifier = Modifier,
+) {
     val s = LocalStrings.current
     val seconds by elapsed.collectAsState()
-    val text by remember { derivedStateOf { GridUtils.formatTime(seconds) } }
+    // Counts the time-bonus window down, then below zero once it is lost.
+    val text by remember(windowSeconds) {
+        derivedStateOf { GridUtils.formatBonusClock(seconds, windowSeconds) }
+    }
     StatPill(label = s.t("time"), value = text, tint = AppText, modifier = modifier)
 }
 
