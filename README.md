@@ -12,7 +12,8 @@ page for the signed APK.
 - Tap an open arrow to remove it; tapping a blocked arrow counts as a failure.
 - Every arrow must be removed to complete a level.
 - Several arrows can be open at once, so a level never locks up.
-- Optional failure limits and time limits end a run.
+- Optional failure limits and time limits end a run (in Custom Mode the time
+  limit is a number of seconds per arrow).
 - Pinch to zoom (0.45x - 5x), drag to pan.
 
 ## Features
@@ -24,7 +25,9 @@ page for the signed APK.
 - Late levels carry more, shorter arrows (160 at level 750, 240 at the end)
 - Dense, fully covered arrow fields with no crossing or overlapping strokes
 - Short and long, heavily bent arrows
-- Removed arrows unspool head-first along their path
+- Removed arrows turn green and unspool head-first along their path
+- Menus drawn in the same style: frames, buttons, switches and sliders are
+  game arrows
 - Deterministic campaign boards, generated and validated on-device
 - Resume an unfinished level from the main menu
 - Optional periodic hint (an open arrow briefly wiggles)
@@ -119,7 +122,7 @@ itself is fully offline.
 `versionCode` is set in `app/build.gradle.kts` and shown as the build number
 on the Settings screen. Increase it by one for every release; app stores reject
 an update whose `versionCode` is not higher than the installed one. (Up to
-build 39 it was derived from the git commit count.) `versionName` is `1.1.0`.
+build 39 it was derived from the git commit count.) `versionName` is `1.2.0`.
 
 ## Privacy
 

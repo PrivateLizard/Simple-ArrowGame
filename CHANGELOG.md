@@ -1,11 +1,11 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40 and is `1.1.0` from build 41. The build
+`1.0.1` for build 40, `1.1.0` for build 41 and is `1.2.0` from build 42. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.2.0 (Build 42) - 2026-11-09
 
 - **Arrow look for all menus:** cards, buttons, option chips, level tiles and
   the in-game stat boxes are framed by one closed game arrow (90° corners,
