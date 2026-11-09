@@ -38,7 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -261,9 +260,9 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 maxLines = 1,
             )
             // Every tile has the same three lines, so the grid looks even.
-            // Not yet cleared: the possible points stand there greyed out.
+            // Not yet cleared: a greyed-out 0 above the possible points.
             Text(
-                text = s.number(if (completed) level.bestScore else level.maxScore),
+                text = s.number(if (completed) level.bestScore else 0),
                 style = numberStyle,
                 color = when {
                     completed -> AppPrimary
@@ -276,9 +275,8 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
             Text(
                 text = "/ " + s.number(level.maxScore),
                 fontSize = 9.sp,
-                // Only meaningful next to a score; kept invisible otherwise so
-                // every tile keeps the same height.
-                color = if (completed) AppTextMuted.copy(alpha = 0.6f) else Color.Transparent,
+                // Same look on every tile; locked tiles stay dimmed.
+                color = if (unlocked) AppTextMuted.copy(alpha = 0.6f) else AppTextMuted.copy(alpha = 0.35f),
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
