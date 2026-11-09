@@ -5,6 +5,15 @@ All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- New launcher icon in the in-game colours (board, grid dots, white and green
+  arrows); adaptive on Android 8+, so it fills the launcher's shape.
+- Home: progress counts cleared levels; the points/progress card is hidden
+  until the first level is cleared.
+- Level select: levels not yet cleared show their possible points greyed out,
+  so every tile has the same layout.
+
 ## 1.2.0 (Build 42) - 2026-11-09
 
 - **Arrow look for all menus:** cards, buttons, option chips, level tiles and

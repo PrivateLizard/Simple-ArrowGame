@@ -38,8 +38,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -260,23 +260,28 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
-            // Locked tiles show only the dimmed number; no "locked" label.
-            if (completed) {
-                Text(
-                    text = s.number(level.bestScore),
-                    style = numberStyle,
-                    color = AppPrimary,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-                Text(
-                    text = "/ " + s.number(level.maxScore),
-                    fontSize = 9.sp,
-                    color = AppTextMuted.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-            }
+            // Every tile has the same three lines, so the grid looks even.
+            // Not yet cleared: the possible points stand there greyed out.
+            Text(
+                text = s.number(if (completed) level.bestScore else level.maxScore),
+                style = numberStyle,
+                color = when {
+                    completed -> AppPrimary
+                    unlocked -> AppTextMuted.copy(alpha = 0.45f)
+                    else -> AppTextMuted.copy(alpha = 0.25f)
+                },
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = "/ " + s.number(level.maxScore),
+                fontSize = 9.sp,
+                // Only meaningful next to a score; kept invisible otherwise so
+                // every tile keeps the same height.
+                color = if (completed) AppTextMuted.copy(alpha = 0.6f) else Color.Transparent,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
         }
     }
 }

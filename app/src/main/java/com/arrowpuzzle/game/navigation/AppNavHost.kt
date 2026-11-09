@@ -49,11 +49,13 @@ fun AppNavHost(container: AppContainer) {
             )
             val campaignScore by viewModel.campaignScoreTotal.collectAsState()
             val highestUnlocked by viewModel.highestUnlocked.collectAsState()
+            val completedLevels by viewModel.completedLevels.collectAsState()
             val savedGame by viewModel.savedGame.collectAsState()
             val homeSettings by container.settingsRepository.settings.collectAsState()
 
             HomeScreen(
                 highScore = campaignScore,
+                completedLevels = completedLevels,
                 highestUnlocked = highestUnlocked.coerceAtMost(LevelCatalog.MAX_LEVEL),
                 resumeLevel = savedGame?.config?.levelId,
                 onResume = {

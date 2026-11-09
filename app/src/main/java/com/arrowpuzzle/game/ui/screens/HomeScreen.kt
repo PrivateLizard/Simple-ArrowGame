@@ -58,6 +58,9 @@ import com.arrowpuzzle.game.ui.theme.AppTextMuted
 @Composable
 fun HomeScreen(
     highScore: Int,
+    /** Campaign levels cleared at least once. */
+    completedLevels: Int,
+    /** Highest unlocked level; only the developer options use it. */
     highestUnlocked: Int,
     onPlay: () -> Unit,
     onCustom: () -> Unit,
@@ -100,28 +103,32 @@ fun HomeScreen(
 
                 Spacer(Modifier.height(verticalGap))
 
-                CenteredContent {
-                    SectionCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Bottom,
-                        ) {
-                            HomeStat(
-                                label = s.t("total_points"),
-                                value = s.number(highScore),
-                                modifier = Modifier.weight(1f),
-                            )
-                            HomeStat(
-                                label = s.t("progress"),
-                                // A level number, written like on the level tiles.
-                                value = highestUnlocked.toString(),
-                                modifier = Modifier.weight(1f),
-                            )
+                // Before the first cleared level there is nothing to show yet;
+                // the buttons then move up right below the title.
+                if (completedLevels > 0) {
+                    CenteredContent {
+                        SectionCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.Bottom,
+                            ) {
+                                HomeStat(
+                                    label = s.t("total_points"),
+                                    value = s.number(highScore),
+                                    modifier = Modifier.weight(1f),
+                                )
+                                HomeStat(
+                                    label = s.t("progress"),
+                                    // Cleared levels, written like a level number.
+                                    value = completedLevels.toString(),
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
                         }
                     }
-                }
 
-                Spacer(Modifier.height(verticalGap))
+                    Spacer(Modifier.height(verticalGap))
+                }
 
                 CenteredContent {
                     if (resumeLevel != null) {
