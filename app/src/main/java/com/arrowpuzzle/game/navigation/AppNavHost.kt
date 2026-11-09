@@ -56,7 +56,6 @@ fun AppNavHost(container: AppContainer) {
                 highScore = campaignScore,
                 highestUnlocked = highestUnlocked.coerceAtMost(LevelCatalog.MAX_LEVEL),
                 resumeLevel = savedGame?.config?.levelId,
-                resumeRemaining = savedGame?.remainingCount,
                 onResume = {
                     savedGame?.let { game ->
                         container.progressRepository.requestResume()
@@ -299,4 +298,5 @@ private fun levelConfigArguments(): List<NamedNavArgument> = listOf(
     navArgument("obstacles") { type = NavType.IntType },
     navArgument("shape") { type = NavType.StringType },
     navArgument("shapeCells") { type = NavType.IntType },
+    navArgument("perArrow") { type = NavType.IntType },
 )

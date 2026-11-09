@@ -166,13 +166,17 @@ fun ResultStat(
     modifier: Modifier = Modifier,
     highlight: Color? = null,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val line = 1.5.dp
     Column(
         modifier = modifier
-            .clip(shape)
-            .background(AppSurface)
-            .border(1.dp, highlight?.copy(alpha = 0.45f) ?: AppGridLine.copy(alpha = 0.7f), shape)
-            .padding(vertical = 12.dp, horizontal = 8.dp),
+            .arrowFrame(
+                color = highlight ?: AppTextMuted.copy(alpha = 0.7f),
+                seed = rememberFrameSeed(),
+                fill = AppSurface,
+                lineWidth = line,
+            )
+            .padding(arrowFrameInset(line))
+            .padding(vertical = 9.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -190,16 +194,20 @@ fun ResultStat(
     }
 }
 
-/** Rounded label pill, for example "NEW HIGH SCORE". */
+/** Small framed label, for example "NEW HIGH SCORE". */
 @Composable
 fun ResultPill(text: String, color: Color) {
-    val shape = RoundedCornerShape(50)
+    val line = 1.5.dp
     Box(
         modifier = Modifier
-            .clip(shape)
-            .background(color.copy(alpha = 0.12f))
-            .border(1.dp, color.copy(alpha = 0.45f), shape)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
+            .arrowFrame(
+                color = color,
+                seed = rememberFrameSeed(),
+                fill = color.copy(alpha = 0.12f),
+                lineWidth = line,
+            )
+            .padding(arrowFrameInset(line))
+            .padding(horizontal = 12.dp, vertical = 5.dp),
     ) {
         Text(
             text = text,

@@ -27,12 +27,12 @@ object AppRoutes {
     private const val NO_SHAPE = "-"
 
     const val GAME =
-        "game/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}"
+        "game/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}/{perArrow}"
     const val VICTORY =
-        "victory/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}" +
+        "victory/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}/{perArrow}" +
             "/{points}/{timeMillis}/{failures}/{newBest}/{arrowsUsed}"
     const val DEFEAT =
-        "defeat/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}" +
+        "defeat/{levelId}/{gw}/{gh}/{arrows}/{maxFailures}/{timeLimit}/{complexity}/{obstacles}/{shape}/{shapeCells}/{perArrow}" +
             "/{reason}/{failures}/{timeMillis}/{arrowCount}"
 
     fun game(config: LevelConfig): String = buildString {
@@ -56,6 +56,8 @@ object AppRoutes {
         append(config.shapeId ?: NO_SHAPE)
         append('/')
         append(config.shapeCells)
+        append('/')
+        append(config.secondsPerArrow ?: -1)
     }
 
     fun victory(result: GameResult): String = buildString {
@@ -79,6 +81,8 @@ object AppRoutes {
         append(result.config.shapeId ?: NO_SHAPE)
         append('/')
         append(result.config.shapeCells)
+        append('/')
+        append(result.config.secondsPerArrow ?: -1)
         append('/')
         append(result.record.points)
         append('/')
@@ -115,6 +119,8 @@ object AppRoutes {
         append('/')
         append(config.shapeCells)
         append('/')
+        append(config.secondsPerArrow ?: -1)
+        append('/')
         append(state.reason.name)
         append('/')
         append(state.failures)
@@ -139,6 +145,7 @@ object AppRoutes {
         val obstacles = arguments.getInt("obstacles", 0)
         val shape = arguments.getString("shape")?.takeIf { it.isNotBlank() && it != NO_SHAPE }
         val shapeCells = arguments.getInt("shapeCells", 0)
+        val perArrow = arguments.getInt("perArrow", -1).takeIf { it > 0 }
         return LevelConfig(
             levelId = levelId,
             gridSize = width to height,
@@ -149,6 +156,7 @@ object AppRoutes {
             obstacleCount = obstacles,
             shapeId = shape,
             shapeCells = shapeCells,
+            secondsPerArrow = perArrow,
         )
     }
 

@@ -1,9 +1,6 @@
 package com.arrowpuzzle.game.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,12 +37,14 @@ import com.arrowpuzzle.game.BuildConfig
 import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.i18n.AppLanguage
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.ui.components.ArrowSwitch
 import com.arrowpuzzle.game.ui.components.AppTopBar
+import com.arrowpuzzle.game.ui.components.ArrowButton
+import com.arrowpuzzle.game.ui.components.ArrowChip
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.MaxFailuresPicker
 import com.arrowpuzzle.game.ui.components.SectionCard
 import com.arrowpuzzle.game.ui.theme.AppDanger
-import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
@@ -76,7 +71,6 @@ fun SettingsScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
                 title = s.t("settings_title"),
-                subtitle = s.t("settings_subtitle"),
                 onBack = onBack,
             )
             Box(
@@ -136,11 +130,6 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = AppText,
                         )
-                        Text(
-                            text = s.t("language_desc"),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AppTextMuted,
-                        )
                         Spacer(Modifier.height(12.dp))
                         LanguageOptions(
                             selected = settings.language,
@@ -151,14 +140,12 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(22.dp))
 
-                OutlinedButton(
+                ArrowButton(
                     onClick = { showResetDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, AppDanger.copy(alpha = 0.8f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppDanger),
+                        .height(60.dp),
+                    tint = AppDanger,
                 ) {
                     Text(
                         text = s.t("reset_progress"),
@@ -272,27 +259,15 @@ private fun LanguageOptions(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AppLanguage.entries.forEach { language ->
-            val isSelected = selected == language.code
-            val shape = RoundedCornerShape(12.dp)
-            val label = if (language == AppLanguage.SYSTEM) {
-                s.t("language_system")
-            } else {
-                language.displayName
-            }
-            Box(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(if (isSelected) AppPrimary else AppSurfaceRaised)
-                    .border(1.dp, if (isSelected) AppPrimary else AppGridLine, shape)
-                    .clickable { onSelect(language.code) }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else AppText,
-                )
-            }
+            ArrowChip(
+                text = if (language == AppLanguage.SYSTEM) {
+                    s.t("language_system")
+                } else {
+                    language.displayName
+                },
+                selected = selected == language.code,
+                onClick = { onSelect(language.code) },
+            )
         }
     }
 }
@@ -323,16 +298,9 @@ private fun ToggleRow(
                 )
             }
         }
-        Switch(
+        ArrowSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = AppSurfaceRaised,
-                checkedTrackColor = AppPrimary,
-                uncheckedThumbColor = AppTextMuted,
-                uncheckedTrackColor = AppGridLine,
-                uncheckedBorderColor = AppGridLine,
-            ),
         )
     }
 }

@@ -14,6 +14,7 @@ import com.arrowpuzzle.game.game.ArrowLogic
 import com.arrowpuzzle.game.game.DefeatReason
 import com.arrowpuzzle.game.game.GameFeedback
 import com.arrowpuzzle.game.game.GameState
+import com.arrowpuzzle.game.game.GeneratedLevel
 import com.arrowpuzzle.game.game.LevelGenerator
 import com.arrowpuzzle.game.scoring.ScoreCalculator
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +71,7 @@ class GameViewModel(
                 } else {
                     1_000_003L * config.levelId
                 }
-                runCatching { levelGenerator.generate(config, seed) }
+                runCatching { withTimeLimit(levelGenerator.generate(config, seed)) }
             }
             result.onSuccess { level ->
                 synchronized(clickLock) {
@@ -117,7 +118,7 @@ class GameViewModel(
 
         synchronized(clickLock) {
             val current = _state.value as? GameState.Playing ?: return@synchronized
-            val limit = config.timeLimitSeconds
+            val limit = current.level.config.timeLimitSeconds
             if (limit != null) {
                 val elapsed = elapsedSeconds()
                 if (elapsed >= limit) {
@@ -306,6 +307,18 @@ class GameViewModel(
         )
     }
 
+    /**
+     * Custom mode with seconds per arrow: the limit follows the real board,
+     * which can hold more arrows than requested. The level carries the result,
+     * so the game and the result screens use the same limit.
+     */
+    private fun withTimeLimit(level: GeneratedLevel): GeneratedLevel {
+        val perArrow = level.config.secondsPerArrow ?: return level
+        return level.copy(
+            config = level.config.copy(timeLimitSeconds = level.arrowCount * perArrow),
+        )
+    }
+
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
@@ -315,7 +328,7 @@ class GameViewModel(
                     val current = _state.value as? GameState.Playing
                         ?: return@synchronized null
                     val elapsed = elapsedSeconds()
-                    val limit = config.timeLimitSeconds
+                    val limit = current.level.config.timeLimitSeconds
                     if (limit != null && elapsed >= limit) {
                         _state.value = GameState.Defeat(
                             level = current.level,

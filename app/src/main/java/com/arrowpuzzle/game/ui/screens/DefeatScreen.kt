@@ -19,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +34,10 @@ import com.arrowpuzzle.game.data.model.AppSettings
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.game.DefeatReason
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.ui.components.ArrowButton
+import com.arrowpuzzle.game.ui.components.arrowFrame
+import com.arrowpuzzle.game.ui.components.arrowFrameInset
+import com.arrowpuzzle.game.ui.components.rememberFrameSeed
 import com.arrowpuzzle.game.ui.components.ResultBadge
 import com.arrowpuzzle.game.ui.components.ResultMark
 import com.arrowpuzzle.game.ui.components.ResultStat
@@ -139,13 +142,11 @@ fun DefeatScreen(
                     ResultStat(
                         label = s.t("failures"),
                         value = "$failures/$failureLimit",
-                        highlight = if (byFailures) AppDanger else null,
                         modifier = Modifier.weight(1f),
                     )
                     ResultStat(
                         label = s.t("time"),
                         value = timeValue,
-                        highlight = if (!byFailures) AppDanger else null,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -155,16 +156,14 @@ fun DefeatScreen(
 
             Reveal(delayMillis = 620) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Button(
+                    ArrowButton(
                         onClick = onRetry,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AppPrimary,
-                            contentColor = AppSurface,
-                        ),
+                            .height(64.dp),
+                        tint = AppPrimary,
+                        emphasis = true,
+                        lineWidth = 2.5.dp,
                     ) {
                         Text(
                             text = s.t(if (config.isCustom) "try_again" else "retry_level"),
@@ -173,16 +172,36 @@ fun DefeatScreen(
                             letterSpacing = 1.5.sp,
                         )
                     }
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        TextButton(onClick = onLevels) {
-                            Text(s.t("levels"), color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
+                        ArrowButton(
+                            onClick = onLevels,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(58.dp),
+                            tint = AppText,
+                        ) {
+                            Text(
+                                text = s.t("levels"),
+                                style = MaterialTheme.typography.labelLarge,
+                                letterSpacing = 1.sp,
+                            )
                         }
-                        TextButton(onClick = onHome) {
-                            Text(s.t("home"), color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
+                        ArrowButton(
+                            onClick = onHome,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(58.dp),
+                            tint = AppText,
+                        ) {
+                            Text(
+                                text = s.t("home"),
+                                style = MaterialTheme.typography.labelLarge,
+                                letterSpacing = 1.sp,
+                            )
                         }
                     }
                 }
@@ -194,14 +213,16 @@ fun DefeatScreen(
 /** Reason headline with a thin accent bar and one practical tip. */
 @Composable
 private fun ReasonCard(title: String, tip: String) {
-    val shape = RoundedCornerShape(24.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(AppSurface)
-            .border(1.dp, AppDanger.copy(alpha = 0.3f), shape)
-            .padding(horizontal = 18.dp, vertical = 18.dp),
+            .arrowFrame(
+                color = AppDanger.copy(alpha = 0.8f),
+                seed = rememberFrameSeed(),
+                fill = AppSurface,
+            )
+            .padding(arrowFrameInset(2.dp))
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

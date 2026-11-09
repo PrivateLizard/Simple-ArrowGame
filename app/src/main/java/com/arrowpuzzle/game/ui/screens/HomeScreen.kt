@@ -1,8 +1,8 @@
 package com.arrowpuzzle.game.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,46 +13,38 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Switch
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.ui.components.ArrowSwitch
+import com.arrowpuzzle.game.ui.components.ArrowButton
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
-import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
-import com.arrowpuzzle.game.ui.theme.AppSecondary
-import com.arrowpuzzle.game.ui.theme.AppSurface
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
 
@@ -71,7 +63,6 @@ fun HomeScreen(
     devWinButtons: Boolean = false,
     onDevWinButtonsChange: (Boolean) -> Unit = {},
     resumeLevel: Int? = null,
-    resumeRemaining: Int? = null,
     onResume: () -> Unit = {},
 ) {
     val s = LocalStrings.current
@@ -106,33 +97,19 @@ fun HomeScreen(
                     SectionCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.Bottom,
                         ) {
-                            Column {
-                                Text(
-                                    text = s.t("total_points"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = AppTextMuted,
-                                )
-                                Text(
-                                    text = s.number(highScore),
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    color = AppPrimary,
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = s.t("progress"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = AppTextMuted,
-                                )
-                                Text(
-                                    text = "$highestUnlocked / ${LevelCatalog.MAX_LEVEL}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = AppPrimary,
-                                )
-                            }
+                            HomeStat(
+                                label = s.t("total_points"),
+                                value = s.number(highScore),
+                                modifier = Modifier.weight(1f),
+                            )
+                            HomeStat(
+                                label = s.t("progress"),
+                                // A level number, written like on the level tiles.
+                                value = highestUnlocked.toString(),
+                                modifier = Modifier.weight(1f),
+                            )
                         }
                     }
                 }
@@ -141,51 +118,34 @@ fun HomeScreen(
 
                 CenteredContent {
                     if (resumeLevel != null) {
-                        OutlinedButton(
+                        ArrowButton(
                             onClick = onResume,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                AppSecondary.copy(alpha = 0.8f),
-                            ),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = AppSecondary,
-                            ),
+                                .height(68.dp),
+                            tint = AppPrimary,
+                            emphasis = true,
+                            lineWidth = 2.5.dp,
                         ) {
                             OneLineFitText(
-                                text = if (resumeRemaining != null) {
-                                    s.f(
-                                        "resume",
-                                        resumeLevel.toString().padStart(2, '0'),
-                                        resumeRemaining,
-                                    )
-                                } else {
-                                    s.f(
-                                        "resume_simple",
-                                        resumeLevel.toString().padStart(2, '0'),
-                                    )
-                                },
+                                text = s.t("continue"),
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    letterSpacing = 0.8.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.5.sp,
                                 ),
                             )
                         }
                         Spacer(Modifier.height(12.dp))
                     }
 
-                    Button(
+                    ArrowButton(
                         onClick = onPlay,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(62.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AppPrimary,
-                            contentColor = AppSurface,
-                        ),
+                            .height(68.dp),
+                        tint = AppPrimary,
+                        emphasis = true,
+                        lineWidth = 2.5.dp,
                     ) {
                         Text(
                             text = s.t("play"),
@@ -197,14 +157,12 @@ fun HomeScreen(
 
                     Spacer(Modifier.height(12.dp))
 
-                    OutlinedButton(
+                    ArrowButton(
                         onClick = onCustom,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AppGridLine),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
+                            .height(60.dp),
+                        tint = AppText,
                     ) {
                         Text(
                             text = s.t("custom_mode"),
@@ -216,14 +174,12 @@ fun HomeScreen(
                     Spacer(Modifier.height(12.dp))
 
                     if (devModeEnabled) {
-                        OutlinedButton(
+                        ArrowButton(
                             onClick = onTest,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(58.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppGridLine),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
+                                .height(60.dp),
+                            tint = AppText,
                         ) {
                             Text(
                                 text = s.t("test_mode"),
@@ -235,14 +191,12 @@ fun HomeScreen(
                         Spacer(Modifier.height(12.dp))
                     }
 
-                    OutlinedButton(
+                    ArrowButton(
                         onClick = onSettings,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AppGridLine),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
+                            .height(60.dp),
+                        tint = AppText,
                     ) {
                         Text(
                             text = s.t("settings"),
@@ -293,13 +247,13 @@ private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
         fontWeight = FontWeight.Black,
         letterSpacing = 0.sp,
     )
-    val title = buildAnnotatedString {
-        withStyle(SpanStyle(color = AppText)) { append(s.t("title_simple")) }
-        withStyle(SpanStyle(color = AppPrimary)) { append(s.t("title_arrow")) }
-    }
+    // Two lines: "SIMPLE" on its own, "ARROW PUZZLE" right below. The second,
+    // longer line sets the size so it runs edge to edge.
+    val firstLine = s.t("title_simple").trim()
+    val secondLine = s.t("title_arrow").trim()
     val baseSize = 40f
     val measured = measurer.measure(
-        text = title,
+        text = secondLine,
         style = baseStyle.copy(fontSize = baseSize.sp),
         maxLines = 1,
         softWrap = false,
@@ -312,12 +266,53 @@ private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
         } else {
             1f
         }
+        val fontSize = (baseSize * scale).sp
+        // One text with two lines: only then does the line height set the
+        // distance between them. A bit below the font size, so they sit close
+        // together like one word mark (capitals only, no descenders).
+        val lineStyle = baseStyle.copy(
+            fontSize = fontSize,
+            lineHeight = fontSize * 0.84f,
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both,
+            ),
+        )
+        val title = buildAnnotatedString {
+            withStyle(SpanStyle(color = AppText)) { append(firstLine) }
+            append('\n')
+            withStyle(SpanStyle(color = AppPrimary)) { append(secondLine) }
+        }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = title,
+                style = lineStyle,
+                maxLines = 2,
+                softWrap = false,
+            )
+        }
+    }
+}
+
+/** Label centred above a big number, for the summary card on Home. */
+@Composable
+private fun HomeStat(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
-            text = title,
-            style = baseStyle.copy(fontSize = (baseSize * scale).sp),
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = AppTextMuted,
+            textAlign = TextAlign.Center,
             maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineLarge,
+            color = AppPrimary,
+            maxLines = 1,
         )
     }
 }
@@ -398,14 +393,12 @@ private fun DevOptionsCard(
                 color = AppTextMuted,
             )
             Spacer(Modifier.height(12.dp))
-            OutlinedButton(
+            ArrowButton(
                 onClick = { onToggleUnlockAll(!isAllUnlocked) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.7f)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = AppPrimary),
+                    .height(52.dp),
+                tint = AppPrimary,
             ) {
                 Text(
                     text = if (isAllUnlocked) {
@@ -453,7 +446,7 @@ private fun DevOptionsCard(
                     label = { Text(s.t("dev_level")) },
                 )
                 Spacer(Modifier.width(10.dp))
-                Button(
+                ArrowButton(
                     onClick = {
                         requestedLevel?.let { level ->
                             onUnlockLevelCount(
@@ -463,12 +456,10 @@ private fun DevOptionsCard(
                         }
                     },
                     enabled = inputValid,
-                    modifier = Modifier.height(56.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppPrimary,
-                        contentColor = AppSurface,
-                    ),
+                    modifier = Modifier.height(60.dp),
+                    tint = AppPrimary,
+                    emphasis = true,
+                    contentPadding = PaddingValues(horizontal = 14.dp),
                 ) {
                     Text(
                         text = s.t("dev_apply"),
@@ -494,15 +485,9 @@ private fun DevOptionsCard(
                     )
                 }
                 Spacer(Modifier.width(10.dp))
-                Switch(
+                ArrowSwitch(
                     checked = winButtons,
                     onCheckedChange = onWinButtonsChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = AppSurfaceRaised,
-                        checkedTrackColor = AppPrimary,
-                        uncheckedThumbColor = AppTextMuted,
-                        uncheckedTrackColor = AppGridLine,
-                    ),
                 )
             }
         }

@@ -24,10 +24,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +45,10 @@ import com.arrowpuzzle.game.game.LevelCatalog
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.scoring.ScoreBreakdown
 import com.arrowpuzzle.game.scoring.ScoreCalculator
+import com.arrowpuzzle.game.ui.components.ArrowButton
+import com.arrowpuzzle.game.ui.components.arrowFrame
+import com.arrowpuzzle.game.ui.components.arrowFrameInset
+import com.arrowpuzzle.game.ui.components.rememberFrameSeed
 import com.arrowpuzzle.game.ui.components.ConfettiShower
 import com.arrowpuzzle.game.ui.components.ResultBadge
 import com.arrowpuzzle.game.ui.components.ResultMark
@@ -161,7 +165,6 @@ fun VictoryScreen(
                         ResultStat(
                             label = s.t("failures"),
                             value = record.failures.toString(),
-                            highlight = if (perfect) AppPrimary else null,
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -184,14 +187,12 @@ fun VictoryScreen(
                             )
                             Spacer(Modifier.height(10.dp))
                         }
-                        OutlinedButton(
+                        ArrowButton(
                             onClick = onRetry,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(54.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, AppGridLine),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
+                                .height(58.dp),
+                            tint = AppText,
                         ) {
                             Text(
                                 text = s.t(if (config.isCustom) "play_again" else "replay_level"),
@@ -199,16 +200,36 @@ fun VictoryScreen(
                                 letterSpacing = 1.sp,
                             )
                         }
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(10.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            TextButton(onClick = onLevels) {
-                                Text(s.t("levels"), color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
+                            ArrowButton(
+                                onClick = onLevels,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(58.dp),
+                                tint = AppText,
+                            ) {
+                                Text(
+                                    text = s.t("levels"),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    letterSpacing = 1.sp,
+                                )
                             }
-                            TextButton(onClick = onHome) {
-                                Text(s.t("home"), color = AppTextMuted, style = MaterialTheme.typography.labelLarge)
+                            ArrowButton(
+                                onClick = onHome,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(58.dp),
+                                tint = AppText,
+                            ) {
+                                Text(
+                                    text = s.t("home"),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    letterSpacing = 1.sp,
+                                )
                             }
                         }
                     }
@@ -238,14 +259,16 @@ private fun ScoreCard(points: Int, breakdown: ScoreBreakdown, perfect: Boolean) 
             tween(durationMillis = 1100, delayMillis = 450, easing = FastOutSlowInEasing),
         )
     }
-    val shape = RoundedCornerShape(24.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(Brush.verticalGradient(listOf(AppSuccessDim.copy(alpha = 0.9f), AppSurface)))
-            .border(1.dp, AppPrimary.copy(alpha = 0.35f), shape)
-            .padding(horizontal = 20.dp, vertical = 22.dp),
+            .arrowFrame(
+                color = AppPrimary.copy(alpha = 0.85f),
+                seed = rememberFrameSeed(),
+                fill = AppSuccessDim.copy(alpha = 0.55f).compositeOver(AppSurface),
+            )
+            .padding(arrowFrameInset(2.dp))
+            .padding(horizontal = 18.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -274,7 +297,7 @@ private fun ScoreCard(points: Int, breakdown: ScoreBreakdown, perfect: Boolean) 
         )
         Spacer(Modifier.height(12.dp))
         BreakdownRow(s.t("base_points"), breakdown.basePoints, AppText)
-        BreakdownRow(s.t("time_bonus"), breakdown.timeBonus, AppSecondary)
+        BreakdownRow(s.t("time_bonus"), breakdown.timeBonus, AppPrimary)
         BreakdownRow(
             label = if (perfect) s.t("no_failure_bonus") else s.t("no_failure_bonus_missed"),
             value = breakdown.comboBonus,
@@ -305,16 +328,14 @@ private fun BreakdownRow(label: String, value: Int, color: Color) {
 
 @Composable
 private fun PrimaryAction(text: String, onClick: () -> Unit) {
-    Button(
+    ArrowButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(58.dp),
-        shape = RoundedCornerShape(18.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = AppPrimary,
-            contentColor = AppSurface,
-        ),
+            .height(64.dp),
+        tint = AppPrimary,
+        emphasis = true,
+        lineWidth = 2.5.dp,
     ) {
         Text(
             text = text,

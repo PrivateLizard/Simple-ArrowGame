@@ -5,6 +5,22 @@ All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- **Arrow look for all menus:** cards, buttons, option chips, level tiles and
+  the in-game stat boxes are framed by one closed game arrow (90° corners,
+  head touching its own tail, random head position and direction).
+- Switches are arrows: short and grey when off, longer and in the accent
+  colour when on. Sliders and the in-game progress bar are game arrows over a
+  row of dots.
+- Home: two-line title, labels centred above the numbers, progress shows only
+  the current level, "Continue" looks like "Play" and shows no level info.
+- Custom Mode: the time limit is now seconds per arrow (off, 3, 5, 10, 20 s),
+  worked out from the real arrow count of the board. Explanation texts removed.
+- Settings: no subtitle, no explanation for max failures and language.
+- Result screens: "Levels" and "Home" are buttons like "Play again"; time and
+  failures are no longer tinted; time bonus is green like the no-failure bonus.
+
 ## 1.1.0 (Build 41) - 2026-11-05
 
 - The resume button on the main menu always stays on one line.

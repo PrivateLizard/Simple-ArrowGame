@@ -58,6 +58,9 @@ import com.arrowpuzzle.game.game.shapes.LevelShape
 import com.arrowpuzzle.game.game.shapes.ShapeMask
 import com.arrowpuzzle.game.game.shapes.ShapeSize
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.ui.components.arrowFrameInset
+import com.arrowpuzzle.game.ui.components.arrowFrame
+import com.arrowpuzzle.game.ui.components.ArrowButton
 import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
@@ -168,17 +171,15 @@ fun TestModeScreen(
                     )
                 }
             }
-            Button(
+            ArrowButton(
                 onClick = { onStart(ShapeMask.levelConfig(shape, size, maxFailures)) },
                 modifier = Modifier
                     .padding(horizontal = 18.dp, vertical = 12.dp)
                     .fillMaxWidth()
-                    .height(60.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AppPrimary,
-                    contentColor = AppSurface,
-                ),
+                    .height(64.dp),
+                tint = AppPrimary,
+                emphasis = true,
+                lineWidth = 2.5.dp,
             ) {
                 Text(
                     text = s.t("start_game"),
@@ -242,15 +243,19 @@ private fun ShapeTile(
             value = withContext(Dispatchers.Default) { ShapePreviews.image(shape, previewPx) }
         }
     }
-    val tileShape = RoundedCornerShape(16.dp)
     val fill = if (selected) AppPrimary else AppTextMuted.copy(alpha = 0.55f)
+    val line = 1.5.dp
     Column(
         modifier = modifier
-            .clip(tileShape)
-            .background(if (selected) AppPrimary.copy(alpha = 0.10f) else AppSurface)
-            .border(1.dp, if (selected) AppPrimary.copy(alpha = 0.7f) else AppGridLine, tileShape)
+            .arrowFrame(
+                color = if (selected) AppPrimary else AppTextMuted.copy(alpha = 0.6f),
+                seed = shape.id.hashCode(),
+                fill = if (selected) AppPrimary.copy(alpha = 0.10f) else AppSurface,
+                lineWidth = line,
+            )
+            .padding(arrowFrameInset(line))
             .clickable(onClick = onClick)
-            .padding(8.dp),
+            .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(

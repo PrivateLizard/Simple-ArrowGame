@@ -63,10 +63,9 @@ class StringsTest {
     fun formattedStringsDoNotThrow() {
         for (language in AppLanguage.translated) {
             val strings = AppStrings(language)
-            strings.f("resume", "12", 34)
+            strings.f("seconds_short", 5)
             strings.f("dev_progress", 1, 2000)
             strings.f("level_title", "2000")
-            strings.f("seconds", 90)
         }
     }
 }

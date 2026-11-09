@@ -7,26 +7,22 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,8 +34,6 @@ import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
@@ -85,12 +78,12 @@ import com.arrowpuzzle.game.game.GameResult
 import com.arrowpuzzle.game.game.GameState
 import com.arrowpuzzle.game.game.GeneratedLevel
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.ui.components.ArrowButton
+import com.arrowpuzzle.game.ui.components.ArrowProgress
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.StatPill
 import com.arrowpuzzle.game.ui.theme.AppDanger
-import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
-import com.arrowpuzzle.game.ui.theme.AppSecondary
 import com.arrowpuzzle.game.ui.theme.AppSurface
 import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
@@ -272,21 +265,10 @@ private fun PlayingContent(
 
             Spacer(Modifier.height(12.dp))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(5.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(AppGridLine),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(progress.coerceIn(0f, 1f))
-                        .fillMaxHeight()
-                        .background(Brush.horizontalGradient(listOf(AppSecondary, AppPrimary))),
-                )
-            }
+            ArrowProgress(
+                progress = progress,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
 
             Spacer(Modifier.weight(1f))
 
@@ -320,32 +302,30 @@ private fun DevWinBar(onNextArrow: () -> Unit, onPerfectWin: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        OutlinedButton(
+        // Over the board, so both get an opaque fill behind the frame.
+        ArrowButton(
             onClick = onNextArrow,
             modifier = Modifier
                 .weight(1f)
-                .heightIn(min = 48.dp),
-            shape = RoundedCornerShape(14.dp),
-            border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.7f)),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = AppSurface.copy(alpha = 0.92f),
-                contentColor = AppPrimary,
-            ),
+                .heightIn(min = 60.dp),
+            tint = AppText,
+            background = AppSurface.copy(alpha = 0.92f),
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
         ) {
             Text(s.t("dev_next_arrow"), style = MaterialTheme.typography.labelLarge, maxLines = 2, textAlign = TextAlign.Center)
         }
-        Button(
+        ArrowButton(
             onClick = onPerfectWin,
             modifier = Modifier
                 .weight(1f)
-                .heightIn(min = 48.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppPrimary,
-                contentColor = AppSurface,
-            ),
+                .heightIn(min = 60.dp),
+            tint = AppPrimary,
+            emphasis = true,
+            background = AppSurface.copy(alpha = 0.92f),
+            lineWidth = 2.5.dp,
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
         ) {
-            Text(s.t("dev_perfect_win"), style = MaterialTheme.typography.labelLarge, maxLines = 2, textAlign = TextAlign.Center)
+            Text(s.t("dev_perfect_win"), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black, maxLines = 2, textAlign = TextAlign.Center)
         }
     }
 }
@@ -1028,14 +1008,17 @@ private fun ErrorContent(message: String, onExit: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
-        Button(
+        ArrowButton(
             onClick = onExit,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppPrimary,
-                contentColor = AppSurface,
-            ),
+            tint = AppPrimary,
+            emphasis = true,
+            contentPadding = PaddingValues(horizontal = 28.dp, vertical = 8.dp),
         ) {
-            Text(LocalStrings.current.t("back"))
+            Text(
+                text = LocalStrings.current.t("back"),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+            )
         }
     }
 }

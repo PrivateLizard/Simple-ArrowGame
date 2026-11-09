@@ -45,7 +45,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.i18n.LocalStrings
+import com.arrowpuzzle.game.ui.components.arrowFrameInset
+import com.arrowpuzzle.game.ui.components.arrowFrame
+import com.arrowpuzzle.game.ui.components.ArrowButton
 import com.arrowpuzzle.game.ui.components.ScreenBackground
+import com.arrowpuzzle.game.ui.theme.AppBackground
+import com.arrowpuzzle.game.ui.theme.AppBoardLine
 import com.arrowpuzzle.game.ui.theme.AppGridLine
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSurface
@@ -138,15 +143,12 @@ fun LevelSelectScreen(
                     enter = fadeIn(),
                     exit = fadeOut(),
                 ) {
-                    Button(
+                    ArrowButton(
                         onClick = {
                             scope.launch { gridState.animateCenterItem(currentIndex) }
                         },
-                        shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AppPrimary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
+                        tint = AppPrimary,
+                        background = AppBackground.copy(alpha = 0.94f),
                     ) {
                         Text(
                             text = s.t("current_level"),
@@ -212,7 +214,6 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
     val s = LocalStrings.current
     val unlocked = level.isUnlocked
     val completed = level.bestScore > 0
-    val shape = RoundedCornerShape(22.dp)
     val numberStyle = MaterialTheme.typography.headlineLarge.copy(
         fontSize = 32.sp,
         lineHeight = 37.sp,
@@ -225,39 +226,23 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
             // Slightly taller than wide so the big score and its maximum fit
             // below the (equally big) level number.
             .aspectRatio(0.86f)
-            .clip(shape)
-            .background(
-                when {
-                    completed -> Brush.verticalGradient(
-                        listOf(AppSurfaceRaised, AppSurface),
-                    )
-                    unlocked -> Brush.verticalGradient(
-                        listOf(
-                            AppSurface.copy(alpha = 0.85f),
-                            AppSurface.copy(alpha = 0.95f),
-                        ),
-                    )
-                    else -> Brush.verticalGradient(
-                        listOf(
-                            AppSurface.copy(alpha = 0.4f),
-                            AppSurface.copy(alpha = 0.6f),
-                        ),
-                    )
+            // Each level keeps its own arrow, also when scrolled out and back.
+            .arrowFrame(
+                color = when {
+                    completed -> AppPrimary.copy(alpha = 0.85f)
+                    unlocked -> AppBoardLine.copy(alpha = 0.8f)
+                    else -> AppTextMuted.copy(alpha = 0.25f)
+                },
+                seed = level.levelId * 7919,
+                fill = when {
+                    completed -> AppSurfaceRaised.copy(alpha = 0.9f)
+                    unlocked -> AppSurface.copy(alpha = 0.9f)
+                    else -> AppSurface.copy(alpha = 0.45f)
                 },
             )
-            .border(
-                BorderStroke(
-                    1.dp,
-                    when {
-                        completed -> AppPrimary.copy(alpha = 0.55f)
-                        unlocked -> AppGridLine.copy(alpha = 0.7f)
-                        else -> AppGridLine.copy(alpha = 0.25f)
-                    },
-                ),
-                shape,
-            )
+            .padding(arrowFrameInset(2.dp))
             .clickable(enabled = unlocked, onClick = onClick)
-            .padding(8.dp),
+            .padding(4.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
