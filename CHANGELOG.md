@@ -5,6 +5,13 @@ All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- **Time bonus scales with the board:** the bonus window is 7 seconds per arrow
+  (was a fixed 60 s), still 5 points per second left. Large levels can now
+  earn a time bonus; the maximum score of every level rises accordingly.
+  Best scores from older builds are kept.
+
 ## 1.2.2 (Build 44) - 2026-11-09
 
 - Level select: levels not yet cleared show a greyed-out 0 and their maximum

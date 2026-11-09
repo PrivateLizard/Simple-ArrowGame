@@ -11,10 +11,23 @@ class ScoreCalculatorTest {
             timeElapsedSeconds = 25.0,
             failures = 0,
         )
+        // Window 6 * 7 = 42 s, 17 s left.
         assertEquals(60, score.basePoints)
-        assertEquals(175, score.timeBonus)
+        assertEquals(85, score.timeBonus)
         assertEquals(30, score.comboBonus)
-        assertEquals(265, score.total)
+        assertEquals(175, score.total)
+    }
+
+    @Test
+    fun timeWindowGrowsWithArrowCount() {
+        // 200 arrows: window 1400 s, 400 s used, 1000 s left.
+        val score = ScoreCalculator.calculate(
+            arrowCount = 200,
+            timeElapsedSeconds = 400.9,
+            failures = 1,
+        )
+        assertEquals(5000, score.timeBonus)
+        assertEquals(0, ScoreCalculator.calculate(200, 1400.0, 0).timeBonus)
     }
 
     @Test
