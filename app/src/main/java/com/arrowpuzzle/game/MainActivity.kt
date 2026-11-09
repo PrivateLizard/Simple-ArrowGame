@@ -1,5 +1,8 @@
 package com.arrowpuzzle.game
 
+import android.annotation.SuppressLint
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +23,7 @@ class MainActivity : ComponentActivity() {
         // 35). ScreenBackground keeps the content clear of them.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        applyOrientation(resources.configuration)
         val container = (application as ArrowPuzzleApplication).container
         setContent {
             val settings by container.settingsRepository.settings.collectAsState()
@@ -31,5 +35,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyOrientation(newConfig)
+    }
+
+    /**
+     * Phones stay in portrait; tablets (smallest width 600 dp and up) follow
+     * the device rotation. Android 16 ignores the lock on large screens anyway.
+     */
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun applyOrientation(config: Configuration) {
+        val wanted = if (config.smallestScreenWidthDp >= TABLET_MIN_WIDTH_DP) {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+        if (requestedOrientation != wanted) requestedOrientation = wanted
+    }
+
+    private companion object {
+        const val TABLET_MIN_WIDTH_DP = 600
     }
 }

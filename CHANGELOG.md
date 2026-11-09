@@ -1,16 +1,19 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43 and is `1.2.2` from build 44. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44 and is `1.2.3` from build 45. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.2.3 (Build 45) - 2026-11-09
 
 - **Time bonus scales with the board:** the bonus window is 7 seconds per arrow
   (was a fixed 60 s), still 5 points per second left. Large levels can now
   earn a time bonus; the maximum score of every level rises accordingly.
   Best scores from older builds are kept.
+- Phones stay in portrait; tablets (smallest width 600 dp and up) rotate
+  with the device. On wide screens the menus keep their phone width and stay
+  centred; the game board still uses the whole screen.
 
 ## 1.2.2 (Build 44) - 2026-11-09
 

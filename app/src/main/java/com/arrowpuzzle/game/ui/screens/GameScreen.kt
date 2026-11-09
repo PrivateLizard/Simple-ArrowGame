@@ -180,7 +180,7 @@ fun GameScreen(
         exitLevel()
     }
 
-    ScreenBackground {
+    ScreenBackground(fullWidth = true) {
         when (val current = state) {
             GameState.Loading -> LoadingContent()
             is GameState.Error -> ErrorContent(message = current.message, onExit = onExit)

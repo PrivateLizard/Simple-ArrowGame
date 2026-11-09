@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.ui.theme.AppBackground
@@ -32,8 +35,18 @@ import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
 
+/** Menus never grow wider than this, so they keep their phone look on tablets. */
+val MenuMaxWidth: Dp = 600.dp
+
+/**
+ * Full-screen gradient background. The content is limited to [MenuMaxWidth]
+ * and centred, unless [fullWidth] is set (the game board uses the whole screen).
+ */
 @Composable
-fun ScreenBackground(content: @Composable BoxScope.() -> Unit) {
+fun ScreenBackground(
+    fullWidth: Boolean = false,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -54,8 +67,20 @@ fun ScreenBackground(content: @Composable BoxScope.() -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding(),
-            content = content,
-        )
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Box(
+                modifier = if (fullWidth) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxHeight()
+                        .widthIn(max = MenuMaxWidth)
+                        .fillMaxWidth()
+                },
+                content = content,
+            )
+        }
     }
 }
 
