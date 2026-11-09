@@ -1,9 +1,16 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44 and is `1.2.3` from build 45. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45 and is `1.2.4` from build 46. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
+
+## 1.2.4 (Build 46) - 2026-11-09
+
+- **New bonus rules:** clearing a level within 7 seconds per arrow adds 10 %
+  of the level's base points, clearing it without failures adds 20 %. The
+  maximum score of a level is now 130 % of its base points. Best scores from
+  older builds are kept and can be higher than the new maximum.
 
 ## 1.2.3 (Build 45) - 2026-11-09
 
