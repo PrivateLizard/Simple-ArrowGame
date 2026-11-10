@@ -1,14 +1,16 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45 and is `1.2.4` from build 46. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46 and is `1.2.5` from build 47. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.2.5 (Build 47) - 2026-11-10
 
 - In-level clock counts the time-bonus window (7 s per arrow) down; once the
   bonus is lost it keeps counting below zero (-00:01, -00:02, ...).
+- Level select: picture levels are marked with an outlined green star in the
+  top right corner.
 
 ## 1.2.4 (Build 46) - 2026-11-09
 

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +18,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -39,15 +42,20 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.i18n.LocalStrings
-import com.arrowpuzzle.game.ui.components.arrowFrameInset
-import com.arrowpuzzle.game.ui.components.arrowFrame
 import com.arrowpuzzle.game.ui.components.ArrowButton
 import com.arrowpuzzle.game.ui.components.ScreenBackground
+import com.arrowpuzzle.game.ui.components.arrowFrame
+import com.arrowpuzzle.game.ui.components.arrowFrameInset
 import com.arrowpuzzle.game.ui.theme.AppBackground
 import com.arrowpuzzle.game.ui.theme.AppBoardLine
 import com.arrowpuzzle.game.ui.theme.AppGridLine
@@ -57,9 +65,12 @@ import com.arrowpuzzle.game.ui.theme.AppSurfaceRaised
 import com.arrowpuzzle.game.ui.theme.AppText
 import com.arrowpuzzle.game.ui.theme.AppTextMuted
 import com.arrowpuzzle.game.ui.viewmodel.LevelItem
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 @Composable
 fun LevelSelectScreen(
@@ -243,6 +254,16 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
             .clickable(enabled = unlocked, onClick = onClick)
             .padding(4.dp),
     ) {
+        if (level.isPictureLevel) {
+            PictureLevelStar(
+                color = if (unlocked) AppPrimary else AppPrimary.copy(alpha = 0.4f),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    // Into the corner, clear of four-digit level numbers.
+                    .offset(x = 3.dp, y = (-3).dp)
+                    .size(13.dp),
+            )
+        }
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -281,5 +302,31 @@ private fun LevelTile(level: LevelItem, onClick: () -> Unit) {
                 maxLines = 1,
             )
         }
+    }
+}
+
+/** Outlined five-pointed star that marks a picture level. */
+@Composable
+private fun PictureLevelStar(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val center = Offset(size.width / 2f, size.height * 0.54f)
+        val outer = size.minDimension / 2f
+        val inner = outer * 0.42f
+        val star = Path()
+        for (i in 0 until 10) {
+            val radius = if (i % 2 == 0) outer else inner
+            val angle = -PI / 2 + i * PI / 5
+            val point = Offset(
+                center.x + (radius * cos(angle)).toFloat(),
+                center.y + (radius * sin(angle)).toFloat(),
+            )
+            if (i == 0) star.moveTo(point.x, point.y) else star.lineTo(point.x, point.y)
+        }
+        star.close()
+        drawPath(
+            path = star,
+            color = color,
+            style = Stroke(width = 1.5.dp.toPx(), join = StrokeJoin.Round),
+        )
     }
 }

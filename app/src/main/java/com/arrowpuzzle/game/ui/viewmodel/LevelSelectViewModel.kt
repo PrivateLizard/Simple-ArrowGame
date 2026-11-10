@@ -19,6 +19,8 @@ data class LevelItem(
     /** Theoretical best score for this level (no failures, instant clear). */
     val maxScore: Int,
     val isUnlocked: Boolean,
+    /** Picture level (board cut into a shape); marked with a star in the list. */
+    val isPictureLevel: Boolean = false,
 )
 
 /** Maximum scores never change, so they are computed once per process. */
@@ -41,6 +43,7 @@ private fun buildLevels(bestScores: Map<Int, Int>, highestUnlocked: Int): List<L
             bestScore = bestScores[levelId] ?: 0,
             maxScore = maxScores[levelId],
             isUnlocked = levelId <= highestUnlocked,
+            isPictureLevel = levelId % LevelCatalog.PICTURE_LEVEL_INTERVAL == 0,
         )
     }
 
