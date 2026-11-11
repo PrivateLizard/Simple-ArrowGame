@@ -1,9 +1,19 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48, `1.2.7` for build 49 and is `1.2.8` from build 50. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48, `1.2.7` for build 49, `1.2.8` for build 50 and is `1.3.0` from build 51. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
+
+## 1.3.0 (Build 51) - 2026-11-11
+
+- New launcher icon: the board is split by a line from bottom left to top
+  right, light mode above, dark mode below. The line is flatter than the
+  corner diagonal (31 degrees) so it misses every arrow head: the black arrow
+  and the green head sit on the light side, the white arrow on the dark side,
+  and the green arrow changes colour only once. Arrows are mirrored compared
+  with the old icon; the green one runs up to its head at the top. The
+  picture is larger and fills more of the icon.
 
 ## 1.2.8 (Build 50) - 2026-11-11
 

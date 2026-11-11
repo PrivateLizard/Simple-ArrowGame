@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Background of the adaptive launcher icon: light top left, dark bottom
+     right, split by a line through the centre. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#0D1527" android:pathData="M0,0h108v108H0z" />
+    <path android:fillColor="#F5F2EA" android:pathData="M0,0 L108,0 L108,21.55 L0,86.45 Z" />
+</vector>
