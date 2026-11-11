@@ -74,7 +74,6 @@ fun AppNavHost(container: AppContainer) {
             val campaignScore by viewModel.campaignScoreTotal.collectAsState()
             val highestUnlocked by viewModel.highestUnlocked.collectAsState()
             val completedLevels by viewModel.completedLevels.collectAsState()
-            val clearedMaxTotal by viewModel.clearedMaxTotal.collectAsState()
             val savedGame by viewModel.savedGame.collectAsState()
             val homeSettings by container.settingsRepository.settings.collectAsState()
 
@@ -136,8 +135,10 @@ fun AppNavHost(container: AppContainer) {
                     devModeEnabled = homeSettings.devModeEnabled,
                     devWinButtons = homeSettings.devWinButtons,
                     onDevWinButtonsChange = container.settingsRepository::setDevWinButtons,
-                    maxPoints = clearedMaxTotal.takeIf {
-                        homeSettings.devModeEnabled && homeSettings.devHomeMaxPoints
+                    maxPoints = if (homeSettings.devModeEnabled && homeSettings.devHomeMaxPoints) {
+                        viewModel.campaignMaxTotal()
+                    } else {
+                        null
                     },
                     devHomeMaxPoints = homeSettings.devHomeMaxPoints,
                     onDevHomeMaxPointsChange = container.settingsRepository::setDevHomeMaxPoints,

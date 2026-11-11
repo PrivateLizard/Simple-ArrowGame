@@ -29,14 +29,8 @@ class HomeViewModel(
             initialValue = countCompleted(scoreRepository.bestScores.value),
         )
 
-    /** Sum of the maximum scores of all cleared levels (dev option on Home). */
-    val clearedMaxTotal: StateFlow<Int> = scoreRepository.bestScores
-        .map(CampaignMaxScores::sumOfCleared)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = CampaignMaxScores.sumOfCleared(scoreRepository.bestScores.value),
-        )
+    /** Most points the whole campaign can give (dev option on Home). */
+    fun campaignMaxTotal(): Int = CampaignMaxScores.total
 
     private fun countCompleted(scores: Map<Int, Int>): Int =
         scores.count { (levelId, points) -> levelId in 1..LevelCatalog.MAX_LEVEL && points > 0 }

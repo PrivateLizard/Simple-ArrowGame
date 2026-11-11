@@ -34,6 +34,7 @@ import com.arrowpuzzle.game.ui.components.arrowHeadLength
 import com.arrowpuzzle.game.ui.components.arrowHeadHalfWidth
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.arrowpuzzle.game.game.LevelCatalog
@@ -72,7 +74,10 @@ fun HomeScreen(
     devModeEnabled: Boolean = false,
     devWinButtons: Boolean = false,
     onDevWinButtonsChange: (Boolean) -> Unit = {},
-    /** Dev option: maximum points of the cleared levels, shown under the total. */
+    /**
+     * Dev option: the most points the whole campaign can give. When set, the
+     * card shows it in place of the real total, to check how it looks.
+     */
     maxPoints: Int? = null,
     devHomeMaxPoints: Boolean = false,
     onDevHomeMaxPointsChange: (Boolean) -> Unit = {},
@@ -109,17 +114,18 @@ fun HomeScreen(
 
                 // Before the first cleared level there is nothing to show yet;
                 // the buttons then move up right below the title.
-                if (completedLevels > 0) {
+                if (completedLevels > 0 || maxPoints != null) {
                     CenteredContent {
                         SectionCard {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
+                                // Labels on one line even when a number
+                                // shrinks to fit.
                                 verticalAlignment = Alignment.Top,
                             ) {
                                 HomeStat(
                                     label = s.t("total_points"),
-                                    value = s.number(highScore),
-                                    subValue = maxPoints?.let { "/ " + s.number(it) },
+                                    value = s.number(maxPoints ?: highScore),
                                     modifier = Modifier.weight(1f),
                                 )
                                 HomeStat(
@@ -369,12 +375,7 @@ private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
 
 /** Label centred above a big number, for the summary card on Home. */
 @Composable
-private fun HomeStat(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    subValue: String? = null,
-) {
+private fun HomeStat(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -386,27 +387,23 @@ private fun HomeStat(
             textAlign = TextAlign.Center,
             maxLines = 1,
         )
-        Text(
+        // Shrinks for large totals (up to seven digits plus separators)
+        // instead of being cut off.
+        OneLineFitText(
             text = value,
             style = MaterialTheme.typography.headlineLarge,
             color = AppPrimary,
-            maxLines = 1,
         )
-        if (subValue != null) {
-            // Like the maximum under a level tile's score.
-            Text(
-                text = subValue,
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted.copy(alpha = 0.6f),
-                maxLines = 1,
-            )
-        }
     }
 }
 
 /** One centred line; the font only shrinks when the text would not fit. */
 @Composable
-private fun OneLineFitText(text: String, style: TextStyle) {
+private fun OneLineFitText(
+    text: String,
+    style: TextStyle,
+    color: Color = Color.Unspecified,
+) {
     val measurer = rememberTextMeasurer()
     BoxWithConstraints(
         modifier = Modifier.fillMaxWidth(),
@@ -425,8 +422,15 @@ private fun OneLineFitText(text: String, style: TextStyle) {
             text = text,
             style = style.copy(
                 fontSize = style.fontSize * scale,
-                letterSpacing = style.letterSpacing * scale,
+                // Not every style sets a letter spacing; scaling an unset
+                // one throws.
+                letterSpacing = if (style.letterSpacing.isSpecified) {
+                    style.letterSpacing * scale
+                } else {
+                    style.letterSpacing
+                },
             ),
+            color = color,
             maxLines = 1,
             softWrap = false,
         )
@@ -499,16 +503,6 @@ private fun DevOptionsCard(
                     letterSpacing = 0.8.sp,
                 )
             }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = if (isAllUnlocked) {
-                    s.t("dev_all_open")
-                } else {
-                    s.t("dev_temp")
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = AppTextMuted.copy(alpha = 0.8f),
-            )
             Spacer(Modifier.height(14.dp))
             Text(
                 text = s.f("dev_unlock_to", LevelCatalog.MAX_LEVEL),
@@ -559,14 +553,12 @@ private fun DevOptionsCard(
             Spacer(Modifier.height(16.dp))
             DevSwitchRow(
                 title = s.t("dev_win_buttons"),
-                description = s.t("dev_win_buttons_desc"),
                 checked = winButtons,
                 onCheckedChange = onWinButtonsChange,
             )
             Spacer(Modifier.height(14.dp))
             DevSwitchRow(
                 title = s.t("dev_home_max"),
-                description = s.t("dev_home_max_desc"),
                 checked = homeMaxPoints,
                 onCheckedChange = onHomeMaxPointsChange,
             )
@@ -577,7 +569,6 @@ private fun DevOptionsCard(
 @Composable
 private fun DevSwitchRow(
     title: String,
-    description: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -585,18 +576,12 @@ private fun DevSwitchRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = AppText,
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = AppTextMuted.copy(alpha = 0.8f),
-            )
-        }
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleSmall,
+            color = AppText,
+        )
         Spacer(Modifier.width(10.dp))
         ArrowSwitch(
             checked = checked,

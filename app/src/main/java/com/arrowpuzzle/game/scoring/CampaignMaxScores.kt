@@ -21,7 +21,6 @@ object CampaignMaxScores {
     fun forLevel(levelId: Int): Int =
         if (levelId in 1..LevelCatalog.MAX_LEVEL) table[levelId] else 0
 
-    /** Sum of the maxima of all campaign levels cleared at least once. */
-    fun sumOfCleared(bestScores: Map<Int, Int>): Int =
-        bestScores.entries.sumOf { (levelId, points) -> if (points > 0) forLevel(levelId) else 0 }
+    /** Most points the whole campaign can give: every level perfect. */
+    val total: Int by lazy { table.sum() }
 }

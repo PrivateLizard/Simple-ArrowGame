@@ -1,9 +1,19 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47 and is `1.2.6` from build 48. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48 and is `1.2.7` from build 49. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
+
+## 1.2.7 (Build 49) - 2026-11-11
+
+- Dev option "Max points on Home" now shows the most points the whole
+  campaign can give in place of the total points (to check how the largest
+  number looks); the card is shown even before the first cleared level. It no
+  longer adds a "/ max" line.
+- Dev options: all explanation texts removed; only labels and switches stay.
+- Home: the points and progress numbers shrink to fit instead of being cut
+  off (seven-digit totals were clipped).
 
 ## 1.2.6 (Build 48) - 2026-11-11
 
