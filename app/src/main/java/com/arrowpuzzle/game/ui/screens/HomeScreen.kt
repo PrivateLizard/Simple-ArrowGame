@@ -294,7 +294,7 @@ private fun InfoBubble(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 private const val REPOSITORY_URL = "https://github.com/PrivateLizard/Simple-ArrowGame"
 
-/** What the app is: the former footer, the project note and the source link. */
+/** What the app is: on-device and offline notes, the project note and the source link. */
 @Composable
 private fun InfoDialog(onDismiss: () -> Unit) {
     val s = LocalStrings.current
@@ -304,8 +304,10 @@ private fun InfoDialog(onDismiss: () -> Unit) {
         buttonText = s.t("close"),
         onDismiss = onDismiss,
     ) {
+        // First line of the old Home footer plus the offline note that used to
+        // sit under "Reset progress" in Settings (it repeats the second line).
         Text(
-            text = s.t("footer"),
+            text = s.t("footer").substringBefore('\n') + s.wordGap + s.t("settings_footer"),
             style = MaterialTheme.typography.bodyMedium,
             color = AppText,
         )

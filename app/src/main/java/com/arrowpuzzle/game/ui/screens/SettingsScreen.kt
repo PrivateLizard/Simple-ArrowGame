@@ -157,12 +157,6 @@ fun SettingsScreen(
                 Spacer(Modifier.height(18.dp))
 
                 Text(
-                    text = s.t("settings_footer"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppTextMuted.copy(alpha = 0.8f),
-                )
-
-                Text(
                     text = s.f("build", BuildConfig.VERSION_CODE),
                     modifier = Modifier
                         .fillMaxWidth()

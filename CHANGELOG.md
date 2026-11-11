@@ -1,11 +1,11 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48 and is `1.2.7` from build 49. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48, `1.2.7` for build 49 and is `1.2.8` from build 50. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.2.8 (Build 50) - 2026-11-11
 
 - Home: a small, quiet "?" bubble in the bottom right corner opens an "About"
   card (in the app's arrow style) with the former footer text, a note that
@@ -13,6 +13,9 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
   free of charge, and a link to the GitHub repository. The footer text under
   the menu is gone.
 - Custom Mode warning and the new About card share one arrow-styled dialog.
+- Settings: the offline note under "Reset progress" moved into the About
+  card (on-device levels, fully offline, no internet permission, no ads, no
+  analytics).
 - **34 picture shapes redrawn** with more detail, turned or seen from another
   side where that fills the board better: butterfly (spotted wings,
   antennae), snowflake (branched arms), lightning (storm cloud with bolt),
