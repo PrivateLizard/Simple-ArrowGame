@@ -5,6 +5,15 @@ All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- Home: a small, quiet "?" bubble in the bottom right corner opens an "About"
+  card (in the app's arrow style) with the former footer text, a note that
+  the app is an AI-assisted hobby project, fully open source and developed
+  free of charge, and a link to the GitHub repository. The footer text under
+  the menu is gone.
+- Custom Mode warning and the new About card share one arrow-styled dialog.
+
 ## 1.2.7 (Build 49) - 2026-11-11
 
 - Dev option "Max points on Home" now shows the most points the whole

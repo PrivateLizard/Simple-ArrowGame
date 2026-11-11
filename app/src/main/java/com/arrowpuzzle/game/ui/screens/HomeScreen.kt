@@ -1,5 +1,13 @@
 package com.arrowpuzzle.game.ui.screens
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextDecoration
+import com.arrowpuzzle.game.ui.components.ArrowDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -245,19 +253,83 @@ fun HomeScreen(
                     }
                 }
 
-                Spacer(Modifier.height(26.dp))
-
-                Text(
-                    text = s.t("footer"),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppTextMuted.copy(alpha = 0.72f),
-                    textAlign = TextAlign.Center,
-                )
+                // Room to scroll the last button clear of the info bubble.
+                Spacer(Modifier.height(56.dp))
             }
         }
+
+        var showInfo by remember { mutableStateOf(false) }
+        InfoBubble(
+            onClick = { showInfo = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        )
+        if (showInfo) {
+            InfoDialog(onDismiss = { showInfo = false })
+        }
+    }
+}
+
+/** Small, quiet "?" in the corner; opens [InfoDialog]. */
+@Composable
+private fun InfoBubble(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val s = LocalStrings.current
+    Box(
+        modifier = modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .border(1.5.dp, AppTextMuted.copy(alpha = 0.4f), CircleShape)
+            .clickable(onClickLabel = s.t("about_title"), onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "?",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = AppTextMuted.copy(alpha = 0.6f),
+        )
+    }
+}
+
+private const val REPOSITORY_URL = "https://github.com/PrivateLizard/Simple-ArrowGame"
+
+/** What the app is: the former footer, the project note and the source link. */
+@Composable
+private fun InfoDialog(onDismiss: () -> Unit) {
+    val s = LocalStrings.current
+    val uriHandler = LocalUriHandler.current
+    ArrowDialog(
+        title = s.t("about_title"),
+        buttonText = s.t("close"),
+        onDismiss = onDismiss,
+    ) {
+        Text(
+            text = s.t("footer"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AppText,
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = s.t("about_text"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AppText,
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = s.t("about_source"),
+            style = MaterialTheme.typography.labelMedium,
+            color = AppTextMuted,
+        )
+        Text(
+            text = REPOSITORY_URL.removePrefix("https://"),
+            modifier = Modifier
+                .clickable { runCatching { uriHandler.openUri(REPOSITORY_URL) } }
+                .padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AppPrimary,
+            textDecoration = TextDecoration.Underline,
+        )
     }
 }
 
