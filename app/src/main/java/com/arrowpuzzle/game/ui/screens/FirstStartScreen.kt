@@ -1,5 +1,6 @@
 package com.arrowpuzzle.game.ui.screens
 
+import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -23,12 +24,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.draw
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arrowpuzzle.game.i18n.LocalStrings
@@ -165,7 +175,7 @@ private fun MenuPreview(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .blur((BLUR_DP * (1f - focus)).dp),
+                    .softBlur((BLUR_DP * (1f - focus)).dp),
             ) {
                 // Same seed sequence in both halves: the frames match across
                 // the split, and Home starts with the same ones.
@@ -229,3 +239,37 @@ private fun ChoiceButton(
         }
     }
 }
+
+/**
+ * Blur that works on every Android version. [Modifier.blur] needs Android 12
+ * (RenderEffect) and is silently ignored below. There the content is drawn
+ * into a much smaller bitmap and scaled back up with filtering, which
+ * softens it like a blur of about [radius].
+ */
+private fun Modifier.softBlur(radius: Dp): Modifier =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        blur(radius)
+    } else {
+        drawWithContent {
+            val factor = radius.toPx() / 1.1f
+            if (factor < 1.5f || size.width < 1f || size.height < 1f) {
+                drawContent()
+                return@drawWithContent
+            }
+            // Inside draw(...) `size` is the small bitmap's, so keep the full one.
+            val full = size
+            val width = (full.width / factor).toInt().coerceAtLeast(1)
+            val height = (full.height / factor).toInt().coerceAtLeast(1)
+            val small = ImageBitmap(width, height)
+            draw(this, layoutDirection, Canvas(small), Size(width.toFloat(), height.toFloat())) {
+                scale(width / full.width, height / full.height, pivot = Offset.Zero) {
+                    this@drawWithContent.drawContent()
+                }
+            }
+            drawImage(
+                image = small,
+                dstSize = IntSize(full.width.toInt(), full.height.toInt()),
+                filterQuality = FilterQuality.Low,
+            )
+        }
+    }

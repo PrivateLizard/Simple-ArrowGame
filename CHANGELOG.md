@@ -5,6 +5,12 @@ All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
+## Unreleased
+
+- **Fix:** the first-start screen showed no blur on Android 11 and older
+  (the system blur needs Android 12). There the menu preview is now drawn
+  small and scaled back up, which blurs it on every version.
+
 ## 1.3.0 (Build 51) - 2026-11-11
 
 - New launcher icon: the board is split by a line from bottom left to top
