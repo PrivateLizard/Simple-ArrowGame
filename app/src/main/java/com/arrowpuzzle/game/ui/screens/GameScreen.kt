@@ -852,7 +852,12 @@ private data class BoardGeometry(
     val originY: Float,
     val spacing: Float,
 ) {
-    val hitRadius: Float get() = spacing * 0.38f
+    /**
+     * Taps go to the nearest arrow. Neighbouring arrows are one cell apart, so
+     * with more than half a cell there is no dead gap between two of them; a
+     * tap only misses on open space more than 0.75 cells from any arrow.
+     */
+    val hitRadius: Float get() = spacing * 0.75f
 
     fun toOffset(point: GridPoint): Offset = Offset(
         x = originX + point.x * spacing,

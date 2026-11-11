@@ -1,6 +1,7 @@
 package com.arrowpuzzle.game.ui.theme
 
 import android.app.Activity
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -204,7 +205,32 @@ fun ArrowPuzzleTheme(
     content: @Composable () -> Unit,
 ) {
     val palette = if (nightMode) DarkArrowPalette else LightArrowPalette
-    val colorScheme = if (nightMode) {
+    val colorScheme = colorSchemeFor(nightMode, palette)
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            // The app draws edge-to-edge (MainActivity.enableEdgeToEdge); the
+            // system bars are transparent, so only the icon colour is set here.
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !nightMode
+                isAppearanceLightNavigationBars = !nightMode
+            }
+        }
+    }
+
+    CompositionLocalProvider(LocalArrowPalette provides palette) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = ArrowTypography,
+            content = content,
+        )
+    }
+}
+
+private fun colorSchemeFor(nightMode: Boolean, palette: ArrowPalette): ColorScheme =
+    if (nightMode) {
         darkColorScheme(
             primary = palette.primary,
             onPrimary = palette.onPrimary,
@@ -250,22 +276,19 @@ fun ArrowPuzzleTheme(
         )
     }
 
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            // The app draws edge-to-edge (MainActivity.enableEdgeToEdge); the
-            // system bars are transparent, so only the icon colour is set here.
-            val window = (view.context as? Activity)?.window ?: return@SideEffect
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !nightMode
-                isAppearanceLightNavigationBars = !nightMode
-            }
-        }
-    }
-
+/**
+ * Light or dark colours for one part of a screen, without touching the system
+ * bars. Used by the first-start screen, which shows both side by side.
+ */
+@Composable
+fun ArrowPaletteScope(
+    nightMode: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val palette = if (nightMode) DarkArrowPalette else LightArrowPalette
     CompositionLocalProvider(LocalArrowPalette provides palette) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = colorSchemeFor(nightMode, palette),
             typography = ArrowTypography,
             content = content,
         )

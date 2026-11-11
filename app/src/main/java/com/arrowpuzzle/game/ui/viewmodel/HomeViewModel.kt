@@ -9,6 +9,7 @@ import com.arrowpuzzle.game.data.ProgressRepository
 import com.arrowpuzzle.game.data.SavedGame
 import com.arrowpuzzle.game.data.ScoreRepository
 import com.arrowpuzzle.game.game.LevelCatalog
+import com.arrowpuzzle.game.scoring.CampaignMaxScores
 import kotlinx.coroutines.flow.StateFlow
 
 class HomeViewModel(
@@ -26,6 +27,15 @@ class HomeViewModel(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = countCompleted(scoreRepository.bestScores.value),
+        )
+
+    /** Sum of the maximum scores of all cleared levels (dev option on Home). */
+    val clearedMaxTotal: StateFlow<Int> = scoreRepository.bestScores
+        .map(CampaignMaxScores::sumOfCleared)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = CampaignMaxScores.sumOfCleared(scoreRepository.bestScores.value),
         )
 
     private fun countCompleted(scores: Map<Int, Int>): Int =

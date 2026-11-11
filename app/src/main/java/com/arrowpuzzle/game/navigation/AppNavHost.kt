@@ -3,6 +3,7 @@ package com.arrowpuzzle.game.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,8 +18,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.arrowpuzzle.game.data.AppContainer
 import com.arrowpuzzle.game.game.LevelCatalog
+import com.arrowpuzzle.game.ui.components.LocalFrameSeedSource
+import kotlin.random.Random
 import com.arrowpuzzle.game.ui.screens.CustomModeScreen
+import com.arrowpuzzle.game.ui.screens.CustomModeWarningDialog
 import com.arrowpuzzle.game.ui.screens.DefeatScreen
+import com.arrowpuzzle.game.ui.screens.FIRST_START_FRAME_SEED
+import com.arrowpuzzle.game.ui.screens.FirstStartScreen
 import com.arrowpuzzle.game.ui.screens.GameScreen
 import com.arrowpuzzle.game.ui.screens.HomeScreen
 import com.arrowpuzzle.game.ui.screens.LevelSelectScreen
@@ -34,11 +40,29 @@ import com.arrowpuzzle.game.ui.viewmodel.SimpleViewModelFactory
 @Composable
 fun AppNavHost(container: AppContainer) {
     val navController = rememberNavController()
+    // Read once: the start destination must not change while the app runs.
+    val startDestination = remember(container) {
+        val firstRun = !container.settingsRepository.settings.value.firstRunDone &&
+            container.scoreRepository.bestScores.value.values.none { it > 0 } &&
+            container.scoreRepository.highestUnlocked.value <= 1
+        if (firstRun) AppRoutes.FIRST_START else AppRoutes.HOME
+    }
 
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.HOME,
+        startDestination = startDestination,
     ) {
+        composable(AppRoutes.FIRST_START) {
+            FirstStartScreen(
+                onChoose = { nightMode ->
+                    container.settingsRepository.completeFirstRun(nightMode)
+                    navController.navigate(AppRoutes.HOME) {
+                        popUpTo(AppRoutes.FIRST_START) { inclusive = true }
+                    }
+                },
+            )
+        }
+
         composable(AppRoutes.HOME) {
             val viewModel: HomeViewModel = viewModel(
                 factory = remember(container) {
@@ -50,45 +74,75 @@ fun AppNavHost(container: AppContainer) {
             val campaignScore by viewModel.campaignScoreTotal.collectAsState()
             val highestUnlocked by viewModel.highestUnlocked.collectAsState()
             val completedLevels by viewModel.completedLevels.collectAsState()
+            val clearedMaxTotal by viewModel.clearedMaxTotal.collectAsState()
             val savedGame by viewModel.savedGame.collectAsState()
             val homeSettings by container.settingsRepository.settings.collectAsState()
 
-            HomeScreen(
-                highScore = campaignScore,
-                completedLevels = completedLevels,
-                highestUnlocked = highestUnlocked.coerceAtMost(LevelCatalog.MAX_LEVEL),
-                resumeLevel = savedGame?.config?.levelId,
-                onResume = {
-                    savedGame?.let { game ->
-                        container.progressRepository.requestResume()
-                        navController.navigate(AppRoutes.game(game.config)) {
-                            launchSingleTop = true
+            // Right after the first-start screen Home keeps its arrow frames,
+            // so nothing jumps when it takes over from the preview.
+            val frameSeeds = remember {
+                if (startDestination == AppRoutes.FIRST_START) {
+                    Random(FIRST_START_FRAME_SEED)
+                } else {
+                    Random.Default
+                }
+            }
+            CompositionLocalProvider(LocalFrameSeedSource provides frameSeeds) {
+                HomeScreen(
+                    highScore = campaignScore,
+                    completedLevels = completedLevels,
+                    highestUnlocked = highestUnlocked.coerceAtMost(LevelCatalog.MAX_LEVEL),
+                    resumeLevel = savedGame?.config?.levelId,
+                    onResume = {
+                        savedGame?.let { game ->
+                            container.progressRepository.requestResume()
+                            navController.navigate(AppRoutes.game(game.config)) {
+                                launchSingleTop = true
+                            }
                         }
-                    }
-                },
-                onPlay = {
-                    navController.navigate(AppRoutes.LEVELS) { launchSingleTop = true }
-                },
-                onCustom = {
-                    navController.navigate(AppRoutes.CUSTOM) { launchSingleTop = true }
-                },
-                onSettings = {
-                    navController.navigate(AppRoutes.SETTINGS) { launchSingleTop = true }
-                },
-                onTest = {
-                    navController.navigate(AppRoutes.TEST) { launchSingleTop = true }
-                },
-                isAllUnlocked = highestUnlocked >= LevelCatalog.MAX_LEVEL,
-                onToggleUnlockAll = { unlocked ->
-                    viewModel.setAllLevelsUnlocked(unlocked)
-                },
-                onUnlockLevelCount = { count ->
-                    viewModel.setLevelsUnlocked(count)
-                },
-                devModeEnabled = homeSettings.devModeEnabled,
-                devWinButtons = homeSettings.devWinButtons,
-                onDevWinButtonsChange = container.settingsRepository::setDevWinButtons,
-            )
+                    },
+                    onPlay = {
+                        if (highestUnlocked <= 1) {
+                            // Only level 1 is open: the level list has nothing to
+                            // choose from, so go straight into it.
+                            navController.navigate(
+                                AppRoutes.game(
+                                    LevelCatalog.defaultConfig(
+                                        levelId = 1,
+                                        maxFailures = homeSettings.maxFailures,
+                                    ),
+                                ),
+                            ) { launchSingleTop = true }
+                        } else {
+                            navController.navigate(AppRoutes.LEVELS) { launchSingleTop = true }
+                        }
+                    },
+                    onCustom = {
+                        navController.navigate(AppRoutes.CUSTOM) { launchSingleTop = true }
+                    },
+                    onSettings = {
+                        navController.navigate(AppRoutes.SETTINGS) { launchSingleTop = true }
+                    },
+                    onTest = {
+                        navController.navigate(AppRoutes.TEST) { launchSingleTop = true }
+                    },
+                    isAllUnlocked = highestUnlocked >= LevelCatalog.MAX_LEVEL,
+                    onToggleUnlockAll = { unlocked ->
+                        viewModel.setAllLevelsUnlocked(unlocked)
+                    },
+                    onUnlockLevelCount = { count ->
+                        viewModel.setLevelsUnlocked(count)
+                    },
+                    devModeEnabled = homeSettings.devModeEnabled,
+                    devWinButtons = homeSettings.devWinButtons,
+                    onDevWinButtonsChange = container.settingsRepository::setDevWinButtons,
+                    maxPoints = clearedMaxTotal.takeIf {
+                        homeSettings.devModeEnabled && homeSettings.devHomeMaxPoints
+                    },
+                    devHomeMaxPoints = homeSettings.devHomeMaxPoints,
+                    onDevHomeMaxPointsChange = container.settingsRepository::setDevHomeMaxPoints,
+                )
+            }
         }
 
         composable(AppRoutes.LEVELS) {
@@ -146,12 +200,18 @@ fun AppNavHost(container: AppContainer) {
         }
 
         composable(AppRoutes.CUSTOM) {
+            val customSettings by container.settingsRepository.settings.collectAsState()
             CustomModeScreen(
                 onBack = { navController.popBackStack() },
                 onStart = { config ->
                     navController.navigate(AppRoutes.game(config))
                 },
             )
+            if (!customSettings.customWarningSeen) {
+                CustomModeWarningDialog(
+                    onConfirm = container.settingsRepository::markCustomWarningSeen,
+                )
+            }
         }
 
         composable(

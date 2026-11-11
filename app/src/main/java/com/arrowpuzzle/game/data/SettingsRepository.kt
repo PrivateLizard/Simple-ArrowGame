@@ -46,6 +46,19 @@ class SettingsRepository(context: Context) {
         it.copy(devWinButtons = enabled)
     }
 
+    fun setDevHomeMaxPoints(enabled: Boolean) = update {
+        it.copy(devHomeMaxPoints = enabled)
+    }
+
+    /** First start: store the chosen theme and never ask again. */
+    fun completeFirstRun(nightMode: Boolean) = update {
+        it.copy(nightMode = nightMode, firstRunDone = true)
+    }
+
+    fun markCustomWarningSeen() = update {
+        it.copy(customWarningSeen = true)
+    }
+
     private fun update(transform: (AppSettings) -> AppSettings) {
         synchronized(lock) {
             val updated = transform(_settings.value)
@@ -58,6 +71,9 @@ class SettingsRepository(context: Context) {
                 putString(KEY_LANGUAGE, updated.language)
                 putBoolean(KEY_DEV_MODE, updated.devModeEnabled)
                 putBoolean(KEY_DEV_WIN_BUTTONS, updated.devWinButtons)
+                putBoolean(KEY_DEV_HOME_MAX, updated.devHomeMaxPoints)
+                putBoolean(KEY_FIRST_RUN_DONE, updated.firstRunDone)
+                putBoolean(KEY_CUSTOM_WARNING_SEEN, updated.customWarningSeen)
             }
             _settings.value = updated
         }
@@ -74,6 +90,11 @@ class SettingsRepository(context: Context) {
         language = preferences.getString(KEY_LANGUAGE, "") ?: "",
         devModeEnabled = preferences.getBoolean(KEY_DEV_MODE, false),
         devWinButtons = preferences.getBoolean(KEY_DEV_WIN_BUTTONS, false),
+        devHomeMaxPoints = preferences.getBoolean(KEY_DEV_HOME_MAX, false),
+        // Settings written by an older build mean the app was used before:
+        // no first-start screen for those players.
+        firstRunDone = preferences.getBoolean(KEY_FIRST_RUN_DONE, preferences.contains(KEY_NIGHT_MODE)),
+        customWarningSeen = preferences.getBoolean(KEY_CUSTOM_WARNING_SEEN, false),
     )
 
     private fun normalizeMaxFailures(value: Int): Int =
@@ -93,5 +114,8 @@ class SettingsRepository(context: Context) {
         const val KEY_LANGUAGE = "language"
         const val KEY_DEV_MODE = "dev_mode_enabled"
         const val KEY_DEV_WIN_BUTTONS = "dev_win_buttons"
+        const val KEY_DEV_HOME_MAX = "dev_home_max_points"
+        const val KEY_FIRST_RUN_DONE = "first_run_done"
+        const val KEY_CUSTOM_WARNING_SEEN = "custom_warning_seen"
     }
 }

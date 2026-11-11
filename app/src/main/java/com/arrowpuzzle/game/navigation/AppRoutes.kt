@@ -18,6 +18,7 @@ data class DefeatRouteData(
 
 object AppRoutes {
     const val HOME = "home"
+    const val FIRST_START = "first_start"
     const val LEVELS = "levels"
     const val SETTINGS = "settings"
     const val CUSTOM = "custom"

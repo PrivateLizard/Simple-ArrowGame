@@ -18,6 +18,7 @@ import com.arrowpuzzle.game.ui.theme.AppTextMuted
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -49,7 +50,16 @@ fun arrowFrameInset(lineWidth: Dp): Dp = lineWidth * HEAD_HALF_WIDTH_PER_LINE
 
 /** A random frame layout that stays the same while the element is shown. */
 @Composable
-fun rememberFrameSeed(key: Any? = null): Int = remember(key) { Random.nextInt() }
+fun rememberFrameSeed(key: Any? = null): Int {
+    val source = LocalFrameSeedSource.current
+    return remember(key) { source.nextInt() }
+}
+
+/**
+ * Where frame seeds come from. Normally truly random; the first-start screen
+ * provides a fixed sequence so its light and dark halves get the same frames.
+ */
+val LocalFrameSeedSource = staticCompositionLocalOf<Random> { Random.Default }
 
 /**
  * Draws the element's outline as one closed game arrow: a rectangle with 90°

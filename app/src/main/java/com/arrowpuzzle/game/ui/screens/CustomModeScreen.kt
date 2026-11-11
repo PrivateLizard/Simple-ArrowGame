@@ -37,6 +37,11 @@ import com.arrowpuzzle.game.ui.components.MaxFailuresPicker
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.SectionCard
 import com.arrowpuzzle.game.ui.theme.AppPrimary
+import com.arrowpuzzle.game.ui.theme.AppSurface
+import com.arrowpuzzle.game.ui.components.rememberFrameSeed
+import com.arrowpuzzle.game.ui.components.arrowFrameInset
+import com.arrowpuzzle.game.ui.components.arrowFrame
+import androidx.compose.ui.window.Dialog
 import com.arrowpuzzle.game.ui.theme.AppText
 
 private const val MIN_GRID = 3
@@ -233,5 +238,59 @@ private fun SettingHeader(label: String, value: String) {
             color = AppPrimary,
             fontWeight = FontWeight.Bold,
         )
+    }
+}
+
+/**
+ * Shown the first time Custom Mode is opened: its boards are generated from
+ * the chosen settings and are not hand-tuned like the campaign levels.
+ * Drawn like the rest of the app: an arrow-framed card and an arrow button.
+ */
+@Composable
+fun CustomModeWarningDialog(onConfirm: () -> Unit) {
+    val s = LocalStrings.current
+    // Closing it any way counts as read; it is only shown once.
+    Dialog(onDismissRequest = onConfirm) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .arrowFrame(
+                    color = AppPrimary,
+                    seed = rememberFrameSeed(),
+                    fill = AppSurface,
+                    lineWidth = 2.5.dp,
+                )
+                .padding(arrowFrameInset(2.5.dp) + 20.dp),
+        ) {
+            Text(
+                text = s.t("custom_warning_title").uppercase(s.locale),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.2.sp,
+                color = AppPrimary,
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = s.t("custom_warning_text"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppText,
+            )
+            Spacer(Modifier.height(20.dp))
+            ArrowButton(
+                onClick = onConfirm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                tint = AppPrimary,
+                emphasis = true,
+            ) {
+                Text(
+                    text = s.t("understood").uppercase(s.locale),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.5.sp,
+                )
+            }
+        }
     }
 }

@@ -72,6 +72,10 @@ fun HomeScreen(
     devModeEnabled: Boolean = false,
     devWinButtons: Boolean = false,
     onDevWinButtonsChange: (Boolean) -> Unit = {},
+    /** Dev option: maximum points of the cleared levels, shown under the total. */
+    maxPoints: Int? = null,
+    devHomeMaxPoints: Boolean = false,
+    onDevHomeMaxPointsChange: (Boolean) -> Unit = {},
     resumeLevel: Int? = null,
     onResume: () -> Unit = {},
 ) {
@@ -110,11 +114,12 @@ fun HomeScreen(
                         SectionCard {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.Bottom,
+                                verticalAlignment = Alignment.Top,
                             ) {
                                 HomeStat(
                                     label = s.t("total_points"),
                                     value = s.number(highScore),
+                                    subValue = maxPoints?.let { "/ " + s.number(it) },
                                     modifier = Modifier.weight(1f),
                                 )
                                 HomeStat(
@@ -228,6 +233,8 @@ fun HomeScreen(
                             onUnlockLevelCount = onUnlockLevelCount,
                             winButtons = devWinButtons,
                             onWinButtonsChange = onDevWinButtonsChange,
+                            homeMaxPoints = devHomeMaxPoints,
+                            onHomeMaxPointsChange = onDevHomeMaxPointsChange,
                         )
                     }
                 }
@@ -362,7 +369,12 @@ private fun TitleSpanningWidth(modifier: Modifier = Modifier) {
 
 /** Label centred above a big number, for the summary card on Home. */
 @Composable
-private fun HomeStat(label: String, value: String, modifier: Modifier = Modifier) {
+private fun HomeStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    subValue: String? = null,
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -380,6 +392,15 @@ private fun HomeStat(label: String, value: String, modifier: Modifier = Modifier
             color = AppPrimary,
             maxLines = 1,
         )
+        if (subValue != null) {
+            // Like the maximum under a level tile's score.
+            Text(
+                text = subValue,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppTextMuted.copy(alpha = 0.6f),
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -433,6 +454,8 @@ private fun DevOptionsCard(
     onUnlockLevelCount: (Int) -> Unit,
     winButtons: Boolean,
     onWinButtonsChange: (Boolean) -> Unit,
+    homeMaxPoints: Boolean,
+    onHomeMaxPointsChange: (Boolean) -> Unit,
 ) {
     val s = LocalStrings.current
     val focusManager = LocalFocusManager.current
@@ -534,28 +557,50 @@ private fun DevOptionsCard(
                 }
             }
             Spacer(Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = s.t("dev_win_buttons"),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = AppText,
-                    )
-                    Text(
-                        text = s.t("dev_win_buttons_desc"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppTextMuted.copy(alpha = 0.8f),
-                    )
-                }
-                Spacer(Modifier.width(10.dp))
-                ArrowSwitch(
-                    checked = winButtons,
-                    onCheckedChange = onWinButtonsChange,
-                )
-            }
+            DevSwitchRow(
+                title = s.t("dev_win_buttons"),
+                description = s.t("dev_win_buttons_desc"),
+                checked = winButtons,
+                onCheckedChange = onWinButtonsChange,
+            )
+            Spacer(Modifier.height(14.dp))
+            DevSwitchRow(
+                title = s.t("dev_home_max"),
+                description = s.t("dev_home_max_desc"),
+                checked = homeMaxPoints,
+                onCheckedChange = onHomeMaxPointsChange,
+            )
         }
+    }
+}
+
+@Composable
+private fun DevSwitchRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = AppText,
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = AppTextMuted.copy(alpha = 0.8f),
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        ArrowSwitch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+        )
     }
 }

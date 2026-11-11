@@ -6,7 +6,7 @@ import com.arrowpuzzle.game.data.ScoreRepository
 import com.arrowpuzzle.game.data.SettingsRepository
 import com.arrowpuzzle.game.data.model.LevelConfig
 import com.arrowpuzzle.game.game.LevelCatalog
-import com.arrowpuzzle.game.scoring.ScoreCalculator
+import com.arrowpuzzle.game.scoring.CampaignMaxScores
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,25 +23,13 @@ data class LevelItem(
     val isPictureLevel: Boolean = false,
 )
 
-/** Maximum scores never change, so they are computed once per process. */
-private val maxScores: IntArray by lazy {
-    IntArray(LevelCatalog.MAX_LEVEL + 1) { levelId ->
-        if (levelId == 0) {
-            0
-        } else {
-            val arrows = LevelCatalog.expectedArrowCountForLevel(levelId)
-            ScoreCalculator.calculate(arrows, 0.0, 0).total
-        }
-    }
-}
-
 private fun buildLevels(bestScores: Map<Int, Int>, highestUnlocked: Int): List<LevelItem> =
     (1..LevelCatalog.visibleLevelCount(highestUnlocked)).map { levelId ->
         LevelItem(
             levelId = levelId,
             openArrowCount = LevelCatalog.openArrowCountForLevel(levelId),
             bestScore = bestScores[levelId] ?: 0,
-            maxScore = maxScores[levelId],
+            maxScore = CampaignMaxScores.forLevel(levelId),
             isUnlocked = levelId <= highestUnlocked,
             isPictureLevel = levelId % LevelCatalog.PICTURE_LEVEL_INTERVAL == 0,
         )

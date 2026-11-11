@@ -15,8 +15,8 @@ android {
         // app stores reject an update whose versionCode is not higher than the
         // installed one. (Up to build 39 it was the git commit count, which can
         // drop after a history rewrite; it is fixed here from build 40 on.)
-        versionCode = 47
-        versionName = "1.2.5"
+        versionCode = 48
+        versionName = "1.2.6"
         vectorDrawables.useSupportLibrary = true
     }
 

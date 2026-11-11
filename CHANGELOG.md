@@ -1,9 +1,24 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46 and is `1.2.5` from build 47. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47 and is `1.2.6` from build 48. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
+
+## 1.2.6 (Build 48) - 2026-11-11
+
+- Larger tap zones: a tap goes to the nearest arrow within 0.75 cells, so
+  there is no dead gap between two neighbouring arrows any more.
+- First start: a split screen shows the menu in light (left) and dark (right),
+  blurred behind one sharp button each, centred on the screen. After a tap the
+  other theme is pulled out to its side and fades while the chosen one comes
+  into focus and becomes Home. Players of older builds skip this screen.
+- "Play" goes straight into level 1 while it is the only open level.
+- Custom Mode warns once, on first opening, that its generated levels can be
+  worse than the campaign levels depending on the settings (arrow-framed card
+  with an arrow button, like the rest of the app).
+- Dev option "Max points on Home": shows the maximum points of all cleared
+  levels under the total points.
 
 ## 1.2.5 (Build 47) - 2026-11-10
 

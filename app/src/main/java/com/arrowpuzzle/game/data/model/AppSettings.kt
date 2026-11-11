@@ -13,6 +13,12 @@ data class AppSettings(
     val devModeEnabled: Boolean = false,
     /** Dev option: show "next arrow" and "perfect win" buttons in levels. */
     val devWinButtons: Boolean = false,
+    /** Dev option: Home shows the maximum points under the total points. */
+    val devHomeMaxPoints: Boolean = false,
+    /** False until the first-start theme choice was made. */
+    val firstRunDone: Boolean = false,
+    /** True once the Custom Mode quality warning was confirmed. */
+    val customWarningSeen: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_MAX_FAILURES = 3
