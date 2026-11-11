@@ -9,8 +9,6 @@ import kotlin.math.sin
  * limit of 64 KB per method. Add further shapes here, not inline in the enum.
  */
 internal object MoreShapes {
-    fun square(): ShapeRegion = Regions.rect(0.06, 0.06, 0.94, 0.94)
-
     fun arch(): ShapeRegion = Regions.minus(Regions.union(Regions.rect(0.1, 0.4, 0.9, 0.95), Regions.above(Regions.ellipse(0.5, 0.4, 0.4, 0.35), 0.4)), Regions.union(Regions.rect(0.32, 0.45, 0.68, 0.96), Regions.above(Regions.ellipse(0.5, 0.45, 0.18, 0.2), 0.45)))
 
     fun stairs(): ShapeRegion = Regions.polygon(0.05, 0.95, 0.05, 0.75, 0.27, 0.75, 0.27, 0.55, 0.5, 0.55, 0.5, 0.35, 0.72, 0.35, 0.72, 0.12, 0.95, 0.12, 0.95, 0.95)
@@ -53,8 +51,6 @@ internal object MoreShapes {
 
     fun horseshoe(): ShapeRegion = Regions.minus(Regions.minus(Regions.circle(0.5, 0.46, 0.44), Regions.circle(0.5, 0.46, 0.22)), Regions.rect(0.36, 0.6, 0.64, 1.0))
 
-    fun palm(): ShapeRegion = Regions.union(Regions.polygon(0.46, 0.4, 0.56, 0.4, 0.66, 0.96, 0.48, 0.96), Regions.circle(0.5, 0.3, 0.11), Regions.bar(0.3, 0.2, 0.5, 0.13, 25.0), Regions.bar(0.7, 0.2, 0.5, 0.13, -25.0), Regions.bar(0.26, 0.38, 0.46, 0.13, -25.0), Regions.bar(0.74, 0.38, 0.46, 0.13, 25.0))
-
     fun oak(): ShapeRegion = Regions.union(Regions.circle(0.5, 0.32, 0.28), Regions.circle(0.26, 0.42, 0.2), Regions.circle(0.74, 0.42, 0.2), Regions.circle(0.38, 0.18, 0.16), Regions.circle(0.62, 0.18, 0.16), Regions.rect(0.42, 0.55, 0.58, 0.96))
 
     fun cherry(): ShapeRegion = Regions.union(Regions.circle(0.3, 0.72, 0.22), Regions.circle(0.72, 0.66, 0.22), Regions.bar(0.45, 0.33, 0.62, 0.08, -61.0), Regions.bar(0.66, 0.28, 0.46, 0.08, 75.0), Regions.ellipse(0.76, 0.1, 0.16, 0.07))
@@ -71,31 +67,19 @@ internal object MoreShapes {
 
     fun feather(): ShapeRegion = Regions.minus(Regions.union(Regions.intersect(Regions.circle(0.18, 0.72, 0.62), Regions.circle(0.72, 0.18, 0.62)), Regions.bar(0.84, 0.84, 0.36, 0.12, 45.0)), Regions.union(Regions.polygon(0.48, 0.42, 0.66, 0.16, 0.84, 0.34), Regions.polygon(0.56, 0.62, 0.2, 0.6, 0.36, 0.8)))
 
-    fun seashell(): ShapeRegion = Regions.minus(Regions.union(Regions.intersect(Regions.circle(0.5, 0.9, 0.8), Regions.polygon(0.5, 0.9, -0.1, 0.35, 0.1, 0.0, 0.9, 0.0, 1.1, 0.35)), Regions.rect(0.36, 0.82, 0.64, 0.95)), Regions.union(Regions.polygon(0.3, 0.02, 0.38, 0.02, 0.35, 0.22), Regions.polygon(0.62, 0.02, 0.7, 0.02, 0.65, 0.22)))
-
     fun mapleLeaf(): ShapeRegion = Regions.polygon(0.5, 0.03, 0.6, 0.22, 0.72, 0.16, 0.68, 0.38, 0.92, 0.34, 0.84, 0.48, 0.96, 0.56, 0.72, 0.72, 0.76, 0.82, 0.54, 0.78, 0.54, 0.97, 0.46, 0.97, 0.46, 0.78, 0.24, 0.82, 0.28, 0.72, 0.04, 0.56, 0.16, 0.48, 0.08, 0.34, 0.32, 0.38, 0.28, 0.16, 0.4, 0.22)
 
     fun island(): ShapeRegion = Regions.union(Regions.below(Regions.ellipse(0.5, 0.8, 0.46, 0.16), 0.72), Regions.polygon(0.46, 0.76, 0.56, 0.76, 0.56, 0.34, 0.5, 0.34), Regions.bar(0.36, 0.3, 0.34, 0.1, 20.0), Regions.bar(0.64, 0.3, 0.34, 0.1, -20.0), Regions.bar(0.36, 0.42, 0.3, 0.1, -30.0), Regions.bar(0.66, 0.42, 0.3, 0.1, 30.0))
 
-    fun tornado(): ShapeRegion = Regions.polygon(0.04, 0.06, 0.96, 0.06, 0.82, 0.26, 0.68, 0.44, 0.6, 0.62, 0.56, 0.8, 0.5, 0.96, 0.44, 0.8, 0.4, 0.62, 0.32, 0.44, 0.18, 0.26)
-
     fun comet(): ShapeRegion = Regions.union(Regions.circle(0.72, 0.3, 0.22), Regions.polygon(0.6, 0.12, 0.9, 0.46, 0.1, 0.92))
-
-    fun planet(): ShapeRegion = Regions.union(Regions.circle(0.5, 0.5, 0.3), Regions.bar(0.5, 0.5, 0.98, 0.1, -20.0))
 
     fun avocado(): ShapeRegion = Regions.minus(Regions.union(Regions.circle(0.5, 0.66, 0.3), Regions.ellipse(0.5, 0.38, 0.2, 0.3)), Regions.circle(0.5, 0.66, 0.13))
 
     fun broccoli(): ShapeRegion = Regions.union(Regions.circle(0.28, 0.38, 0.19), Regions.circle(0.5, 0.26, 0.21), Regions.circle(0.72, 0.38, 0.19), Regions.circle(0.5, 0.46, 0.2), Regions.polygon(0.36, 0.5, 0.64, 0.5, 0.6, 0.95, 0.4, 0.95))
 
-    fun chili(): ShapeRegion = Regions.union(Regions.polygon(0.3, 0.12, 0.6, 0.12, 0.66, 0.3, 0.62, 0.56, 0.46, 0.8, 0.16, 0.96, 0.3, 0.74, 0.34, 0.5, 0.26, 0.28), Regions.rect(0.26, 0.1, 0.64, 0.18), Regions.bar(0.52, 0.07, 0.2, 0.1, -60.0))
-
-    fun lion(): ShapeRegion = Regions.minus(Regions.star(0.5, 0.5, 0.49, 0.38, tips = 14), Regions.union(Regions.circle(0.38, 0.44, 0.05), Regions.circle(0.62, 0.44, 0.05), Regions.polygon(0.44, 0.6, 0.56, 0.6, 0.5, 0.68)))
-
     fun panda(): ShapeRegion = Regions.minus(Regions.union(Regions.circle(0.5, 0.56, 0.38), Regions.circle(0.2, 0.24, 0.14), Regions.circle(0.8, 0.24, 0.14)), Regions.union(Regions.ellipse(0.35, 0.52, 0.09, 0.11), Regions.ellipse(0.65, 0.52, 0.09, 0.11), Regions.circle(0.5, 0.7, 0.05)))
 
     fun koala(): ShapeRegion = Regions.minus(Regions.union(Regions.ellipse(0.5, 0.58, 0.3, 0.34), Regions.circle(0.16, 0.36, 0.16), Regions.circle(0.84, 0.36, 0.16)), Regions.union(Regions.circle(0.38, 0.5, 0.05), Regions.circle(0.62, 0.5, 0.05), Regions.ellipse(0.5, 0.64, 0.07, 0.11)))
-
-    fun monkey(): ShapeRegion = Regions.minus(Regions.union(Regions.circle(0.5, 0.46, 0.3), Regions.circle(0.14, 0.46, 0.12), Regions.circle(0.86, 0.46, 0.12), Regions.ellipse(0.5, 0.7, 0.26, 0.2)), Regions.union(Regions.circle(0.38, 0.4, 0.05), Regions.circle(0.62, 0.4, 0.05), Regions.rect(0.4, 0.72, 0.6, 0.76)))
 
     fun cow(): ShapeRegion = Regions.minus(Regions.union(Regions.ellipse(0.5, 0.5, 0.26, 0.3), Regions.ellipse(0.5, 0.76, 0.2, 0.16), Regions.ellipse(0.13, 0.42, 0.13, 0.07), Regions.ellipse(0.87, 0.42, 0.13, 0.07), Regions.polygon(0.28, 0.28, 0.2, 0.06, 0.4, 0.22), Regions.polygon(0.72, 0.28, 0.8, 0.06, 0.6, 0.22)), Regions.union(Regions.circle(0.38, 0.44, 0.05), Regions.circle(0.62, 0.44, 0.05), Regions.circle(0.43, 0.78, 0.035), Regions.circle(0.57, 0.78, 0.035)))
 
@@ -103,13 +87,9 @@ internal object MoreShapes {
 
     fun giraffe(): ShapeRegion = Regions.union(Regions.ellipse(0.58, 0.66, 0.26, 0.14), Regions.polygon(0.36, 0.62, 0.5, 0.58, 0.34, 0.12, 0.24, 0.12), Regions.ellipse(0.24, 0.1, 0.15, 0.07), Regions.rect(0.38, 0.72, 0.46, 0.97), Regions.rect(0.7, 0.72, 0.78, 0.97))
 
-    fun sheep(): ShapeRegion = Regions.union(Regions.circle(0.34, 0.42, 0.17), Regions.circle(0.54, 0.36, 0.17), Regions.circle(0.72, 0.44, 0.17), Regions.circle(0.6, 0.56, 0.17), Regions.circle(0.38, 0.58, 0.17), Regions.ellipse(0.14, 0.46, 0.12, 0.1), Regions.rect(0.34, 0.66, 0.42, 0.95), Regions.rect(0.6, 0.66, 0.68, 0.95))
-
     fun chicken(): ShapeRegion = Regions.union(Regions.ellipse(0.54, 0.62, 0.34, 0.26), Regions.circle(0.3, 0.36, 0.15), Regions.polygon(0.18, 0.34, 0.04, 0.38, 0.18, 0.44), Regions.polygon(0.22, 0.24, 0.26, 0.1, 0.32, 0.2, 0.36, 0.1, 0.4, 0.24), Regions.polygon(0.82, 0.6, 0.98, 0.3, 0.96, 0.6), Regions.rect(0.46, 0.82, 0.54, 0.97), Regions.rect(0.6, 0.82, 0.68, 0.97))
 
     fun shark(): ShapeRegion = Regions.union(Regions.ellipse(0.46, 0.56, 0.42, 0.17), Regions.polygon(0.4, 0.42, 0.54, 0.12, 0.6, 0.42), Regions.polygon(0.8, 0.5, 0.98, 0.3, 0.92, 0.56, 0.98, 0.8, 0.8, 0.62), Regions.polygon(0.4, 0.66, 0.5, 0.66, 0.34, 0.86))
-
-    fun dolphin(): ShapeRegion = Regions.polygon(0.04, 0.62, 0.2, 0.5, 0.36, 0.36, 0.46, 0.34, 0.54, 0.12, 0.62, 0.34, 0.78, 0.46, 0.9, 0.66, 0.99, 0.6, 0.96, 0.82, 0.8, 0.9, 0.82, 0.72, 0.66, 0.62, 0.5, 0.6, 0.42, 0.76, 0.34, 0.6, 0.2, 0.62)
 
     fun seahorse(): ShapeRegion = Regions.union(Regions.circle(0.5, 0.2, 0.15), Regions.polygon(0.34, 0.18, 0.06, 0.22, 0.06, 0.3, 0.38, 0.3), Regions.ellipse(0.54, 0.5, 0.18, 0.24), Regions.below(Regions.minus(Regions.circle(0.46, 0.76, 0.2), Regions.circle(0.46, 0.76, 0.09)), 0.7), Regions.polygon(0.62, 0.1, 0.78, 0.16, 0.66, 0.24))
 
@@ -119,19 +99,11 @@ internal object MoreShapes {
 
     fun ladybug(): ShapeRegion = Regions.minus(Regions.union(Regions.circle(0.5, 0.56, 0.38), Regions.circle(0.5, 0.16, 0.14)), Regions.union(Regions.circle(0.34, 0.46, 0.06), Regions.circle(0.66, 0.46, 0.06), Regions.circle(0.34, 0.7, 0.06), Regions.circle(0.66, 0.7, 0.06), Regions.circle(0.5, 0.58, 0.06)))
 
-    fun spider(): ShapeRegion = Regions.union(Regions.circle(0.5, 0.52, 0.2), Regions.circle(0.5, 0.26, 0.12), Regions.bar(0.24, 0.36, 0.56, 0.1, 30.0), Regions.bar(0.2, 0.52, 0.6, 0.1, 0.0), Regions.bar(0.24, 0.68, 0.56, 0.1, -30.0), Regions.bar(0.76, 0.36, 0.56, 0.1, -30.0), Regions.bar(0.8, 0.52, 0.6, 0.1, 0.0), Regions.bar(0.76, 0.68, 0.56, 0.1, 30.0))
-
     fun snake(): ShapeRegion = Regions.union(Regions.minus(Regions.minus(Regions.circle(0.5, 0.3, 0.27), Regions.circle(0.5, 0.3, 0.12)), Regions.rect(0.5, 0.3, 1.0, 0.6)), Regions.minus(Regions.minus(Regions.circle(0.5, 0.7, 0.27), Regions.circle(0.5, 0.7, 0.12)), Regions.rect(0.0, 0.4, 0.5, 0.7)), Regions.ellipse(0.78, 0.24, 0.1, 0.12))
 
     fun swan(): ShapeRegion = Regions.union(Regions.ellipse(0.56, 0.72, 0.36, 0.2), Regions.polygon(0.92, 0.66, 0.99, 0.46, 0.88, 0.76), Regions.circle(0.3, 0.14, 0.1), Regions.polygon(0.22, 0.1, 0.06, 0.2, 0.22, 0.2), Regions.bar(0.38, 0.42, 0.58, 0.12, 74.0))
 
-    fun bat(): ShapeRegion = Regions.polygon(0.02, 0.34, 0.2, 0.22, 0.36, 0.3, 0.44, 0.16, 0.5, 0.24, 0.56, 0.16, 0.64, 0.3, 0.8, 0.22, 0.98, 0.34, 0.9, 0.62, 0.78, 0.52, 0.68, 0.68, 0.58, 0.58, 0.5, 0.84, 0.42, 0.58, 0.32, 0.68, 0.22, 0.52, 0.1, 0.62)
-
-    fun hedgehog(): ShapeRegion = Regions.union(Regions.above(Regions.star(0.54, 0.54, 0.46, 0.34, tips = 16), 0.76), Regions.ellipse(0.16, 0.66, 0.16, 0.1), Regions.rect(0.34, 0.72, 0.44, 0.9), Regions.rect(0.64, 0.72, 0.74, 0.9))
-
     fun camel(): ShapeRegion = Regions.union(Regions.ellipse(0.56, 0.56, 0.34, 0.18), Regions.circle(0.44, 0.38, 0.14), Regions.circle(0.7, 0.38, 0.14), Regions.polygon(0.24, 0.46, 0.4, 0.58, 0.22, 0.3, 0.1, 0.22), Regions.ellipse(0.12, 0.24, 0.12, 0.09), Regions.rect(0.3, 0.62, 0.4, 0.96), Regions.rect(0.72, 0.62, 0.82, 0.96))
-
-    fun paw(): ShapeRegion = Regions.union(Regions.ellipse(0.5, 0.68, 0.34, 0.26), Regions.ellipse(0.14, 0.48, 0.09, 0.15), Regions.ellipse(0.37, 0.3, 0.09, 0.2), Regions.ellipse(0.63, 0.3, 0.09, 0.2), Regions.ellipse(0.86, 0.48, 0.09, 0.15))
 
     fun truck(): ShapeRegion = Regions.minus(Regions.union(Regions.rect(0.03, 0.26, 0.62, 0.72), Regions.polygon(0.62, 0.4, 0.84, 0.4, 0.97, 0.56, 0.97, 0.72, 0.62, 0.72), Regions.circle(0.24, 0.76, 0.12), Regions.circle(0.76, 0.76, 0.12)), Regions.polygon(0.68, 0.46, 0.82, 0.46, 0.9, 0.56, 0.68, 0.56))
 
@@ -143,8 +115,6 @@ internal object MoreShapes {
 
     fun submarine(): ShapeRegion = Regions.minus(Regions.union(Regions.ellipse(0.5, 0.6, 0.46, 0.2), Regions.rect(0.38, 0.26, 0.62, 0.44), Regions.rect(0.54, 0.12, 0.6, 0.28)), Regions.union(Regions.circle(0.3, 0.6, 0.06), Regions.circle(0.5, 0.6, 0.06), Regions.circle(0.7, 0.6, 0.06)))
 
-    fun hotAirBalloon(): ShapeRegion = Regions.union(Regions.circle(0.5, 0.36, 0.32), Regions.polygon(0.2, 0.46, 0.8, 0.46, 0.6, 0.74, 0.4, 0.74), Regions.rect(0.4, 0.72, 0.6, 0.94))
-
     fun castle(): ShapeRegion = Regions.minus(Regions.union(Regions.rect(0.04, 0.14, 0.28, 0.96), Regions.rect(0.72, 0.14, 0.96, 0.96), Regions.rect(0.2, 0.38, 0.8, 0.96), Regions.rect(0.38, 0.2, 0.62, 0.4)), Regions.union(Regions.rect(0.12, 0.12, 0.2, 0.2), Regions.rect(0.8, 0.12, 0.88, 0.2), Regions.rect(0.46, 0.18, 0.54, 0.26), Regions.rect(0.42, 0.72, 0.58, 0.97)))
 
     fun tent(): ShapeRegion = Regions.minus(Regions.polygon(0.5, 0.06, 0.97, 0.92, 0.03, 0.92), Regions.polygon(0.5, 0.46, 0.66, 0.93, 0.34, 0.93))
@@ -152,10 +122,6 @@ internal object MoreShapes {
     fun lighthouse(): ShapeRegion = Regions.minus(Regions.union(Regions.polygon(0.38, 0.36, 0.62, 0.36, 0.72, 0.92, 0.28, 0.92), Regions.rect(0.22, 0.88, 0.78, 0.97), Regions.rect(0.34, 0.28, 0.66, 0.36), Regions.rect(0.4, 0.12, 0.6, 0.28), Regions.polygon(0.36, 0.12, 0.64, 0.12, 0.5, 0.02)), Regions.rect(0.46, 0.16, 0.54, 0.26))
 
     fun windmill(): ShapeRegion = Regions.union(Regions.polygon(0.38, 0.42, 0.62, 0.42, 0.72, 0.97, 0.28, 0.97), Regions.circle(0.5, 0.38, 0.08), Regions.bar(0.5, 0.38, 0.84, 0.14, 45.0), Regions.bar(0.5, 0.38, 0.84, 0.14, -45.0))
-
-    fun igloo(): ShapeRegion = Regions.minus(Regions.union(Regions.above(Regions.ellipse(0.5, 0.8, 0.46, 0.62), 0.8), Regions.rect(0.04, 0.78, 0.96, 0.86)), Regions.above(Regions.ellipse(0.5, 0.86, 0.16, 0.22), 0.86))
-
-    fun hammer(): ShapeRegion = Regions.union(Regions.rect(0.16, 0.1, 0.84, 0.34), Regions.polygon(0.16, 0.1, 0.04, 0.22, 0.16, 0.34), Regions.rect(0.43, 0.3, 0.57, 0.97))
 
     fun wrench(): ShapeRegion = Regions.minus(Regions.union(Regions.circle(0.26, 0.26, 0.22), Regions.circle(0.74, 0.74, 0.22), Regions.bar(0.5, 0.5, 0.8, 0.14, 45.0)), Regions.union(Regions.polygon(0.26, 0.26, 0.0, 0.16, 0.16, 0.0), Regions.polygon(0.74, 0.74, 1.0, 0.84, 0.84, 1.0)))
 
@@ -207,5 +173,4 @@ internal object MoreShapes {
 
     fun bomb(): ShapeRegion = Regions.union(Regions.circle(0.45, 0.6, 0.35), Regions.bar(0.7, 0.28, 0.22, 0.14, -45.0), Regions.star(0.84, 0.14, 0.14, 0.06, tips = 6))
 
-    fun magnet(): ShapeRegion = Regions.union(Regions.rect(0.06, 0.06, 0.3, 0.42), Regions.rect(0.7, 0.06, 0.94, 0.42), Regions.below(Regions.minus(Regions.circle(0.5, 0.42, 0.44), Regions.circle(0.5, 0.42, 0.2)), 0.42))
 }

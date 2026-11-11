@@ -13,6 +13,20 @@ git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
   free of charge, and a link to the GitHub repository. The footer text under
   the menu is gone.
 - Custom Mode warning and the new About card share one arrow-styled dialog.
+- **34 picture shapes redrawn** with more detail, turned or seen from another
+  side where that fills the board better: butterfly (spotted wings,
+  antennae), snowflake (branched arms), lightning (storm cloud with bolt),
+  banana, carrot (leaves, diagonal), bird (songbird on a branch), fox (head
+  with ear and eye cut-outs), penguin, burger (bun with seeds, layers),
+  palm (bent trunk, drooping fronds, coconuts), seashell (ribbed scallop),
+  chili, lion (whole lion with mane and tail), monkey, sheep, hedgehog,
+  magnet, dog, pig, dolphin, bat, spider, paw, tornado, planet, volcano,
+  hot-air balloon, igloo, whale, cloud, lemon and hammer.
+- The plain square and rounded square picture levels looked like normal
+  levels; they are now a squirrel and a deer.
+- Shapes can use thick round-ended strokes, rotation and mirroring.
+  Picture levels with a changed shape get a new board; an unfinished one from
+  an older build is discarded. Scores are kept.
 
 ## 1.2.7 (Build 49) - 2026-11-11
 

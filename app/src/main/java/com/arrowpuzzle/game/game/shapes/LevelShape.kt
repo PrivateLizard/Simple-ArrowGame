@@ -121,6 +121,38 @@ object Regions {
     fun minus(base: ShapeRegion, cut: ShapeRegion) = ShapeRegion { x, y ->
         base.contains(x, y) && !cut.contains(x, y)
     }
+
+    /** Thick line from (x1, y1) to (x2, y2) with round ends; [r] is half the width. */
+    fun capsule(x1: Double, y1: Double, x2: Double, y2: Double, r: Double): ShapeRegion {
+        val dx = x2 - x1
+        val dy = y2 - y1
+        val lengthSquared = dx * dx + dy * dy
+        return ShapeRegion { x, y ->
+            val t = if (lengthSquared > 0.0) {
+                (((x - x1) * dx + (y - y1) * dy) / lengthSquared).coerceIn(0.0, 1.0)
+            } else {
+                0.0
+            }
+            val px = x - (x1 + t * dx)
+            val py = y - (y1 + t * dy)
+            px * px + py * py <= r * r
+        }
+    }
+
+    /** [region] turned clockwise (on screen) by [angleDeg] around (cx, cy). */
+    fun rotate(region: ShapeRegion, angleDeg: Double, cx: Double = 0.5, cy: Double = 0.5): ShapeRegion {
+        val angle = Math.toRadians(angleDeg)
+        val c = cos(angle)
+        val s = sin(angle)
+        return ShapeRegion { x, y ->
+            val dx = x - cx
+            val dy = y - cy
+            region.contains(cx + dx * c + dy * s, cy - dx * s + dy * c)
+        }
+    }
+
+    /** [region] mirrored left to right. */
+    fun mirror(region: ShapeRegion) = ShapeRegion { x, y -> region.contains(1.0 - x, y) }
 }
 
 /**
@@ -177,15 +209,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
         ),
     ),
     MOON("moon", Regions.minus(Regions.circle(0.5, 0.5, 0.45), Regions.circle(0.68, 0.38, 0.37))),
-    CLOUD(
-        "cloud",
-        Regions.union(
-            Regions.circle(0.28, 0.60, 0.17),
-            Regions.circle(0.48, 0.45, 0.24),
-            Regions.circle(0.72, 0.55, 0.20),
-            Regions.ellipse(0.50, 0.68, 0.42, 0.14),
-        ),
-    ),
+    CLOUD("cloud", DetailedShapes.cloud()),
     TREE(
         "tree",
         Regions.union(
@@ -228,10 +252,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.ellipse(0.64, 0.80, 0.13, 0.06), // leaf
         ),
     ),
-    LIGHTNING(
-        "lightning",
-        Regions.polygon(0.60, 0.02, 0.18, 0.56, 0.46, 0.56, 0.34, 0.98, 0.84, 0.40, 0.55, 0.40, 0.72, 0.02),
-    ),
+    LIGHTNING("lightning", DetailedShapes.lightning()),
     FISH(
         "fish",
         Regions.minus(
@@ -250,18 +271,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.polygon(0.83, 0.46, 0.79, 0.05, 0.54, 0.27), // right ear
         ),
     ),
-    BUTTERFLY(
-        "butterfly",
-        Regions.union(
-            // Upper wings tilt outwards, lower wings are smaller; a clear gap
-            // between them keeps the four wings readable.
-            Regions.polygon(0.50, 0.42, 0.40, 0.12, 0.18, 0.06, 0.04, 0.18, 0.08, 0.40, 0.30, 0.50),
-            Regions.polygon(0.50, 0.42, 0.60, 0.12, 0.82, 0.06, 0.96, 0.18, 0.92, 0.40, 0.70, 0.50),
-            Regions.ellipse(0.32, 0.71, 0.16, 0.15),
-            Regions.ellipse(0.68, 0.71, 0.16, 0.15),
-            Regions.rect(0.45, 0.20, 0.55, 0.86), // body
-        ),
-    ),
+    BUTTERFLY("butterfly", DetailedShapes.butterfly()),
     BUNNY(
         "bunny",
         Regions.union(
@@ -355,17 +365,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
         "octagon",
         Regions.regularPolygon(0.5, 0.5, 0.48, 8, rotationDeg = 22.5),
     ),
-    ROUNDED_SQUARE(
-        "rounded_square",
-        Regions.union(
-            Regions.rect(0.18, 0.05, 0.82, 0.95),
-            Regions.rect(0.05, 0.18, 0.95, 0.82),
-            Regions.circle(0.18, 0.18, 0.13),
-            Regions.circle(0.82, 0.18, 0.13),
-            Regions.circle(0.18, 0.82, 0.13),
-            Regions.circle(0.82, 0.82, 0.13),
-        ),
-    ),
+    DEER("deer", DetailedShapes.deer()),
     PARALLELOGRAM(
         "parallelogram",
         Regions.polygon(0.28, 0.15, 0.97, 0.15, 0.72, 0.85, 0.03, 0.85),
@@ -466,10 +466,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.rect(0.47, 0.08, 0.54, 0.22),
         ),
     ),
-    BANANA(
-        "banana",
-        Regions.minus(Regions.ellipse(0.5, 0.34, 0.46, 0.52), Regions.ellipse(0.5, 0.2, 0.42, 0.46)),
-    ),
+    BANANA("banana", DetailedShapes.banana()),
     STRAWBERRY(
         "strawberry",
         Regions.union(
@@ -480,44 +477,18 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.rect(0.46, 0.04, 0.54, 0.16),
         ),
     ),
-    LEMON(
-        "lemon",
-        Regions.union(
-            Regions.ellipse(0.5, 0.5, 0.4, 0.28),
-            Regions.polygon(0.03, 0.5, 0.16, 0.4, 0.16, 0.6),
-            Regions.polygon(0.97, 0.5, 0.84, 0.4, 0.84, 0.6),
-        ),
-    ),
-    CARROT(
-        "carrot",
-        Regions.union(
-            Regions.polygon(0.34, 0.24, 0.66, 0.24, 0.53, 0.96, 0.47, 0.96),
-            Regions.ellipse(0.4, 0.14, 0.06, 0.12),
-            Regions.ellipse(0.5, 0.11, 0.06, 0.13),
-            Regions.ellipse(0.6, 0.14, 0.06, 0.12),
-        ),
-    ),
+    LEMON("lemon", DetailedShapes.lemon()),
+    CARROT("carrot", DetailedShapes.carrot()),
     MOUNTAIN(
         "mountain",
         Regions.polygon(0.02, 0.92, 0.34, 0.3, 0.46, 0.46, 0.62, 0.1, 0.98, 0.92),
     ),
-    SNOWFLAKE(
-        "snowflake",
-        Regions.union(
-            Regions.bar(0.5, 0.5, 0.94, 0.14, 90.0),
-            Regions.bar(0.5, 0.5, 0.94, 0.14, 30.0),
-            Regions.bar(0.5, 0.5, 0.94, 0.14, -30.0),
-            Regions.regularPolygon(0.5, 0.5, 0.18, 6),
-        ),
-    ),
+    SNOWFLAKE("snowflake", DetailedShapes.snowflake()),
     RAINBOW(
         "rainbow",
         Regions.above(Regions.minus(Regions.circle(0.5, 0.82, 0.47), Regions.circle(0.5, 0.82, 0.22)), 0.82),
     ),
-    VOLCANO(
-        "volcano",
-        Regions.polygon(0.03, 0.94, 0.36, 0.32, 0.44, 0.38, 0.56, 0.38, 0.64, 0.32, 0.97, 0.94),
-    ),
+    VOLCANO("volcano", DetailedShapes.volcano()),
     EGG(
         "egg",
         Regions.union(
@@ -525,18 +496,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.ellipse(0.5, 0.42, 0.26, 0.36),
         ),
     ),
-    DOG(
-        "dog",
-        Regions.minus(
-            Regions.union(
-                Regions.circle(0.5, 0.46, 0.27), // head
-                Regions.ellipse(0.19, 0.58, 0.10, 0.24), // left ear
-                Regions.ellipse(0.81, 0.58, 0.10, 0.24), // right ear
-                Regions.ellipse(0.5, 0.72, 0.17, 0.14), // snout
-            ),
-            Regions.union(Regions.circle(0.40, 0.42, 0.045), Regions.circle(0.60, 0.42, 0.045)),
-        ),
-    ),
+    DOG("dog", DetailedShapes.dog()),
     OWL(
         "owl",
         Regions.minus(Regions.union(
@@ -548,17 +508,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.circle(0.62, 0.42, 0.08),
         )),
     ),
-    PENGUIN(
-        "penguin",
-        Regions.union(
-            Regions.ellipse(0.5, 0.57, 0.27, 0.38),
-            Regions.circle(0.5, 0.22, 0.17),
-            Regions.ellipse(0.24, 0.56, 0.07, 0.2),
-            Regions.ellipse(0.76, 0.56, 0.07, 0.2),
-            Regions.ellipse(0.4, 0.95, 0.1, 0.04),
-            Regions.ellipse(0.6, 0.95, 0.1, 0.04),
-        ),
-    ),
+    PENGUIN("penguin", DetailedShapes.penguin()),
     TURTLE(
         "turtle",
         Regions.union(
@@ -578,13 +528,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.ellipse(0.86, 0.62, 0.08, 0.16),
         ),
     ),
-    WHALE(
-        "whale",
-        Regions.union(
-            Regions.ellipse(0.44, 0.56, 0.38, 0.24),
-            Regions.polygon(0.76, 0.52, 0.9, 0.3, 0.99, 0.22, 0.96, 0.42, 0.86, 0.6),
-        ),
-    ),
+    WHALE("whale", DetailedShapes.whale()),
     DUCK(
         "duck",
         Regions.union(
@@ -595,10 +539,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.polygon(0.84, 0.58, 0.98, 0.42, 0.92, 0.68),
         ),
     ),
-    BIRD(
-        "bird",
-        Regions.polygon(0.02, 0.28, 0.26, 0.36, 0.5, 0.54, 0.74, 0.36, 0.98, 0.28, 0.8, 0.54, 0.56, 0.72, 0.44, 0.72, 0.2, 0.54),
-    ),
+    BIRD("bird", DetailedShapes.bird()),
     ELEPHANT(
         "elephant",
         Regions.union(
@@ -619,26 +560,8 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.rect(0.03, 0.66, 0.14, 0.73),
         ),
     ),
-    PIG(
-        "pig",
-        Regions.minus(
-            Regions.union(
-                Regions.circle(0.5, 0.54, 0.36), // head
-                Regions.polygon(0.20, 0.30, 0.20, 0.14, 0.36, 0.22), // small ears
-                Regions.polygon(0.80, 0.30, 0.80, 0.14, 0.64, 0.22),
-            ),
-            Regions.union(
-                // snout ring with two nostrils
-                Regions.minus(Regions.ellipse(0.5, 0.64, 0.17, 0.12), Regions.ellipse(0.5, 0.64, 0.12, 0.08)),
-                Regions.circle(0.44, 0.64, 0.035),
-                Regions.circle(0.56, 0.64, 0.035),
-            ),
-        ),
-    ),
-    FOX(
-        "fox",
-        Regions.polygon(0.05, 0.1, 0.32, 0.3, 0.5, 0.27, 0.68, 0.3, 0.95, 0.1, 0.86, 0.54, 0.5, 0.93, 0.14, 0.54),
-    ),
+    PIG("pig", DetailedShapes.pig()),
+    FOX("fox", DetailedShapes.fox()),
     FROG(
         "frog",
         Regions.minus(Regions.union(
@@ -829,16 +752,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.ellipse(0.5, 0.08, 0.06, 0.07),
         ),
     ),
-    BURGER(
-        "burger",
-        Regions.union(
-            Regions.above(Regions.ellipse(0.5, 0.44, 0.40, 0.32), 0.44), // top bun
-            Regions.rect(0.03, 0.44, 0.97, 0.58), // patty sticks out at the sides
-            Regions.rect(0.12, 0.58, 0.88, 0.76), // bottom bun
-            Regions.circle(0.12, 0.67, 0.09),
-            Regions.circle(0.88, 0.67, 0.09),
-        ),
-    ),
+    BURGER("burger", DetailedShapes.burger()),
     CANDY(
         "candy",
         Regions.union(
@@ -912,7 +826,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
             Regions.rect(0.25, 0.76, 0.75, 0.93),
         ),
     ),
-    SQUARE("square", MoreShapes.square()),
+    SQUIRREL("squirrel", DetailedShapes.squirrel()),
     ARCH("arch", MoreShapes.arch()),
     STAIRS("stairs", MoreShapes.stairs()),
     ZIGZAG("zigzag", MoreShapes.zigzag()),
@@ -934,7 +848,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
     CLUBS("clubs", MoreShapes.clubs()),
     BATTERY("battery", MoreShapes.battery()),
     HORSESHOE("horseshoe", MoreShapes.horseshoe()),
-    PALM("palm", MoreShapes.palm()),
+    PALM("palm", DetailedShapes.palm()),
     OAK("oak", MoreShapes.oak()),
     CHERRY("cherry", MoreShapes.cherry()),
     GRAPES("grapes", MoreShapes.grapes()),
@@ -943,49 +857,49 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
     PUMPKIN("pumpkin", MoreShapes.pumpkin()),
     SUNFLOWER("sunflower", MoreShapes.sunflower()),
     FEATHER("feather", MoreShapes.feather()),
-    SEASHELL("seashell", MoreShapes.seashell()),
+    SEASHELL("seashell", DetailedShapes.seashell()),
     MAPLE_LEAF("maple_leaf", MoreShapes.mapleLeaf()),
     ISLAND("island", MoreShapes.island()),
-    TORNADO("tornado", MoreShapes.tornado()),
+    TORNADO("tornado", DetailedShapes.tornado()),
     COMET("comet", MoreShapes.comet()),
-    PLANET("planet", MoreShapes.planet()),
+    PLANET("planet", DetailedShapes.planet()),
     AVOCADO("avocado", MoreShapes.avocado()),
     BROCCOLI("broccoli", MoreShapes.broccoli()),
-    CHILI("chili", MoreShapes.chili()),
-    LION("lion", MoreShapes.lion()),
+    CHILI("chili", DetailedShapes.chili()),
+    LION("lion", DetailedShapes.lion()),
     PANDA("panda", MoreShapes.panda()),
     KOALA("koala", MoreShapes.koala()),
-    MONKEY("monkey", MoreShapes.monkey()),
+    MONKEY("monkey", DetailedShapes.monkey()),
     COW("cow", MoreShapes.cow()),
     HORSE("horse", MoreShapes.horse()),
     GIRAFFE("giraffe", MoreShapes.giraffe()),
-    SHEEP("sheep", MoreShapes.sheep()),
+    SHEEP("sheep", DetailedShapes.sheep()),
     CHICKEN("chicken", MoreShapes.chicken()),
     SHARK("shark", MoreShapes.shark()),
-    DOLPHIN("dolphin", MoreShapes.dolphin()),
+    DOLPHIN("dolphin", DetailedShapes.dolphin()),
     SEAHORSE("seahorse", MoreShapes.seahorse()),
     JELLYFISH("jellyfish", MoreShapes.jellyfish()),
     BEE("bee", MoreShapes.bee()),
     LADYBUG("ladybug", MoreShapes.ladybug()),
-    SPIDER("spider", MoreShapes.spider()),
+    SPIDER("spider", DetailedShapes.spider()),
     SNAKE("snake", MoreShapes.snake()),
     SWAN("swan", MoreShapes.swan()),
-    BAT("bat", MoreShapes.bat()),
-    HEDGEHOG("hedgehog", MoreShapes.hedgehog()),
+    BAT("bat", DetailedShapes.bat()),
+    HEDGEHOG("hedgehog", DetailedShapes.hedgehog()),
     CAMEL("camel", MoreShapes.camel()),
-    PAW("paw", MoreShapes.paw()),
+    PAW("paw", DetailedShapes.paw()),
     TRUCK("truck", MoreShapes.truck()),
     BUS("bus", MoreShapes.bus()),
     TRAIN("train", MoreShapes.train()),
     HELICOPTER("helicopter", MoreShapes.helicopter()),
     SUBMARINE("submarine", MoreShapes.submarine()),
-    HOT_AIR_BALLOON("hot_air_balloon", MoreShapes.hotAirBalloon()),
+    HOT_AIR_BALLOON("hot_air_balloon", DetailedShapes.hotAirBalloon()),
     CASTLE("castle", MoreShapes.castle()),
     TENT("tent", MoreShapes.tent()),
     LIGHTHOUSE("lighthouse", MoreShapes.lighthouse()),
     WINDMILL("windmill", MoreShapes.windmill()),
-    IGLOO("igloo", MoreShapes.igloo()),
-    HAMMER("hammer", MoreShapes.hammer()),
+    IGLOO("igloo", DetailedShapes.igloo()),
+    HAMMER("hammer", DetailedShapes.hammer()),
     WRENCH("wrench", MoreShapes.wrench()),
     SCISSORS("scissors", MoreShapes.scissors()),
     SWORD("sword", MoreShapes.sword()),
@@ -1011,7 +925,7 @@ enum class LevelShape(val id: String, val region: ShapeRegion) {
     ROBOT("robot", MoreShapes.robot()),
     TREASURE_CHEST("treasure_chest", MoreShapes.treasureChest()),
     BOMB("bomb", MoreShapes.bomb()),
-    MAGNET("magnet", MoreShapes.magnet()),
+    MAGNET("magnet", DetailedShapes.magnet()),
     ;
 
     companion object {
