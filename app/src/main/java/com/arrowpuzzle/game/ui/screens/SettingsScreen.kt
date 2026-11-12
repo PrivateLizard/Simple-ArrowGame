@@ -40,6 +40,7 @@ import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.components.ArrowSwitch
 import com.arrowpuzzle.game.ui.components.AppTopBar
 import com.arrowpuzzle.game.ui.components.ArrowButton
+import com.arrowpuzzle.game.ui.components.ArrowDialog
 import com.arrowpuzzle.game.ui.components.ArrowChip
 import com.arrowpuzzle.game.ui.components.ScreenBackground
 import com.arrowpuzzle.game.ui.components.MaxFailuresPicker
@@ -59,11 +60,13 @@ fun SettingsScreen(
     onHapticChange: (Boolean) -> Unit,
     onHintsChange: (Boolean) -> Unit,
     onLanguageChange: (String) -> Unit,
+    onBackupChange: (Boolean) -> Unit,
     onDevModeChange: (Boolean) -> Unit,
     onResetProgress: () -> Unit,
     onBack: () -> Unit,
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var showBackupNote by remember { mutableStateOf(false) }
     var showDevDialog by remember { mutableStateOf(false) }
     val s = LocalStrings.current
 
@@ -138,6 +141,19 @@ fun SettingsScreen(
                     }
                 }
 
+                Spacer(Modifier.height(14.dp))
+
+                SectionCard {
+                    ToggleRow(
+                        title = s.t("backup"),
+                        checked = settings.backupEnabled,
+                        onCheckedChange = { enabled ->
+                            // Switching on only after the note was confirmed.
+                            if (enabled) showBackupNote = true else onBackupChange(false)
+                        },
+                    )
+                }
+
                 Spacer(Modifier.height(22.dp))
 
                 ArrowButton(
@@ -210,6 +226,25 @@ fun SettingsScreen(
         )
     }
 
+    if (showBackupNote) {
+        ArrowDialog(
+            title = s.t("backup"),
+            buttonText = s.t("enable"),
+            onDismiss = {
+                showBackupNote = false
+                onBackupChange(true)
+            },
+            cancelText = s.t("cancel"),
+            onCancel = { showBackupNote = false },
+        ) {
+            Text(
+                text = s.t("backup_note"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppText,
+            )
+        }
+    }
+
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
@@ -269,7 +304,6 @@ private fun LanguageOptions(
 @Composable
 private fun ToggleRow(
     title: String,
-    description: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -278,20 +312,12 @@ private fun ToggleRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = AppText,
-            )
-            if (description != null) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppTextMuted,
-                )
-            }
-        }
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+            color = AppText,
+        )
         ArrowSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,

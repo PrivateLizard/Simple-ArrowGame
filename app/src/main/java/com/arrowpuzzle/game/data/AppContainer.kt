@@ -7,6 +7,9 @@ import com.arrowpuzzle.game.util.SoundEffects
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
+    /** Created first: a restored backup must be in place before the stores load. */
+    private val backupMirror = BackupMirror(appContext)
+
     val settingsRepository = SettingsRepository(appContext)
     val scoreRepository = ScoreRepository(appContext)
     val progressRepository = ProgressRepository(appContext)

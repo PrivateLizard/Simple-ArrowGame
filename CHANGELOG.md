@@ -1,15 +1,30 @@
 # Changelog
 
 All notable changes to Simple Arrow Puzzle. `versionName` was `1.0` up to build 39,
-`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48, `1.2.7` for build 49, `1.2.8` for build 50 and is `1.3.0` from build 51. The build
+`1.0.1` for build 40, `1.1.0` for build 41, `1.2.0` for build 42, `1.2.1` for build 43, `1.2.2` for build 44, `1.2.3` for build 45, `1.2.4` for build 46, `1.2.5` for build 47, `1.2.6` for build 48, `1.2.7` for build 49, `1.2.8` for build 50, `1.3.0` for build 51 and is `1.3.1` from build 52. The build
 number (`versionCode`) is shown on the Settings screen. Up to build 39 it was the
 git commit count; from build 40 on it is set by hand in `app/build.gradle.kts`.
 
-## Unreleased
+## 1.3.1 (Build 52) - 2026-11-12
 
+- **Package name:** the app id is now `com.simplearrowpuzzle.game` (the old
+  one was already taken on Google Play). Android treats this as a new app: an
+  installed build with the old id stays separate and its progress is not
+  carried over. The Kotlin namespace stays `com.arrowpuzzle.game`.
+- **New:** optional backup in Settings, off by default. When switched on, best
+  scores, the unlocked level and the settings go into Android's own backup
+  (end-to-end encrypted Google backup or a phone-to-phone transfer) and come
+  back after a reinstall or on a new phone. Only one dedicated file is ever
+  included; it stays empty while backup is off. Developer options and an
+  unfinished level are not backed up. Switching it on first opens a note
+  (Enable / Cancel) that explains what is saved and what Android needs for
+  it: Android backup turned on and a screen lock, so the backup is
+  end-to-end encrypted; backups run about once a day.
 - **Fix:** the first-start screen showed no blur on Android 11 and older
   (the system blur needs Android 12). There the menu preview is now drawn
-  small and scaled back up, which blurs it on every version.
+  into a bitmap at a quarter of its size, blurred once with three box passes
+  (close to the Gaussian blur of Android 12) and kept, so the animation after
+  the choice only fades it out and never recomputes it.
 
 ## 1.3.0 (Build 51) - 2026-11-11
 

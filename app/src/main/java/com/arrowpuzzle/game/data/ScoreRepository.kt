@@ -123,10 +123,10 @@ class ScoreRepository(context: Context) {
     private fun levelKey(levelId: Int): String = "$LEVEL_KEY_PREFIX$levelId"
 
 
-    private companion object {
+    companion object {
         const val PREFERENCES_NAME = "arrow_puzzle_scores"
-        const val LEVEL_KEY_PREFIX = "best_level_"
-        const val KEY_GLOBAL_BEST = "global_best"
-        const val KEY_UNLOCKED = "highest_unlocked"
+        private const val LEVEL_KEY_PREFIX = "best_level_"
+        private const val KEY_GLOBAL_BEST = "global_best"
+        private const val KEY_UNLOCKED = "highest_unlocked"
     }
 }

@@ -27,5 +27,7 @@ class SettingsViewModel(
 
     fun setDevModeEnabled(enabled: Boolean) = settingsRepository.setDevModeEnabled(enabled)
 
+    fun setBackupEnabled(enabled: Boolean) = settingsRepository.setBackupEnabled(enabled)
+
     fun resetProgress() = scoreRepository.clearProgress()
 }

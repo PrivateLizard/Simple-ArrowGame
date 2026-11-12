@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older: only the opt-in backup file (see BackupMirror), and
+     only to a backup that is encrypted on the device. -->
+<full-backup-content>
+    <include
+        domain="sharedpref"
+        path="arrow_puzzle_backup.xml"
+        requireFlags="clientSideEncryption" />
+</full-backup-content>

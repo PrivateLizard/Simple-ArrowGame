@@ -8,15 +8,15 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.arrowpuzzle.game"
+        applicationId = "com.simplearrowpuzzle.game"
         minSdk = 24
         targetSdk = 36
         // Build number shown in Settings. Increase it by one for every release:
         // app stores reject an update whose versionCode is not higher than the
         // installed one. (Up to build 39 it was the git commit count, which can
         // drop after a history rewrite; it is fixed here from build 40 on.)
-        versionCode = 51
-        versionName = "1.3.0"
+        versionCode = 52
+        versionName = "1.3.1"
         vectorDrawables.useSupportLibrary = true
     }
 

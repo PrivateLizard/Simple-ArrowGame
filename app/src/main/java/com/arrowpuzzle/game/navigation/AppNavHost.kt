@@ -183,6 +183,7 @@ fun AppNavHost(container: AppContainer) {
                 onHapticChange = viewModel::setHapticEnabled,
                 onHintsChange = viewModel::setHintsEnabled,
                 onLanguageChange = viewModel::setLanguage,
+                onBackupChange = viewModel::setBackupEnabled,
                 onDevModeChange = viewModel::setDevModeEnabled,
                 onResetProgress = viewModel::resetProgress,
                 onBack = { navController.popBackStack() },

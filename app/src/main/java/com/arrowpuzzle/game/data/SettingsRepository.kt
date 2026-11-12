@@ -55,6 +55,10 @@ class SettingsRepository(context: Context) {
         it.copy(nightMode = nightMode, firstRunDone = true)
     }
 
+    fun setBackupEnabled(enabled: Boolean) = update {
+        it.copy(backupEnabled = enabled)
+    }
+
     fun markCustomWarningSeen() = update {
         it.copy(customWarningSeen = true)
     }
@@ -74,6 +78,7 @@ class SettingsRepository(context: Context) {
                 putBoolean(KEY_DEV_HOME_MAX, updated.devHomeMaxPoints)
                 putBoolean(KEY_FIRST_RUN_DONE, updated.firstRunDone)
                 putBoolean(KEY_CUSTOM_WARNING_SEEN, updated.customWarningSeen)
+                putBoolean(KEY_BACKUP, updated.backupEnabled)
             }
             _settings.value = updated
         }
@@ -95,6 +100,7 @@ class SettingsRepository(context: Context) {
         // no first-start screen for those players.
         firstRunDone = preferences.getBoolean(KEY_FIRST_RUN_DONE, preferences.contains(KEY_NIGHT_MODE)),
         customWarningSeen = preferences.getBoolean(KEY_CUSTOM_WARNING_SEEN, false),
+        backupEnabled = preferences.getBoolean(KEY_BACKUP, false),
     )
 
     private fun normalizeMaxFailures(value: Int): Int =
@@ -104,18 +110,19 @@ class SettingsRepository(context: Context) {
             value.coerceIn(0, 99)
         }
 
-    private companion object {
+    companion object {
         const val PREFERENCES_NAME = "arrow_puzzle_settings"
-        const val KEY_MAX_FAILURES = "max_failures"
-        const val KEY_NIGHT_MODE = "night_mode"
-        const val KEY_SOUND = "sound_enabled"
-        const val KEY_HAPTICS = "haptics_enabled"
-        const val KEY_HINTS = "hints_enabled"
-        const val KEY_LANGUAGE = "language"
-        const val KEY_DEV_MODE = "dev_mode_enabled"
-        const val KEY_DEV_WIN_BUTTONS = "dev_win_buttons"
-        const val KEY_DEV_HOME_MAX = "dev_home_max_points"
-        const val KEY_FIRST_RUN_DONE = "first_run_done"
-        const val KEY_CUSTOM_WARNING_SEEN = "custom_warning_seen"
+        private const val KEY_MAX_FAILURES = "max_failures"
+        private const val KEY_NIGHT_MODE = "night_mode"
+        private const val KEY_SOUND = "sound_enabled"
+        private const val KEY_HAPTICS = "haptics_enabled"
+        private const val KEY_HINTS = "hints_enabled"
+        private const val KEY_LANGUAGE = "language"
+        private const val KEY_DEV_MODE = "dev_mode_enabled"
+        private const val KEY_DEV_WIN_BUTTONS = "dev_win_buttons"
+        private const val KEY_DEV_HOME_MAX = "dev_home_max_points"
+        private const val KEY_FIRST_RUN_DONE = "first_run_done"
+        private const val KEY_CUSTOM_WARNING_SEEN = "custom_warning_seen"
+        const val KEY_BACKUP = "backup_enabled"
     }
 }

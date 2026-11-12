@@ -19,6 +19,8 @@ data class AppSettings(
     val firstRunDone: Boolean = false,
     /** True once the Custom Mode quality warning was confirmed. */
     val customWarningSeen: Boolean = false,
+    /** Opt-in: progress and settings go into Android's backup. Off by default. */
+    val backupEnabled: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_MAX_FAILURES = 3

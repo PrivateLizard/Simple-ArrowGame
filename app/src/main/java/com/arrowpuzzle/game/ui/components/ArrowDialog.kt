@@ -17,20 +17,24 @@ import androidx.compose.ui.window.Dialog
 import com.arrowpuzzle.game.i18n.LocalStrings
 import com.arrowpuzzle.game.ui.theme.AppPrimary
 import com.arrowpuzzle.game.ui.theme.AppSurface
+import com.arrowpuzzle.game.ui.theme.AppTextMuted
 
 /**
  * Dialog in the look of the app: an arrow-framed card with a green headline
- * and one arrow button that closes it.
+ * and one arrow button that closes it. With [cancelText] a second, plain
+ * button below it calls [onCancel]; tapping outside or Back then cancels too.
  */
 @Composable
 fun ArrowDialog(
     title: String,
     buttonText: String,
     onDismiss: () -> Unit,
+    cancelText: String? = null,
+    onCancel: () -> Unit = onDismiss,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val s = LocalStrings.current
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = if (cancelText != null) onCancel else onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -66,6 +70,22 @@ fun ArrowDialog(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.5.sp,
                 )
+            }
+            if (cancelText != null) {
+                Spacer(Modifier.height(12.dp))
+                ArrowButton(
+                    onClick = onCancel,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    tint = AppTextMuted,
+                ) {
+                    Text(
+                        text = cancelText.uppercase(s.locale),
+                        style = MaterialTheme.typography.titleMedium,
+                        letterSpacing = 1.5.sp,
+                    )
+                }
             }
         }
     }
